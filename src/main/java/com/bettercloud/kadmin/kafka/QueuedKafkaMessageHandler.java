@@ -21,21 +21,19 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
     private static final Logger logger = LoggerFactory.getLogger(QueuedKafkaMessageHandler.class);
 
     private final FixedSizeList<MessageContainer> messageQueue;
-    private final long maxWindow;
 
-    public QueuedKafkaMessageHandler(int maxSize, long maxWindow) {
+    public QueuedKafkaMessageHandler(int maxSize) {
         messageQueue = new FixedSizeList<>(maxSize);
-        this.maxWindow = maxWindow;
     }
 
     @Override
     public void handleMessage(String s, Object o) {
+        logger.log(LogLevel.INFO, "Adding message container({})", messageQueue.spine.size());
         this.messageQueue.add(MessageContainer.builder()
                 .key(s)
                 .message(o)
                 .writeTime(System.currentTimeMillis())
                 .build());
-
     }
 
     @Override
@@ -43,36 +41,26 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
         logger.log(LogLevel.ERROR, cause.getMessage());
     }
 
-    public List<Object> get() {
-        return get(-1L);
-    }
-
     public List<Object> get(Long since) {
         return messageQueue.stream()
                 .filter(c -> isValidDate(since, c.getWriteTime()))
-                .map(MessageContainer::getMessage)
                 .collect(Collectors.toList());
     }
 
-    public int count() {
-        return count(-1L);
-    }
-
     public int count(Long since) {
+        logger.log(LogLevel.INFO, "Queue Size: {}", messageQueue.spine.size());
         return (int)messageQueue.stream()
                 .filter(c -> isValidDate(since, c.getWriteTime()))
                 .count();
     }
 
     protected boolean isValidDate(Long since, Long writeTime) {
-        Long windowThreshold = System.currentTimeMillis() - maxWindow;
-        return writeTime > windowThreshold &&
-                (since < 0 || writeTime > since);
+        return since < 0 || writeTime > since;
     }
 
     @Data
     @Builder
-    protected static class MessageContainer {
+    public static class MessageContainer {
 
         private final long writeTime;
         private final String key;
@@ -90,7 +78,8 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
         }
 
         public synchronized void add(E ele) {
-            if (spine.size() == maxSize) {
+            logger.log(LogLevel.INFO, "Adding element to spine({}): {}", spine.size(), ele);
+            if (spine.size() >= maxSize) {
                 spine.removeFirst();
             }
             spine.add(ele);

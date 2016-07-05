@@ -17,8 +17,8 @@ public interface KafkaProviderService {
 
     ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic);
 
-    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String kafkaUrl, String topic);
+    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic, String kafkaUrl);
 
-    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String schemaRegistryUrl,
-                                                  String kafkaUrl, String topic);
+    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
+                                                  String kafkaUrl, String schemaRegistryUrl);
 }

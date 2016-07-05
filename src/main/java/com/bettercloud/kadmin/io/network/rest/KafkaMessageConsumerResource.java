@@ -8,6 +8,8 @@ import com.bettercloud.logger.services.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import javafx.collections.ObservableMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ public class KafkaMessageConsumerResource {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaMessageConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final Joiner keyBuilder = Joiner.on(':');
 
     private final KafkaProviderService kps;
     private final Map<String, QueuedKafkaMessageHandler> handlerMap;
@@ -48,28 +51,44 @@ public class KafkaMessageConsumerResource {
     )
     public ResponseEntity<Page<JsonNode>> read(@PathVariable("topic") String topic,
                                              @RequestParam("since") Optional<Long> oSince,
-                                             @RequestParam("window") Optional<Long> oWindow) {
-        if (!handlerMap.containsKey(topic)) {
-            QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(100, 5 * 60 * 1000);// 5 minutes
-            handlerMap.put(topic, queue);
-            kps.consumerService(queue, topic).start();
+                                               @RequestParam("window") Optional<Long> oWindow,
+                                               @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
+                                               @RequestParam("schemaUrl") Optional<String> schemaUrl,
+                                               @RequestParam("size") Optional<Integer> queueSize) {
+        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
+        if (!handlerMap.containsKey(key)) {
+            Integer maxSize = queueSize.orElse(25);
+            logger.log(LogLevel.INFO, "Queue Max Size: {}", maxSize);
+            QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
+            handlerMap.put(key, queue);
+            kps.consumerService(queue, topic, kafkaUrl.orElse(null), schemaUrl.orElse(null)).start();
         }
-        QueuedKafkaMessageHandler handler = handlerMap.get(topic);
+        logger.log(LogLevel.INFO, "Handler Key: {}", key);
+        QueuedKafkaMessageHandler handler = handlerMap.get(key);
         Long since = getSince(oSince, oWindow);
-        logger.log(LogLevel.INFO, "Requesting message({}) since {}", handler.count(), since);
+        logger.log(LogLevel.INFO, "Requesting message({}) since {}", handler.count(since), since);
         PageImpl<JsonNode> page = new PageImpl<>(handler.get(since).stream()
-                .map(Object::toString)
-                .map(json -> {
-                    JsonNode node = null;
+                .map(m -> (QueuedKafkaMessageHandler.MessageContainer)m)
+                .map(mc -> {
+                    ObjectNode node = mapper.createObjectNode();
+                    node.put("key", mc.getKey());
+                    node.put("writeTime", mc.getWriteTime());
+                    /*
+                     * There appears to be some incompatibility with JSON serializing Avro models. So,
+                     *
+                     * disgusting hack start...
+                     */
+                    JsonNode message = null;
                     try {
-                        node = mapper.readTree(json);
+                        message = mapper.readTree(mc.getMessage().toString());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    node.replace("message", message);
+                    // disgusting hack end
                     return node;
                 })
                 .collect(Collectors.toList()));
-        page.getContent().forEach(m -> logger.log(LogLevel.INFO, "Retrieved for topic {} - {}: {}", topic, m.getClass().getSimpleName(), m));
         return ResponseEntity.ok(page);
     }
 

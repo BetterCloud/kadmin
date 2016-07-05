@@ -1,6 +1,9 @@
 package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
+import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.logger.services.Logger;
+import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
@@ -28,6 +31,8 @@ import java.util.UUID;
  */
 @Service
 public class DefaultKafkaProviderService implements KafkaProviderService {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultKafkaProviderService.class);
 
     private final Joiner keyJoiner = Joiner.on("<:=:>");
 
@@ -88,8 +93,8 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
     ========================================================
      */
 
-    private String getConsumerKey(String schemaRegistryUrl, String kafkaUrl, String topic) {
-        return keyJoiner.join(schemaRegistryUrl, kafkaUrl, topic);
+    private String getConsumerKey(String kafkaUrl, String schemaRegistryUrl, String topic) {
+        return keyJoiner.join(kafkaUrl, schemaRegistryUrl, topic);
     }
 
     protected Properties kafkaConsumerProperties(String kafkaHost, String schemaRegistryUrl) throws UnknownHostException {
@@ -117,18 +122,19 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
 
     @Override
     public ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
-                                                         String schemaRegistryUrl, String kafkaUrl) {
+                                                         String kafkaUrl, String schemaRegistryUrl) {
         if (kafkaUrl == null) {
             kafkaUrl = bootstrapServers;
         }
         if (schemaRegistryUrl == null) {
             schemaRegistryUrl = this.schemaRegistryUrl;
         }
-        String key = getConsumerKey(schemaRegistryUrl, kafkaUrl, topic);
+        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
+        logger.log(LogLevel.INFO, "Consumer Key: {}", key);
         if (!consumerMap.containsKey(key)) {
             Properties props = null;
             try {
-                props = kafkaConsumerProperties(schemaRegistryUrl, kafkaUrl);
+                props = kafkaConsumerProperties(kafkaUrl, schemaRegistryUrl);
                 consumerMap.put(key, consumerService(props, topic, handler));
             } catch (UnknownHostException e) {
                 e.printStackTrace();
