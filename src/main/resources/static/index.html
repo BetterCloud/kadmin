@@ -1,0 +1,95 @@
+<html>
+    <head>
+        <title>Kadmin @ BetterCloud</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <ul class="nav nav-pills">
+                        <li role="presentation" class="active"><a href="/">Home</a></li>
+                        <li role="presentation"><a href="/consumer.html" target="_blank">Consumer</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label for="kafkahost">Kafka Host</label>
+                            <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092">
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="schemaurl">Kafka Schema Registry Url</label>
+                            <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="topic">Topic</label>
+                <input type="text" class="form-control" id="topic">
+            </div>
+            <div class="form-group">
+                <label for="schema">Schema</label>
+                <select class="form-control" id="schema">
+                    <option>ActionCall</option>
+                    <option>ActionEndpoint</option>
+                    <option>ActionResponsePayload</option>
+                    <option>ConditionPayload</option>
+                    <option>ContextPayload</option>
+                    <option>EventCall</option>
+                    <option>MapEntry</option>
+                    <option>MapKeyValueEntry</option>
+                    <option>MetaCondition</option>
+                    <option>MetaConditionValue</option>
+                    <option>WorkflowEventPayload</option>
+                    <option>WorkflowPayload</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="message">Raw Message</label>
+                <textarea class="form-control" id="message" rows="10" ></textarea>
+            </div>
+            <div class="row text-right">
+                <button class="btn btn-primary" id="send-message-btn">
+                    Send
+                </button>
+            </div>
+        </div>
+
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/underscore-min.js"></script>
+        <script type="text/javascript" src="js/bootstrap.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $('#send-message-btn').click(function(e) {
+                    e.preventDefault();
+                    let req = {
+                        meta: {
+                            kafkaUrl: $('#kafkahost').val(),
+                            schemaRegistryUrl: $('#schemaurl').val(),
+                            schema: $('#schema').val(),
+                            topic: $('#topic').val()
+                        },
+                        rawMessage: $('#message').val()
+                    };
+                    if (req.meta.kafkaUrl === "") {
+                        req.meta.kafkaUrl = null;
+                    }
+                    if (req.meta.schemaRegistryUrl === "") {
+                        req.meta.schemaRegistryUrl = null;
+                    }
+                    $.ajax({
+                        type: "POST",
+                        url: "kafka/send",
+                        contentType: "application/json",
+                        data: JSON.stringify(req),
+                        success: function(data) { console.log(data) }
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
