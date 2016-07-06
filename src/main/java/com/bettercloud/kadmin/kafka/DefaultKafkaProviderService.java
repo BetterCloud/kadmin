@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import javax.management.InstanceAlreadyExistsException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -138,13 +139,15 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 consumerMap.put(key, consumerService(props, topic, handler));
             } catch (UnknownHostException e) {
                 e.printStackTrace();
+            } catch (InstanceAlreadyExistsException e) {
+                /* ignore metrics registration exception */
             }
         }
         return consumerMap.get(key);
     }
 
     protected ConsumerGroup<String, Object> consumerService(Properties kafkaConsumerProperties, String topic,
-                                                            MessageHandler<String, Object> handler) {
+                                                            MessageHandler<String, Object> handler) throws InstanceAlreadyExistsException {
         return ConsumerGroup.<String, Object>create()
                 .withConsumerProperties(kafkaConsumerProperties)
                 .withMessageHandler(handler)
