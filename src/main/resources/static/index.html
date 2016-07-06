@@ -29,22 +29,28 @@
                 <label for="topic">Topic</label>
                 <input type="text" class="form-control" id="topic">
             </div>
-            <div class="form-group">
-                <label for="schema">Schema</label>
-                <select class="form-control" id="schema">
-                    <option>ActionCall</option>
-                    <option>ActionEndpoint</option>
-                    <option>ActionResponsePayload</option>
-                    <option>ConditionPayload</option>
-                    <option>ContextPayload</option>
-                    <option>EventCall</option>
-                    <option>MapEntry</option>
-                    <option>MapKeyValueEntry</option>
-                    <option>MetaCondition</option>
-                    <option>MetaConditionValue</option>
-                    <option>WorkflowEventPayload</option>
-                    <option>WorkflowPayload</option>
-                </select>
+            <div class="select-row">
+                <div class="form-group col-sm-6">
+                    <label for="schema">Schema</label>
+                    <select class="form-control" id="schema">
+                        <option>ActionCall</option>
+                        <option>ActionEndpoint</option>
+                        <option>ActionResponsePayload</option>
+                        <option>ConditionPayload</option>
+                        <option>ContextPayload</option>
+                        <option>EventCall</option>
+                        <option>MapEntry</option>
+                        <option>MapKeyValueEntry</option>
+                        <option>MetaCondition</option>
+                        <option>MetaConditionValue</option>
+                        <option>WorkflowEventPayload</option>
+                        <option>WorkflowPayload</option>
+                    </select>
+                </div>
+                <div class="form-group col-sm-6">
+                    <label for="count">Count (number to send)</label>
+                    <input type="text" class="form-control" id="count" value="1" />
+                </div>
             </div>
             <div class="form-group">
                 <label for="message">Raw Message</label>
@@ -61,31 +67,58 @@
         <script type="text/javascript" src="js/underscore-min.js"></script>
         <script type="text/javascript" src="js/bootstrap.min.js"></script>
         <script>
+            function sendMessage() {
+                let req = buildRequest();
+                $.ajax({
+                    type: "POST",
+                    url: "kafka/send?count=" + getCount(),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json;charset=UTF-8"
+                    },
+                    data: JSON.stringify(req),
+                    success: handleResponse
+                });
+            }
+
+            function buildRequest() {
+                let req = {
+                    meta: {
+                        kafkaUrl: $('#kafkahost').val(),
+                        schemaRegistryUrl: $('#schemaurl').val(),
+                        schema: $('#schema').val(),
+                        topic: $('#topic').val()
+                    },
+                    rawMessage: $('#message').val()
+                };
+                if (req.meta.kafkaUrl === "") {
+                    req.meta.kafkaUrl = null;
+                }
+                if (req.meta.schemaRegistryUrl === "") {
+                    req.meta.schemaRegistryUrl = null;
+                }
+                return req;
+            }
+
+            function getCount() {
+                let count = $('#count').val();
+                if (count !== '') {
+                    count = parseInt(count);
+                    if (count !== NaN && count > 0 && count < 10000) {
+                        return count;
+                    }
+                }
+                return 1;
+            }
+
+            function handleResponse(data) {
+                console.log(data);
+            }
+
             $(document).ready(function() {
                 $('#send-message-btn').click(function(e) {
                     e.preventDefault();
-                    let req = {
-                        meta: {
-                            kafkaUrl: $('#kafkahost').val(),
-                            schemaRegistryUrl: $('#schemaurl').val(),
-                            schema: $('#schema').val(),
-                            topic: $('#topic').val()
-                        },
-                        rawMessage: $('#message').val()
-                    };
-                    if (req.meta.kafkaUrl === "") {
-                        req.meta.kafkaUrl = null;
-                    }
-                    if (req.meta.schemaRegistryUrl === "") {
-                        req.meta.schemaRegistryUrl = null;
-                    }
-                    $.ajax({
-                        type: "POST",
-                        url: "kafka/send",
-                        contentType: "application/json",
-                        data: JSON.stringify(req),
-                        success: function(data) { console.log(data) }
-                    });
+                    sendMessage();
                 });
             });
         </script>
