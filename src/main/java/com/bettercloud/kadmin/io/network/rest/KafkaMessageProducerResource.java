@@ -57,29 +57,28 @@ public class KafkaMessageProducerResource {
         ProducerService<String, Object> ps = providerService.producerService(meta.getKafkaUrl(), meta.getSchemaRegistryUrl());
         boolean sendMessage = message != null && ps != null;
         int count = 0;
-        boolean success = false;
+        int success = 0;
         long duration = -1;
         double rate = -1;
         if (sendMessage) {
             count = oCount.orElse(1);
-            success = true;
             long startTime = System.currentTimeMillis();
             for (int i=0;i<count;i++) {
                 try {
                     ps.send(meta.getTopic(), message);
+                    success++;
                 } catch (Exception e) {
-                    success = false;
                 }
             }
             duration = System.currentTimeMillis() - startTime;
             rate = count * 1000.0 / duration;
         }
         ProducerResponse res = ProducerResponse.builder()
-                .count(count)
+                .count(success)
                 .duration(duration)
                 .rate(rate)
                 .sent(sendMessage)
-                .success(success)
+                .success(success > 0 && success == count)
                 .build();
         logger.log(LogLevel.INFO, "Produced: {}", res);
         return ResponseEntity.ok(res);

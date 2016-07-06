@@ -61,12 +61,43 @@
                     Send
                 </button>
             </div>
+            <div id="sent-results-row"></div>
         </div>
 
         <script type="text/javascript" src="js/jquery.min.js"></script>
         <script type="text/javascript" src="js/underscore-min.js"></script>
         <script type="text/javascript" src="js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/moment.min.js"></script>
+
+        <script type="text/template" id="sent-info-template">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h5>Sent</h5>
+                    <div><%= timeText %></div>
+                    <ul>
+                        <li>Success: <%= success %></li>
+                        <li>Count: <%= count %></li>
+                        <li>Duration: <%= duration %>ms</li>
+                        <li>Rate: <%= rate %> messages/second</li>
+                    </ul>
+                </div>
+            </div>
+        </script>
+
+        <script type="text/template" id="sent-error-template">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h5 class="error">There was an error</h5>
+                    <div><%= timeText %></div>
+                </div>
+            </div>
+        </script>
+
         <script>
+            var sentInfoTemplate = _.template($('#sent-info-template').html()),
+                sentErrorTemplate = _.template($('#sent-error-template').html()),
+                $results = $('#sent-results-row');
+
             function sendMessage() {
                 let req = buildRequest();
                 $.ajax({
@@ -79,6 +110,7 @@
                     data: JSON.stringify(req),
                     success: handleResponse
                 });
+                $('#send-message-btn').addClass("disabled");
             }
 
             function buildRequest() {
@@ -113,6 +145,18 @@
 
             function handleResponse(data) {
                 console.log(data);
+                let timeText = moment().format('LTS'),
+                    template = null;
+                if (!!data && !!data.sent && data.sent && !!data.success && data.success) {
+                    // request was successful
+                    template = sentInfoTemplate;
+                } else {
+                    data = {};
+                    template = sentErrorTemplate;
+                }
+                data.timeText = timeText;
+                $results.html(template(data));
+                $('#send-message-btn').removeClass("disabled");
             }
 
             $(document).ready(function() {

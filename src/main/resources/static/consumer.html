@@ -80,7 +80,12 @@
         <script type="text/template" id="message-tile-template">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    Key: <%= key %> @<%= writeTimeText %>
+                    <div class="key-row">
+                        Key: "<%= key %>"
+                    </div>
+                    <div class="time-row">
+                        @<%= writeTimeText %>
+                    </div>
                     <pre><%= messageText %></pre>
                 </div>
             </div>
