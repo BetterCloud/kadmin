@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 /**
  * Created by davidesposito on 7/1/16.
  */
-@Component
-public class DefaultKafkaMessageConverter implements KafkaMessageConverter {
+@Component("genericRecordKafkaConverter")
+public class DefaultKafkaMessageConverter implements KafkaMessageConverter<GenericRecord> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Map<String, Class<? extends GenericRecord>> SCHEMA_MAP;

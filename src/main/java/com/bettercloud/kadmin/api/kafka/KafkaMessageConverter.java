@@ -8,5 +8,5 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Created by davidesposito on 7/1/16.
  */
-public interface KafkaMessageConverter extends MessageConverter<KafkaProduceMessageMeta, GenericRecord> {
+public interface KafkaMessageConverter<ReturnT> extends MessageConverter<KafkaProduceMessageMeta, ReturnT> {
 }

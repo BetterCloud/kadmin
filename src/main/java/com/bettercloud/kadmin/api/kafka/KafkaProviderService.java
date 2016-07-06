@@ -9,15 +9,9 @@ import com.bettercloud.messaging.kafka.produce.ProducerService;
  */
 public interface KafkaProviderService {
 
-    ProducerService<String, Object> producerService();
-
-    ProducerService<String, Object> producerService(String kafkaUrl);
-
     ProducerService<String, Object> producerService(String schemaRegistryUrl, String kafkaUrl);
 
-    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic);
-
-    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic, String kafkaUrl);
+    ProducerService<String, byte[]> rawProducerService(String schemaRegistryUrl, String kafkaUrl);
 
     ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
                                                   String kafkaUrl, String schemaRegistryUrl);

@@ -17,5 +17,6 @@ public class KafkaProduceMessageMeta {
     private String kafkaUrl;
     private String schemaRegistryUrl;
     private String schema;
+    private String rawSchema;
     private String topic;
 }

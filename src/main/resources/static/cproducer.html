@@ -1,0 +1,255 @@
+<html>
+    <head>
+        <title>Kadmin @ BetterCloud</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <div>
+                <ul class="nav nav-pills">
+                    <li role="presentation"><a href="/">Home</a></li>
+                    <li role="presentation"><a href="/bproducer.html" target="_blank">BetterCloud Producer</a></li>
+                    <li role="presentation" class="active"><a href="/cproducer.html" target="_blank">Custom Producer</a></li>
+                    <li role="presentation"><a href="/consumer.html" target="_blank">Consumer</a></li>
+                </ul>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label for="kafkahost">Kafka Host</label>
+                            <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092">
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="schemaurl">Kafka Schema Registry Url</label>
+                            <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label for="topic">Topic</label>
+                            <input type="text" class="form-control" id="topic">
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="count">Count (number to send)</label>
+                            <input type="text" class="form-control" id="count" value="1" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="select-row row">
+                        <div class="col-sm-3">
+                            <div>
+                                <button class="btn btn-success" id="refresh-schemas-btn">
+                                    Refresh Schemas
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label for="schema">Schema</label>
+                                <select class="form-control" id="schema">
+
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="schema-version">Schema Version</label>
+                                <select class="form-control" id="schema-version">
+
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-9">
+                            <label for="raw-schema">Raw Schema</label>
+                            <textarea class="form-control" id="raw-schema" rows="10" ></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="message">
+                    Avro Encoded JSON Message
+                    (
+                        <a href="https://avro.apache.org/docs/1.7.7/spec.html#json_encoding" target="_blank">docs</a>/
+                        <a href="http://stackoverflow.com/a/27499930" target="_blank">example</a>
+                    )
+                </label>
+                <div><i>Not "normal" JSON</i></div>
+                <textarea class="form-control" id="message" rows="10" ></textarea>
+            </div>
+            <div class="row text-right">
+                <button class="btn btn-primary" id="send-message-btn">
+                    Send
+                </button>
+            </div>
+            <div id="sent-results-row"></div>
+        </div>
+
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/underscore-min.js"></script>
+        <script type="text/javascript" src="js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/moment.min.js"></script>
+
+        <script type="text/template" id="sent-info-template">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h5>Sent</h5>
+                    <div><%= timeText %></div>
+                    <ul>
+                        <li>Success: <%= success %></li>
+                        <li>Count: <%= count %></li>
+                        <li>Duration: <%= duration %>ms</li>
+                        <li>Rate: <%= rate %> messages/second</li>
+                    </ul>
+                </div>
+            </div>
+        </script>
+
+        <script type="text/template" id="sent-error-template">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h5 class="error">There was an error</h5>
+                    <div><%= timeText %></div>
+                </div>
+            </div>
+        </script>
+
+        <script>
+            var sentInfoTemplate = _.template($('#sent-info-template').html()),
+                sentErrorTemplate = _.template($('#sent-error-template').html()),
+                $results = $('#sent-results-row'),
+                $schemas = $('#schema'),
+                $schemaVersions = $('#schema-version');
+
+            function sendMessage() {
+                let req = buildRequest();
+                $.ajax({
+                    type: "POST",
+                    url: "kafka/publish?count=" + getCount(),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json;charset=UTF-8"
+                    },
+                    data: JSON.stringify(req),
+                    success: handleResponse
+                });
+                $('#send-message-btn').addClass("disabled");
+            }
+
+            function buildRequest() {
+                let req = {
+                    meta: {
+                        kafkaUrl: $('#kafkahost').val(),
+                        schemaRegistryUrl: $('#schemaurl').val(),
+                        schema: $('#schema').val(),
+                        rawSchema: $('#raw-schema').val(),
+                        topic: $('#topic').val()
+                    },
+                    rawMessage: $('#message').val()
+                };
+                if (req.meta.kafkaUrl === "") {
+                    req.meta.kafkaUrl = null;
+                }
+                if (req.meta.schemaRegistryUrl === "") {
+                    req.meta.schemaRegistryUrl = null;
+                }
+                return req;
+            }
+
+            function getCount() {
+                let count = $('#count').val();
+                if (count !== '') {
+                    count = parseInt(count);
+                    if (count !== NaN && count > 0 && count < 10000) {
+                        return count;
+                    }
+                }
+                return 1;
+            }
+
+            function handleResponse(data) {
+                console.log(data);
+                let timeText = moment().format('LTS'),
+                    template = null;
+                if (!!data && !!data.sent && data.sent && !!data.success && data.success) {
+                    // request was successful
+                    template = sentInfoTemplate;
+                } else {
+                    data = {};
+                    template = sentErrorTemplate;
+                }
+                data.timeText = timeText;
+                $results.html(template(data));
+                $('#send-message-btn').removeClass("disabled");
+            }
+
+            function refreshSchemas() {
+                let url = "/schemas",
+                    schemaUrl = $('#schemaurl').val();
+                if (schemaUrl !== '') {
+                    url += "?url=" + schemaUrl;
+                }
+                $.get(url)
+                    .done(function(data) {
+                        console.log(data);
+                        $schemas.html('<option value="null">**Select Value**</option>');
+                        _.each(data, function(schemaName) {
+                            $schemas.append('<option>' + schemaName + '</option>');
+                        });
+                    })
+                    .fail(function(err) {
+                        $schemas.html('<option value="null">**Invalid Schema Url**</option>');
+                    });
+            }
+
+            function handleNewSchema() {
+                let name = $schemas.val();
+                if (name !== 'null') {
+                    $.get('/schemas/' + name, function(data) {
+                        console.log(data);
+                        let curr = data.currSchema,
+                            v = curr.version,
+                            rawSchema = JSON.stringify(JSON.parse(curr.schema), null, 2);
+
+                        $schemaVersions.html('<option value="' + v + '">' + v + ' (Current)</option>');
+                        _.each(data.versions, function(ver) {
+                            $schemaVersions.append('<option>' + ver + '</option>');
+                        });
+
+                        $('#raw-schema').html(rawSchema);
+                    });
+                }
+            }
+
+            function handleNewVersion() {
+                let name = $schemas.val(),
+                    ver = $schemaVersions.val();
+                if (!!name && name !== '' && !!ver && ver !== '') {
+                    $.get('/schemas/' + name + "/" + ver, function(data) {
+                        console.log(data);
+                        let rawSchema = JSON.stringify(JSON.parse(data.schema), null, 2);
+                        $('#raw-schema').html(rawSchema);
+                    });
+                }
+            }
+
+            $(document).ready(function() {
+                $('#send-message-btn').click(function(e) {
+                    e.preventDefault();
+                    sendMessage();
+                });
+                $('#refresh-schemas-btn').click(function(e) {
+                    e.preventDefault();
+                    refreshSchemas();
+                });
+                refreshSchemas();
+                $schemas.change(handleNewSchema);
+                $schemaVersions.change(handleNewVersion);
+            });
+        </script>
+    </body>
+</html>

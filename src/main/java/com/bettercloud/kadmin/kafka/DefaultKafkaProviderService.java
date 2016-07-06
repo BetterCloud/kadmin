@@ -14,6 +14,7 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
     private String bootstrapServers;
 
     private final Map<String, ProducerService<String, Object>> producerMap = Maps.newHashMap();
+    private final Map<String, ProducerService<String, byte[]>> rawProducerMap = Maps.newHashMap();
     private final Map<String, ConsumerGroup<String, Object>> consumerMap = Maps.newHashMap();
 
     protected Properties producerProperties(String schemaRegistryUrl, String kafkaUrl) {
@@ -57,14 +59,7 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
         return keyJoiner.join(schemaRegistryUrl, kafkaUrl);
     }
 
-    public ProducerService<String, Object> producerService() {
-        return producerService(bootstrapServers);
-    }
-
-    public ProducerService<String, Object> producerService(String kafkaUrl) {
-        return producerService(schemaRegistryUrl, kafkaUrl);
-    }
-
+    @Override
     public ProducerService<String, Object> producerService(String schemaRegistryUrl, String kafkaUrl) {
         if (kafkaUrl == null) {
             kafkaUrl = bootstrapServers;
@@ -80,11 +75,35 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
         return producerMap.get(key);
     }
 
+    @Override
+    public ProducerService<String, byte[]> rawProducerService(String schemaRegistryUrl, String kafkaUrl) {
+        if (kafkaUrl == null) {
+            kafkaUrl = bootstrapServers;
+        }
+        if (schemaRegistryUrl == null) {
+            schemaRegistryUrl = this.schemaRegistryUrl;
+        }
+        String key = getProducerKey(schemaRegistryUrl, kafkaUrl);
+        if (!rawProducerMap.containsKey(key)) {
+            Properties props = producerProperties(schemaRegistryUrl, kafkaUrl);
+            rawProducerMap.put(key, rawProducerService(props));
+        }
+        return rawProducerMap.get(key);
+    }
+
     protected ProducerService<String, Object> producerService(Properties producerProperties) {
         return ProducerService.<String, Object>create()
                 .withProducerProperties(producerProperties)
                 .withKeySerializer(new StringSerializer())
                 .withMessageSerializer(new KafkaAvroSerializer())
+                .build();
+    }
+
+    protected ProducerService<String, byte[]> rawProducerService(Properties producerProperties) {
+        return ProducerService.<String, byte[]>create()
+                .withProducerProperties(producerProperties)
+                .withKeySerializer(new StringSerializer())
+                .withMessageSerializer(new ByteArraySerializer())
                 .build();
     }
 
@@ -109,16 +128,6 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
         properties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 32 * 1024);
         return properties;
 
-    }
-
-    @Override
-    public ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic) {
-        return consumerService(handler, topic, bootstrapServers);
-    }
-
-    @Override
-    public ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic, String kafkaUrl) {
-        return consumerService(handler, topic, kafkaUrl, schemaRegistryUrl);
     }
 
     @Override
