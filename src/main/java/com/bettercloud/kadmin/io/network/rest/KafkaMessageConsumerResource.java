@@ -50,7 +50,7 @@ public class KafkaMessageConsumerResource {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<Page<JsonNode>> read(@PathVariable("topic") String topic,
-                                             @RequestParam("since") Optional<Long> oSince,
+                                               @RequestParam("since") Optional<Long> oSince,
                                                @RequestParam("window") Optional<Long> oWindow,
                                                @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
                                                @RequestParam("schemaUrl") Optional<String> schemaUrl,
@@ -90,6 +90,23 @@ public class KafkaMessageConsumerResource {
                 })
                 .collect(Collectors.toList()));
         return ResponseEntity.ok(page);
+    }
+
+    @RequestMapping(
+            path = "/{topic}",
+            method = RequestMethod.DELETE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<Boolean> clear(@PathVariable("topic") String topic,
+                                               @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
+                                               @RequestParam("schemaUrl") Optional<String> schemaUrl) {
+        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
+        boolean cleared = false;
+        if (handlerMap.containsKey(key) && handlerMap.get(key) != null) {
+            handlerMap.get(key).clear();
+            cleared = true;
+        }
+        return ResponseEntity.ok(cleared);
     }
 
     protected long getSince(Optional<Long> oSince, Optional<Long> oWindow) {

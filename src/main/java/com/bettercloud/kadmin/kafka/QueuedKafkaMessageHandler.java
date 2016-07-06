@@ -54,6 +54,10 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
                 .count();
     }
 
+    public void clear() {
+        messageQueue.clear();
+    }
+
     protected boolean isValidDate(Long since, Long writeTime) {
         return since < 0 || writeTime > since;
     }
@@ -83,6 +87,10 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
                 spine.removeFirst();
             }
             spine.add(ele);
+        }
+
+        public void clear() {
+            spine.clear();
         }
 
         public synchronized Stream<E> stream() {
