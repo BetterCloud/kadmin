@@ -15,6 +15,8 @@ import javafx.collections.ObservableMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,28 +69,31 @@ public class KafkaMessageConsumerResource {
         QueuedKafkaMessageHandler handler = handlerMap.get(key);
         Long since = getSince(oSince, oWindow);
         logger.log(LogLevel.INFO, "Requesting message({}) since {}", handler.count(since), since);
-        PageImpl<JsonNode> page = new PageImpl<>(handler.get(since).stream()
-                .map(m -> (QueuedKafkaMessageHandler.MessageContainer)m)
-                .map(mc -> {
-                    ObjectNode node = mapper.createObjectNode();
-                    node.put("key", mc.getKey());
-                    node.put("writeTime", mc.getWriteTime());
-                    /*
-                     * There appears to be some incompatibility with JSON serializing Avro models. So,
-                     *
-                     * disgusting hack start...
-                     */
-                    JsonNode message = null;
-                    try {
-                        message = mapper.readTree(mc.getMessage().toString());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    node.replace("message", message);
-                    // disgusting hack end
-                    return node;
-                })
-                .collect(Collectors.toList()));
+        PageImpl<JsonNode> page = new PageImpl<>(
+                handler.get(since).stream()
+                        .map(m -> (QueuedKafkaMessageHandler.MessageContainer)m)
+                        .map(mc -> {
+                            ObjectNode node = mapper.createObjectNode();
+                            node.put("key", mc.getKey());
+                            node.put("writeTime", mc.getWriteTime());
+                            /*
+                             * There appears to be some incompatibility with JSON serializing Avro models. So,
+                             *
+                             * disgusting hack start...
+                             */
+                            JsonNode message = null;
+                            try {
+                                message = mapper.readTree(mc.getMessage().toString());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            node.replace("message", message);
+                            // disgusting hack end
+                            return node;
+                        })
+                        .collect(Collectors.toList()
+                        ),
+                new PageRequest(0, 25), handler.total());
         return ResponseEntity.ok(page);
     }
 

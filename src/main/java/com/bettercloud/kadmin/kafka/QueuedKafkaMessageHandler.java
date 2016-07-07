@@ -10,6 +10,7 @@ import lombok.Data;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,6 +22,7 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
     private static final Logger logger = LoggerFactory.getLogger(QueuedKafkaMessageHandler.class);
 
     private final FixedSizeList<MessageContainer> messageQueue;
+    private final AtomicLong total = new AtomicLong(0L);
 
     public QueuedKafkaMessageHandler(int maxSize) {
         messageQueue = new FixedSizeList<>(maxSize);
@@ -28,7 +30,7 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
 
     @Override
     public void handleMessage(String s, Object o) {
-        logger.log(LogLevel.INFO, "Adding message container({})", messageQueue.spine.size());
+        total.incrementAndGet();
         this.messageQueue.add(MessageContainer.builder()
                 .key(s)
                 .message(o)
@@ -54,7 +56,12 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
                 .count();
     }
 
+    public long total() {
+        return total.get();
+    }
+
     public void clear() {
+        total.set(0L);
         messageQueue.clear();
     }
 

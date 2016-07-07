@@ -196,7 +196,7 @@
             function handleResults(data) {
                 console.log(data);
                 $messageList.html('');
-                document.title = "(" + data.numberOfElements + ") " + consumerConfig.topic;
+                document.title = "(" + data.totalElements + ") " + consumerConfig.topic;
                 _.each(data.content, function(ele) {
                     let html = "";
                     ele.writeTimeText = moment(ele.writeTime).format('LTS');
