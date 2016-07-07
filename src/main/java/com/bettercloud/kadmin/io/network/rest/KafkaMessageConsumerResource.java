@@ -60,15 +60,12 @@ public class KafkaMessageConsumerResource {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         if (!handlerMap.containsKey(key)) {
             Integer maxSize = queueSize.orElse(25);
-            logger.log(LogLevel.INFO, "Queue Max Size: {}", maxSize);
             QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
             handlerMap.put(key, queue);
             kps.consumerService(queue, topic, kafkaUrl.orElse(null), schemaUrl.orElse(null)).start();
         }
-        logger.log(LogLevel.INFO, "Handler Key: {}", key);
         QueuedKafkaMessageHandler handler = handlerMap.get(key);
         Long since = getSince(oSince, oWindow);
-        logger.log(LogLevel.INFO, "Requesting message({}) since {}", handler.count(since), since);
         PageImpl<JsonNode> page = new PageImpl<>(
                 handler.get(since).stream()
                         .map(m -> (QueuedKafkaMessageHandler.MessageContainer)m)

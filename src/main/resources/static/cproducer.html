@@ -2,6 +2,13 @@
     <head>
         <title>Kadmin @ BetterCloud</title>
         <link href="css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            #ace-message, #ace-schema {
+                width: 100%;
+                height: 30em;
+                border: 1px solid #cccccc;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -64,22 +71,22 @@
                             </div>
                         </div>
                         <div class="col-sm-9">
-                            <label for="raw-schema">Raw Schema</label>
-                            <textarea class="form-control" id="raw-schema" rows="10" ></textarea>
+                            <label for="ace-schema">Raw Schema</label>
+                            <div id="ace-schema"></div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <label for="message">
+                <label for="ace-message">
                     Avro Encoded JSON Message
                     (
                         <a href="https://avro.apache.org/docs/1.7.7/spec.html#json_encoding" target="_blank">docs</a>/
                         <a href="http://stackoverflow.com/a/27499930" target="_blank">example</a>
                     )
                 </label>
-                <div><i>Not "normal" JSON</i></div>
-                <textarea class="form-control" id="message" rows="10" ></textarea>
+                <div class="text-muted"><i>Not "normal" JSON</i></div>
+                <div id="ace-message"></div>
             </div>
             <div class="row text-right">
                 <button class="btn btn-primary" id="send-message-btn">
@@ -93,6 +100,7 @@
         <script type="text/javascript" src="js/underscore-min.js"></script>
         <script type="text/javascript" src="js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/moment.min.js"></script>
+        <script type="text/javascript" src="js/ace.min.js"></script>
 
         <script type="text/template" id="sent-info-template">
             <div class="panel panel-default">
@@ -123,7 +131,14 @@
                 sentErrorTemplate = _.template($('#sent-error-template').html()),
                 $results = $('#sent-results-row'),
                 $schemas = $('#schema'),
-                $schemaVersions = $('#schema-version');
+                $schemaVersions = $('#schema-version'),
+                $aceMessage = ace.edit("ace-message"),
+                $aceSchema = ace.edit("ace-schema");
+
+            $aceMessage.setTheme("ace/theme/chrome");
+            $aceMessage.getSession().setMode("ace/mode/json");
+            $aceSchema.setTheme("ace/theme/chrome");
+            $aceSchema.getSession().setMode("ace/mode/json");
 
             function sendMessage() {
                 let req = buildRequest();
@@ -146,10 +161,10 @@
                         kafkaUrl: $('#kafkahost').val(),
                         schemaRegistryUrl: $('#schemaurl').val(),
                         schema: $('#schema').val(),
-                        rawSchema: $('#raw-schema').val(),
+                        rawSchema: $aceSchema.getValue(),
                         topic: $('#topic').val()
                     },
-                    rawMessage: $('#message').val()
+                    rawMessage: $aceMessage.getValue()
                 };
                 if (req.meta.kafkaUrl === "") {
                     req.meta.kafkaUrl = null;
@@ -220,7 +235,7 @@
                             $schemaVersions.append('<option>' + ver + '</option>');
                         });
 
-                        $('#raw-schema').html(rawSchema);
+                        $aceSchema.setValue(rawSchema);
                     });
                 }
             }
@@ -232,7 +247,7 @@
                     $.get('/schemas/' + name + "/" + ver, function(data) {
                         console.log(data);
                         let rawSchema = JSON.stringify(JSON.parse(data.schema), null, 2);
-                        $('#raw-schema').html(rawSchema);
+                        $aceSchema.setValue(rawSchema);
                     });
                 }
             }

@@ -50,7 +50,6 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
     }
 
     public int count(Long since) {
-        logger.log(LogLevel.INFO, "Queue Size: {}", messageQueue.spine.size());
         return (int)messageQueue.stream()
                 .filter(c -> isValidDate(since, c.getWriteTime()))
                 .count();
@@ -89,7 +88,6 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
         }
 
         public synchronized void add(E ele) {
-            logger.log(LogLevel.INFO, "Adding element to spine({}): {}", spine.size(), ele);
             if (spine.size() >= maxSize) {
                 spine.removeFirst();
             }

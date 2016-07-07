@@ -94,8 +94,6 @@ public class KafkaMessageProducerResource {
             }
         }
         KafkaProduceMessageMeta meta = requestModel.getMeta();
-        logger.log(LogLevel.INFO, "Schema: {}", meta.getRawSchema());
-        logger.log(LogLevel.INFO, "Message: {}", requestModel.getRawMessage().toString());
         Object message;
         try {
             message = jtaConverter.convert(requestModel.getRawMessage().toString(), meta.getRawSchema());

@@ -2,6 +2,13 @@
     <head>
         <title>Kadmin @ BetterCloud</title>
         <link href="css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            #ace-message {
+                width: 100%;
+                height: 30em;
+                border: 1px solid #cccccc;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -55,8 +62,8 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="message">Raw Message</label>
-                <textarea class="form-control" id="message" rows="10" ></textarea>
+                <label for="ace-message">Raw Message</label>
+                <div id="ace-message"></div>
             </div>
             <div class="row text-right">
                 <button class="btn btn-primary" id="send-message-btn">
@@ -70,6 +77,7 @@
         <script type="text/javascript" src="js/underscore-min.js"></script>
         <script type="text/javascript" src="js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/moment.min.js"></script>
+        <script type="text/javascript"  src="js/ace.min.js" charset="utf-8"></script>
 
         <script type="text/template" id="sent-info-template">
             <div class="panel panel-default">
@@ -98,7 +106,11 @@
         <script>
             var sentInfoTemplate = _.template($('#sent-info-template').html()),
                 sentErrorTemplate = _.template($('#sent-error-template').html()),
-                $results = $('#sent-results-row');
+                $results = $('#sent-results-row'),
+                $aceMessage = ace.edit("ace-message");
+
+            $aceMessage.setTheme("ace/theme/chrome");
+            $aceMessage.getSession().setMode("ace/mode/json");
 
             function sendMessage() {
                 let req = buildRequest();
@@ -123,7 +135,7 @@
                         schema: $('#schema').val(),
                         topic: $('#topic').val()
                     },
-                    rawMessage: $('#message').val()
+                    rawMessage: $aceMessage.getValue()
                 };
                 if (req.meta.kafkaUrl === "") {
                     req.meta.kafkaUrl = null;
