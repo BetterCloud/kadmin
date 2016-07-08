@@ -13,8 +13,8 @@ buildscript {
 		classpath "io.spring.gradle:dependency-management-plugin:0.5.2.RELEASE"
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.2.RELEASE")
 		classpath("org.springframework:springloaded:1.2.3.RELEASE")
-//		classpath("com.bettercloud:docker-plugin:${docker_plugin_version}")
-//		classpath("com.bettercloud:base-gradle-plugin:1.+")
+		classpath("com.bettercloud:docker-plugin:${docker_plugin_version}")
+		classpath("com.bettercloud:base-gradle-plugin:1.+")
 	}
 }
 
@@ -23,8 +23,8 @@ apply plugin: 'idea'
 apply plugin: 'spring-boot'
 apply plugin: 'java'
 apply plugin: 'war'
-//apply plugin: 'com.bettercloud.docker-plugin'
-//apply plugin: 'com.bettercloud.gradle.base-gradle-plugin'
+apply plugin: 'com.bettercloud.docker-plugin'
+apply plugin: 'com.bettercloud.gradle.base-gradle-plugin'
 apply plugin: "io.spring.dependency-management"
 
 jar {
