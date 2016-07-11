@@ -1,0 +1,216 @@
+{
+  "type": "record",
+  "name": "EventCall",
+  "namespace": "com.bettercloud.avro.workflow",
+  "fields": [
+    {
+      "name": "header",
+      "type": {
+        "type": "record",
+        "name": "Header",
+        "namespace": "com.bettercloud.avro",
+        "fields": [
+          {
+            "name": "senderId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ],
+            "default": "null"
+          },
+          {
+            "name": "domainId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ]
+          },
+          {
+            "name": "tenantId",
+            "type": {
+              "type": "string",
+              "avro.java.string": "String"
+            }
+          },
+          {
+            "name": "providerId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ]
+          },
+          {
+            "name": "correlationId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ]
+          },
+          {
+            "name": "externalCorrelationId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ]
+          },
+          {
+            "name": "receivedDate",
+            "type": [
+              "long",
+              "null"
+            ]
+          },
+          {
+            "name": "eventId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ]
+          },
+          {
+            "name": "userId",
+            "type": [
+              {
+                "type": "string",
+                "avro.java.string": "String"
+              },
+              "null"
+            ]
+          },
+          {
+            "name": "eventMeta",
+            "type": [
+              "null",
+              {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "MapKeyValueEntry",
+                  "namespace": "com.bettercloud.avro.workflow",
+                  "fields": [
+                    {
+                      "name": "key",
+                      "type": {
+                        "type": "string",
+                        "avro.java.string": "String"
+                      }
+                    },
+                    {
+                      "name": "value",
+                      "type": [
+                        "boolean",
+                        "int",
+                        "long",
+                        "float",
+                        "double",
+                        "bytes",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        },
+                        "null",
+                        {
+                          "type": "array",
+                          "items": [
+                            "MapKeyValueEntry",
+                            "boolean",
+                            "int",
+                            "long",
+                            "float",
+                            "double",
+                            "bytes",
+                            {
+                              "type": "string",
+                              "avro.java.string": "String"
+                            },
+                            "null",
+                            {
+                              "type": "array",
+                              "items": "MapKeyValueEntry"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "eventId",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      }
+    },
+    {
+      "name": "eventParams",
+      "type": [
+        "null",
+        {
+          "type": "map",
+          "values": [
+            "boolean",
+            "int",
+            "long",
+            "float",
+            "double",
+            "bytes",
+            {
+              "type": "string",
+              "avro.java.string": "String"
+            },
+            "null",
+            {
+              "type": "map",
+              "values": [
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                },
+                "null"
+              ],
+              "avro.java.string": "String"
+            }
+          ],
+          "avro.java.string": "String"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "values",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "MapKeyValueEntry"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

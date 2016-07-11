@@ -1,0 +1,34 @@
+{
+  "header": {
+    "senderId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "domainId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "tenantId": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa",
+    "providerId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "correlationId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "externalCorrelationId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "receivedDate": {"long": 1467378058627},
+    "eventId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "userId": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"},
+    "eventMeta": {
+      "array": [
+        {
+          "key": "workflow",
+          "value": {"boolean": true}
+        }, {
+          "key": "workflow_directory_integration",
+          "value": {"boolean": false}
+        }
+      ]
+    }
+  },
+  "eventId": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa",
+  "eventParams": null,
+  "values": {
+    "array": [
+      {
+        "key": "userId",
+        "value": {"string": "f7d7e7c5-1a1f-4d2a-9ae0-ce07e83907fa"}
+      }
+    ]
+  }
+}

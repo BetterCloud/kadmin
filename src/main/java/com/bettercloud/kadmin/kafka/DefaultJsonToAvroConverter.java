@@ -1,22 +1,24 @@
 package com.bettercloud.kadmin.kafka;
 
+import com.bettercloud.kadmin.api.kafka.AvrifyConverter;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.*;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by davidesposito on 7/6/16.
  */
 @Component
-public class DefaultJsonToAvroConverter implements JsonToAvroConverter {
+public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     @Override
     public Object convert(String json, String schemaStr) {
@@ -35,5 +37,10 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter {
         }
 
         return datum;
+    }
+
+    @Override
+    public String avrify(String json, String schema) {
+        return json;
     }
 }
