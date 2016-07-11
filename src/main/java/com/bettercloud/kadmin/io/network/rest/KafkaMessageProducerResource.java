@@ -63,7 +63,7 @@ public class KafkaMessageProducerResource {
         }
         KafkaProduceMessageMeta meta = requestModel.getMeta();
         GenericRecord message = genericRecordKafkaConverter.convert(requestModel.getRawMessage(), meta);
-        ProducerService<String, Object> ps = providerService.producerService(meta.getKafkaUrl(), meta.getSchemaRegistryUrl());
+        ProducerService<String, Object> ps = providerService.producerService(null, null);
         boolean sendMessage = message != null && ps != null;
         ProducerResponse res = ProducerResponse.builder()
                 .sent(sendMessage)
@@ -101,7 +101,7 @@ public class KafkaMessageProducerResource {
         } catch (AvroTypeException e) {
             return ResponseUtil.error(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        ProducerService<String, Object> ps = providerService.producerService(meta.getKafkaUrl(), meta.getSchemaRegistryUrl());
+        ProducerService<String, Object> ps = providerService.producerService(null, null);
         boolean sendMessage = message != null && ps != null;
         ProducerResponse res = ProducerResponse.builder()
                 .sent(sendMessage)

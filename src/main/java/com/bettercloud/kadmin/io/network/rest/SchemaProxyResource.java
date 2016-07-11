@@ -50,10 +50,8 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<List<String>> schemas(@RequestParam("url") Optional<String> oUrl) {
-        String url = String.format("%s/subjects",
-                oUrl.orElse(this.schemaRegistryUrl)
-        );
+    public ResponseEntity<List<String>> schemas() {
+        String url = String.format("%s/subjects", this.schemaRegistryUrl);
         NodeConverter<List<String>> c = (node) -> {
             if (node.isArray()) {
                 ArrayNode arr = (ArrayNode) node;
@@ -71,12 +69,8 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<SchemaInfo> info(@PathVariable("name") String name,
-                                                  @RequestParam("url") Optional<String> oUrl) {
-        String url = String.format("%s/subjects/%s/versions",
-                oUrl.orElse(this.schemaRegistryUrl),
-                name
-        );
+    public ResponseEntity<SchemaInfo> info(@PathVariable("name") String name) {
+        String url = String.format("%s/subjects/%s/versions", this.schemaRegistryUrl, name);
         NodeConverter<List<Integer>> c = (node) -> {
             if (node.isArray()) {
                 ArrayNode arr = (ArrayNode) node;
@@ -92,7 +86,7 @@ public class SchemaProxyResource {
         ResponseEntity<List<Integer>> versionsRes = proxyResponse(url, c, null);
         if (versionsRes.getStatusCode().is2xxSuccessful()) {
             versions = versionsRes.getBody();
-            ResponseEntity<JsonNode> info = version(name, versions.get(versions.size() - 1), oUrl);
+            ResponseEntity<JsonNode> info = version(name, versions.get(versions.size() - 1));
             if (info.getStatusCode().is2xxSuccessful()) {
                 currSchema = info.getBody();
             } else {
@@ -119,10 +113,9 @@ public class SchemaProxyResource {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<JsonNode> version(@PathVariable("name") String name,
-                                                  @PathVariable("version") Integer version,
-                                                  @RequestParam("url") Optional<String> oUrl) {
+                                                  @PathVariable("version") Integer version) {
         String url = String.format("%s/subjects/%s/versions/%d",
-                oUrl.orElse(this.schemaRegistryUrl),
+                this.schemaRegistryUrl,
                 name,
                 version
         );
