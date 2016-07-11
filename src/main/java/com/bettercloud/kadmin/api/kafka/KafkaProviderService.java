@@ -11,8 +11,10 @@ public interface KafkaProviderService {
 
     ProducerService<String, Object> producerService(String schemaRegistryUrl, String kafkaUrl);
 
-    ProducerService<String, byte[]> rawProducerService(String schemaRegistryUrl, String kafkaUrl);
+    ProducerService<String, Object> lookupProducer(String key);
 
     ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
                                                   String kafkaUrl, String schemaRegistryUrl);
+
+    ConsumerGroup<String, Object> lookupConsumer(String key);
 }

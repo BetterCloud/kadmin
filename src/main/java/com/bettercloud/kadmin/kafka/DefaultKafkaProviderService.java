@@ -7,6 +7,8 @@ import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
+import com.bettercloud.util.Opt;
+import com.bettercloud.util.TimedWrapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -24,9 +26,11 @@ import org.springframework.stereotype.Service;
 import javax.management.InstanceAlreadyExistsException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Created by davidesposito on 6/28/16.
@@ -35,6 +39,7 @@ import java.util.UUID;
 public class DefaultKafkaProviderService implements KafkaProviderService {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultKafkaProviderService.class);
+    private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
 
     private final Joiner keyJoiner = Joiner.on("<:=:>");
 
@@ -44,7 +49,6 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
     private String bootstrapServers;
 
     private final Map<String, ProducerService<String, Object>> producerMap = Maps.newHashMap();
-    private final Map<String, ProducerService<String, byte[]>> rawProducerMap = Maps.newHashMap();
     private final Map<String, ConsumerGroup<String, Object>> consumerMap = Maps.newHashMap();
 
     protected Properties producerProperties(String schemaRegistryUrl, String kafkaUrl) {
@@ -76,19 +80,8 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
     }
 
     @Override
-    public ProducerService<String, byte[]> rawProducerService(String schemaRegistryUrl, String kafkaUrl) {
-        if (kafkaUrl == null) {
-            kafkaUrl = bootstrapServers;
-        }
-        if (schemaRegistryUrl == null) {
-            schemaRegistryUrl = this.schemaRegistryUrl;
-        }
-        String key = getProducerKey(schemaRegistryUrl, kafkaUrl);
-        if (!rawProducerMap.containsKey(key)) {
-            Properties props = producerProperties(schemaRegistryUrl, kafkaUrl);
-            rawProducerMap.put(key, rawProducerService(props));
-        }
-        return rawProducerMap.get(key);
+    public ProducerService<String, Object> lookupProducer(String key) {
+        return producerMap.get(key);
     }
 
     protected ProducerService<String, Object> producerService(Properties producerProperties) {
@@ -96,14 +89,6 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 .withProducerProperties(producerProperties)
                 .withKeySerializer(new StringSerializer())
                 .withMessageSerializer(new KafkaAvroSerializer())
-                .build();
-    }
-
-    protected ProducerService<String, byte[]> rawProducerService(Properties producerProperties) {
-        return ProducerService.<String, byte[]>create()
-                .withProducerProperties(producerProperties)
-                .withKeySerializer(new StringSerializer())
-                .withMessageSerializer(new ByteArraySerializer())
                 .build();
     }
 
@@ -152,6 +137,11 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 /* ignore metrics registration exception */
             }
         }
+        return consumerMap.get(key);
+    }
+
+    @Override
+    public ConsumerGroup<String, Object> lookupConsumer(String key) {
         return consumerMap.get(key);
     }
 

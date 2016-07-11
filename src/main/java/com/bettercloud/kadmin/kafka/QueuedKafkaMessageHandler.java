@@ -30,6 +30,7 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
 
     @Override
     public void handleMessage(String s, Object o) {
+        logger.log(LogLevel.INFO, "receiving => {}, queued => {}", total.get() + 1, messageQueue.spine.size());
         total.incrementAndGet();
         this.messageQueue.add(MessageContainer.builder()
                 .key(s)
