@@ -1,6 +1,7 @@
 package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
+import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
@@ -66,31 +67,36 @@ public class KafkaMessageConsumerResource {
         }
         QueuedKafkaMessageHandler handler = handlerMap.get(key);
         Long since = getSince(oSince, oWindow);
-        PageImpl<JsonNode> page = new PageImpl<>(
-                handler.get(since).stream()
-                        .map(m -> (QueuedKafkaMessageHandler.MessageContainer)m)
-                        .map(mc -> {
-                            ObjectNode node = mapper.createObjectNode();
-                            node.put("key", mc.getKey());
-                            node.put("writeTime", mc.getWriteTime());
+        PageImpl<JsonNode> page = null;
+        try {
+            page = new PageImpl<>(
+                    handler.get(since).stream()
+                            .map(m -> (QueuedKafkaMessageHandler.MessageContainer) m)
+                            .map(mc -> {
+                                ObjectNode node = mapper.createObjectNode();
+                                node.put("key", mc.getKey());
+                                node.put("writeTime", mc.getWriteTime());
                             /*
                              * There appears to be some incompatibility with JSON serializing Avro models. So,
                              *
                              * disgusting hack start...
                              */
-                            JsonNode message = null;
-                            try {
-                                message = mapper.readTree(mc.getMessage().toString());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            node.replace("message", message);
-                            // disgusting hack end
-                            return node;
-                        })
-                        .collect(Collectors.toList()
-                        ),
-                new PageRequest(0, 25), handler.total());
+                                JsonNode message = null;
+                                try {
+                                    message = mapper.readTree(mc.getMessage().toString());
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                node.replace("message", message);
+                                // disgusting hack end
+                                return node;
+                            })
+                            .collect(Collectors.toList()
+                            ),
+                    new PageRequest(0, 25), handler.total());
+        } catch (RuntimeException e) {
+            return ResponseUtil.error(e);
+        }
         return ResponseEntity.ok(page);
     }
 
