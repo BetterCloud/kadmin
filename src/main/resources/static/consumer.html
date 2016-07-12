@@ -14,9 +14,6 @@
             .key { color: red; }
 
             .copy-btn {
-                /*position: relative;*/
-                /*top: 1em;*/
-                /*right: 1em;*/
                 float: right;
             }
             .raw-message {
@@ -126,7 +123,7 @@
                 },
                 messageTemplate = _.template($('#message-tile-template').html()),
                 $messageList = $('#message-list'),
-                clipboards = [];
+                clipboard = null;
 
             function initConfig() {
                 let topic = $('#topic').val();
@@ -230,10 +227,9 @@
 
             function handleResults(data) {
                 let count = 0;
-                _.each(clipboards, function(cb) {
-                    cb.destroy();
-                });
-                clipboards = [];
+                if (!!clipboard) {
+                    clipboard.destroy();
+                }
                 $messageList.html('');
                 document.title = "(" + data.totalElements + ") " + consumerConfig.topic;
                 _.each(data.content, function(ele) {
@@ -247,24 +243,8 @@
                     ele.timestamp = "_" + count++;
                     html = messageTemplate(ele);
                     $messageList.prepend(html);
-//                    let elementId = '#' + ele.timestamp;
-//                    console.log(elementId);
-//                    let cb = new Clipboard(elementId);
-//                    cb.on('success', function(e) {
-//                        console.info('Action:', e.action);
-//                        console.info('Text:', e.text);
-//                        console.info('Trigger:', e.trigger);
-//
-//                        e.clearSelection();
-//                    });
-//                    cb.on('error', function(e) {
-//                        console.error('Action:', e.action);
-//                        console.error('Trigger:', e.trigger);
-//                    });
-//                    clipboards.push(cb);
-//                    console.log(clipboards);
                 });
-                new Clipboard('.copy-btn');
+                clipboard = new Clipboard('.copy-btn');
             }
 
             function syntaxHighlight(json) {
