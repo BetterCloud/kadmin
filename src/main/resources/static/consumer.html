@@ -54,8 +54,11 @@
                     <button id="refresh-btn" class="btn btn-success disabled">
                         <span class="glyphicon glyphicon-refresh"></span> Refresh Now
                     </button>
-                    <button id="clear-btn" class="btn btn-danger disabled">
+                    <button id="clear-btn" class="btn btn-warning disabled">
                         <span class="glyphicon glyphicon-trash"></span> Truncate Queue
+                    </button>
+                    <button id="dispose-btn" class="btn btn-danger disabled">
+                        <span class="glyphicon glyphicon-trash"></span> Dispose Consumer
                     </button>
                 </div>
             </div>
@@ -129,6 +132,9 @@
                 var $clear = $("#clear-btn");
                 $clear.removeClass("disabled");
                 $clear.click(truncateList);
+                var $dispose = $("#dispose-btn");
+                $dispose.removeClass("disabled");
+                $dispose.click(disposeConsumer);
             }
 
             function truncateList() {
@@ -141,6 +147,20 @@
                 $.ajax({
                     type: "DELETE",
                     url: url,
+                    success: refresh
+                });
+            }
+
+            function disposeConsumer() {
+                if (!consumerConfig.started) {
+                    if (!initConfig()) {
+                        return;
+                    }
+                }
+                let url = buildUrl();
+                $.ajax({
+                    type: "DELETE",
+                    url: url + "/kill",
                     success: refresh
                 });
             }
