@@ -7,8 +7,6 @@ import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
-import com.bettercloud.util.Opt;
-import com.bettercloud.util.TimedWrapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -16,21 +14,17 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceAlreadyExistsException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Created by davidesposito on 6/28/16.
@@ -43,9 +37,9 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
 
     private final Joiner keyJoiner = Joiner.on("<:=:>");
 
-    @Value("${kafka.schema.registry.url:http://localhost:8081}")
+    @Value("${kafka.host:http://localhost:8081}")
     private String schemaRegistryUrl;
-    @Value("${kafka.schema.host.url:localhost:9092}")
+    @Value("${schema.registry.url:localhost:9092}")
     private String bootstrapServers;
 
     private final Map<String, ProducerService<String, Object>> producerMap = Maps.newHashMap();
