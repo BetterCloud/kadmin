@@ -130,12 +130,30 @@ public class KafkaMessageConsumerResource {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<Boolean> clear(@PathVariable("topic") String topic,
-                                               @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
-                                               @RequestParam("schemaUrl") Optional<String> schemaUrl) {
+                                         @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
+                                         @RequestParam("schemaUrl") Optional<String> schemaUrl) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         boolean cleared = false;
         if (handlerMap.containsKey(key) && handlerMap.get(key) != null) {
             handlerMap.get(key).getData().clear();
+            cleared = true;
+        }
+        return ResponseEntity.ok(cleared);
+    }
+
+    @RequestMapping(
+            path = "/{topic}/kill",
+            method = RequestMethod.DELETE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<Boolean> kill(@PathVariable("topic") String topic,
+                                         @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
+                                         @RequestParam("schemaUrl") Optional<String> schemaUrl) {
+        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
+        boolean cleared = false;
+        if (handlerMap.containsKey(key) && handlerMap.get(key) != null) {
+            handlerMap.get(key).getData().clear();
+            kps.disposeConsumer(topic, kafkaUrl.get(), schemaUrl.get());
             cleared = true;
         }
         return ResponseEntity.ok(cleared);

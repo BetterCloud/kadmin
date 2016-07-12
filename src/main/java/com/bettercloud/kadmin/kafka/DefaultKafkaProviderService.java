@@ -7,6 +7,7 @@ import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
+import com.bettercloud.util.Opt;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -74,6 +75,18 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
     }
 
     @Override
+    public boolean disposeProducer(String schemaRegistryUrl, String kafkaUrl) {
+        if (kafkaUrl == null) {
+            kafkaUrl = bootstrapServers;
+        }
+        if (schemaRegistryUrl == null) {
+            schemaRegistryUrl = this.schemaRegistryUrl;
+        }
+        String key = getProducerKey(schemaRegistryUrl, kafkaUrl);
+        return Opt.of(producerMap.get(key)).ifPresent(prod -> prod.dispose()).isPresent();
+    }
+
+    @Override
     public ProducerService<String, Object> lookupProducer(String key) {
         return producerMap.get(key);
     }
@@ -132,6 +145,18 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
             }
         }
         return consumerMap.get(key);
+    }
+
+    @Override
+    public boolean disposeConsumer(String topic, String kafkaUrl, String schemaRegistryUrl) {
+        if (kafkaUrl == null) {
+            kafkaUrl = bootstrapServers;
+        }
+        if (schemaRegistryUrl == null) {
+            schemaRegistryUrl = this.schemaRegistryUrl;
+        }
+        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
+        return Opt.of(consumerMap.get(key)).ifPresent(con -> con.dispose()).isPresent();
     }
 
     @Override
