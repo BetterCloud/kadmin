@@ -1,26 +1,18 @@
 package com.bettercloud.kadmin.kafka;
 
-import com.bettercloud.kadmin.api.kafka.AvrifyConverter;
 import com.bettercloud.util.Opt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import lombok.NonNull;
-import org.apache.avro.Schema;
-import org.apache.avro.SchemaParseException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by davidesposito on 7/8/16.
@@ -38,10 +30,6 @@ public class DefaultJsonToAvroConverterTest {
 
     private String w(String s) {
         return '"' + s + '"';
-    }
-
-    private SchemaBuilder sb() {
-        return sb(null);
     }
 
     private SchemaBuilder sb(String name) {
@@ -77,162 +65,6 @@ public class DefaultJsonToAvroConverterTest {
 
     private JsonNodeBuilder b() {
         return new JsonNodeBuilder();
-    }
-
-    private JsonArrayNodeBuilder a() {
-        return new JsonArrayNodeBuilder();
-    }
-
-    private Schema schema(String rawSchema) {
-        return new Schema.Parser().parse(rawSchema);
-    }
-
-    @Test
-    public void testSchemaRegEmptyPrimitive() {
-        JsonNode schemaNode = s("test", null, "string");
-        Schema schema = schema(schemaNode.toString());
-        Map<String, Schema> registeredSchemas = Maps.newHashMap();
-        converter.getRegisteredSchemas(schema, registeredSchemas);
-        Assert.assertTrue("Not Empty: " + registeredSchemas, registeredSchemas.isEmpty());
-    }
-
-    @Test
-    public void testSchemaRegRecord() {
-        JsonNode schemaNode = sb("test", null, "record")
-                .field()
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("test"));
-    }
-
-    @Test
-    public void testSchemaRegRecordWns() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field()
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test"));
-    }
-
-    @Test
-    public void testSchemaRegRecordWfields() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(s("s", null, "string"))
-                .field(s("i", null, "int"))
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test"));
-    }
-
-    @Test
-    public void testSchemaRegRecordNested() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(s("s", null, "string"))
-                .field(s("i", null, "int"))
-                .field(sb("nested", null)
-                        .type(sb("Nested", null, "record").field().build())
-                        .build()
-                )
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test", "foo.bar.Nested"));
-    }
-
-    @Test
-    public void testSchemaRegRecordNestedUnion() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(s("s", null, "string"))
-                .field(s("i", null, "int"))
-                .field(sb("nested", null)
-                        .type("null")
-                        .type("string")
-                        .type(sb("Nested", null, "record").field().build())
-                        .build()
-                )
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test", "foo.bar.Nested"));
-    }
-
-    @Test
-    public void testSchemaRegRecordNestedWns() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(s("s", null, "string"))
-                .field(s("i", null, "int"))
-                .field(sb("nested", null)
-                        .type(sb("Nested", "vim", "record").field().build())
-                        .build()
-                )
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test", "vim.Nested"));
-    }
-
-    @Test
-    public void testSchemaRegArray() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(
-                        sb("arr")
-                                .type(
-                                        sb()
-                                                .type("array")
-                                                .item("string")
-                                                .build()
-                                )
-                                .build()
-                )
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test"));
-    }
-
-    @Test
-    public void testSchemaRegArrayNested() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(
-                        sb("arr")
-                                .type(
-                                        sb()
-                                                .type("array")
-                                                .item(
-                                                        sb("Nested", null, "record")
-                                                                .field()
-                                                                .build()
-                                                )
-                                                .build()
-                                )
-                                .build()
-                )
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test", "foo.bar.Nested"));
-    }
-
-    @Test
-    public void testSchemaRegArrayNestedUnion() {
-        JsonNode schemaNode = sb("test", "foo.bar", "record")
-                .field(
-                        sb("arr")
-                                .type(
-                                        sb()
-                                                .type("array")
-                                                .item("null")
-                                                .item("string")
-                                                .item(
-                                                        sb("Nested", null, "record")
-                                                                .field()
-                                                                .build()
-                                                )
-                                                .build()
-                                )
-                                .build()
-                )
-                .build();
-        testSchemaRegistration(schemaNode.toString(), Lists.newArrayList("foo.bar.test", "foo.bar.Nested"));
-    }
-
-    private void testSchemaRegistration(String rawSchema, List<String> expectedKeys) {
-        Schema schema = schema(rawSchema);
-        Map<String, Schema> registeredSchemas = Maps.newHashMap();
-        converter.getRegisteredSchemas(schema, registeredSchemas);
-        Assert.assertFalse("Was empty", registeredSchemas.isEmpty());
-        Assert.assertEquals("Wrong number of schemas registered", expectedKeys.size(), registeredSchemas.size());
-        expectedKeys.stream().forEach(expectedKey -> {
-            Assert.assertTrue("Expected key: " + expectedKey + " but found " + registeredSchemas.keySet(), registeredSchemas.containsKey(expectedKey));
-            Assert.assertNotNull("Expected value for key: " + expectedKey, registeredSchemas.get(expectedKey));
-        });
     }
 
     @Test
@@ -458,81 +290,6 @@ public class DefaultJsonToAvroConverterTest {
 
         test(json.toString(), schema.toString(), expected.toString());
     }
-//
-//    @Test
-//    @Ignore
-//    public void testMC() {
-//        JsonNode cat = b().putString("sound", "catSound").build();
-//        JsonNode json = b()
-//                .putString("name2", "FIRST_MESSAGE")
-//                .putString("role", "Role")
-//                .putString("address", "Address")
-//                .putInt("age", 21)
-//                .putString("email", "Email")
-//                .putString("location", "Location")
-//                .putNode("nested", cat)
-//                .putNode(
-//                        "arr", a()
-//                                .putNode(cat)
-//                                .putInt(25)
-//                                .build()
-//                )
-//                .build();
-//
-//        JsonNode expected = b()
-//                .putString("name2", "FIRST_MESSAGE")
-//                .putNode(
-//                        "role", b().putString("string", "Role").build()
-//                )
-//                .putNode(
-//                        "address", b().putString("string", "Address").build()
-//                )
-//                .putInt("age", 21)
-//                .putString("email", "Email")
-//                .putString("location", "Location")
-//                .putNode(
-//                        "nested", b().putNode("com.bettercloud.Cat", cat).build()
-//                )
-//                .putNode(
-//                        "arr", a()
-//                                .putNode(
-//                                        b().putNode("com.bettercloud.Cat", cat).build()
-//                                )
-//                                .putNode(
-//                                        b().putInt("int", 25).build()
-//                                )
-//                                .build()
-//                )
-//                .build();
-//
-//        JsonNode schema = sb("User", "com.bettercloud", "record")
-//                .field(s("name2", null, "string"))
-//                .field(s("age", null, "int"))
-//                .field(s("address", null, Lists.newArrayList("null", "string")))
-//                .field(s("role", null, Lists.newArrayList("null", "string")))
-//                .field(s("email", null, "string"))
-//                .field(s("location", null, "string"))
-//                .field(
-//                        sb("nested", null)
-//                                .type("null")
-//                                .type("string")
-//                                .type(
-//                                        sb("Cat", "com.bettercloud", "record")
-//                                        .build()
-//                                )
-//                                .build()
-//                )
-//                .field(
-//                        sb("arr", null)
-//                                .item("int")
-//                                .item("string")
-//                                .item("com.bettercloud.Cat")
-//                                .build()
-//                )
-//                .build();
-//
-//        test(json.toString(), schema.toString(), expected.toString());
-//    }
 
     public void test(String json, String schema) {
         test(json, schema, json);

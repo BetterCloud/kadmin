@@ -8,8 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
@@ -33,14 +31,12 @@ import java.util.stream.Collectors;
 public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Set<Schema.Type> PRIMITIVE_TYPES = Sets.newHashSet(
-            Schema.Type.BOOLEAN, Schema.Type.DOUBLE, Schema.Type.FLOAT,
-            Schema.Type.INT, Schema.Type.LONG, Schema.Type.NULL, Schema.Type.STRING
-    );
 
     @Override
     public Object convert(String json, String schemaStr) {
-        InputStream input = new ByteArrayInputStream(json.getBytes());
+        String avroJson = avrify(json, schemaStr);
+
+        InputStream input = new ByteArrayInputStream(avroJson.getBytes());
         DataInputStream din = new DataInputStream(input);
 
         Schema schema = new Schema.Parser().parse(schemaStr);
@@ -55,19 +51,16 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         }
 
         return datum;
-//        return avrify(json, schemaStr);
     }
 
     @Override
-    public Object avrify(String rawJson, String rawSchema) {
+    public String avrify(String rawJson, String rawSchema) {
         String converted = rawJson;
         try {
             JsonNode json = mapper.readTree(rawJson);
             if (json.isObject()) {
                 Schema schema = new Schema.Parser().parse(rawSchema);
-                Map<String, Schema> registeredSchemas = Maps.newHashMap();
-                getRegisteredSchemas(schema, registeredSchemas);
-                converted = Opt.of(avrify(json, schema, registeredSchemas))
+                converted = Opt.of(avrify(json, schema))
                         .map(n -> n.toString())
                         .orElse(rawJson);
             }
@@ -77,35 +70,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         return converted;
     }
 
-    public void getRegisteredSchemas(Schema schema, Map<String, Schema> registeredSchemas) {
-        switch (schema.getType()) {
-            case RECORD:
-                if (registeredSchemas.containsKey(schema.getFullName())) {
-                    return;
-                }
-                registeredSchemas.put(schema.getFullName(), schema);
-                break;
-            case ARRAY:
-                getRegisteredSchemas(schema.getElementType(), registeredSchemas);
-                break;
-            case UNION:
-                schema.getTypes().forEach(s -> {
-                    getRegisteredSchemas(s, registeredSchemas);
-                });
-                break;
-        }
-        if (isRecord(schema, false)) {
-            schema.getFields().stream()
-                    .map(f -> f.schema())
-                    .forEach(fs ->
-                            Opt.of(fs)
-                            .filter(s -> !registeredSchemas.containsKey(s.getFullName()))
-                            .ifPresent(s -> getRegisteredSchemas(s, registeredSchemas))
-                    );
-        }
-    }
-
-    private JsonNode avrify(JsonNode message, Schema schema, Map<String, Schema> registeredSchema) {
+    private JsonNode avrify(JsonNode message, Schema schema) {
         if (message.isObject() && isRecord(schema, true)) {
             Schema recSchema = isUnion(schema) ? getRecordSchema(schema) : schema;
             ObjectNode oMessage = (ObjectNode) message;
@@ -114,7 +79,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
             message.fields().forEachRemaining(e -> {
                 Schema.Field field = fieldMap.get(e.getKey());
                 Schema fs = field.schema();
-                JsonNode newField = avrify(e.getValue(), fs, registeredSchema);
+                JsonNode newField = avrify(e.getValue(), fs);
                 oMessage.replace(e.getKey(), newField);
             });
         } else if (message.isArray() && isArray(schema, true)) {
@@ -124,19 +89,19 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
             ArrayNode tempArrNode = mapper.createArrayNode();
             message.elements().forEachRemaining(ele -> {
                 Schema fs = guessSchema(ele, validSchemas);
-                JsonNode newField = avrify(ele, fs, registeredSchema);
+                JsonNode newField = avrify(ele, fs);
                 tempArrNode.add(newField);
             });
             message = tempArrNode;
         }
         // union mapping after recusion
         if (isUnion(schema)) {
-            message = convertUnion(message, schema, registeredSchema);
+            message = convertUnion(message, schema);
         }
         return message;
     }
 
-    private JsonNode convertUnion(JsonNode message, Schema schema, Map<String, Schema> registeredSchema) {
+    private JsonNode convertUnion(JsonNode message, Schema schema) {
         Set<Schema.Type> unionTypes = schema.getTypes().stream()
                 .map(s -> s.getType())
                 .collect(Collectors.toSet());

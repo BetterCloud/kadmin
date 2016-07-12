@@ -7,5 +7,5 @@ import org.apache.avro.generic.GenericRecord;
  */
 public interface AvrifyConverter {
 
-    Object avrify(String json, String schema);
+    String avrify(String json, String schema);
 }
