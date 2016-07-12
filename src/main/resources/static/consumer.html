@@ -12,6 +12,16 @@
             .boolean { color: blue; }
             .null { color: magenta; }
             .key { color: red; }
+
+            .copy-btn {
+                /*position: relative;*/
+                /*top: 1em;*/
+                /*right: 1em;*/
+                float: right;
+            }
+            .raw-message {
+                display: none;
+            }
         </style>
     </head>
     <body>
@@ -52,13 +62,13 @@
                 </div>
                 <div class="col-sm-6">
                     <button id="refresh-btn" class="btn btn-success disabled">
-                        <span class="glyphicon glyphicon-refresh"></span> Refresh Now
+                        <span class="glyphicon glyphicon-refresh"></span> Refresh
                     </button>
                     <button id="clear-btn" class="btn btn-warning disabled">
-                        <span class="glyphicon glyphicon-trash"></span> Truncate Queue
+                        <span class="glyphicon glyphicon-trash"></span> Truncate
                     </button>
                     <button id="dispose-btn" class="btn btn-danger disabled">
-                        <span class="glyphicon glyphicon-trash"></span> Dispose Consumer
+                        <span class="glyphicon glyphicon-trash"></span> Close
                     </button>
                 </div>
             </div>
@@ -75,9 +85,13 @@
         <script type="text/javascript" src="js/underscore-min.js"></script>
         <script type="text/javascript" src="js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/moment.min.js"></script>
+        <script type="text/javascript" src="js/clipboard.min.js"></script>
         <script type="text/template" id="message-tile-template">
             <div class="panel panel-default">
                 <div class="panel-body">
+                    <button class="btn btn-default copy-btn btn-sm" data-clipboard-text='<%= rawMessage %>'>
+                        <span class="glyphicon glyphicon-copy"></span> Copy
+                    </button>
                     <div class="key-row">
                         Key: "<%= key %>"
                     </div>
@@ -99,7 +113,8 @@
                     refreshRate: $refreshRate.val()
                 },
                 messageTemplate = _.template($('#message-tile-template').html()),
-                $messageList = $('#message-list');
+                $messageList = $('#message-list'),
+                clipboards = [];
 
             function initConfig() {
                 let topic = $('#topic').val();
@@ -185,7 +200,11 @@
             }
 
             function handleResults(data) {
-                console.log(data);
+                let count = 0;
+                _.each(clipboards, function(cb) {
+                    cb.destroy();
+                });
+                clipboards = [];
                 $messageList.html('');
                 document.title = "(" + data.totalElements + ") " + consumerConfig.topic;
                 _.each(data.content, function(ele) {
@@ -193,11 +212,30 @@
                     ele.writeTimeText = moment(ele.writeTime).format('LTS');
                     ele.messageText = "null";
                     if (!!ele.message) {
-                        ele.messageText = syntaxHighlight(JSON.stringify(ele.message, null, 2));
+                        ele.rawMessage = JSON.stringify(ele.message, null, 2);
+                        ele.messageText = syntaxHighlight(ele.rawMessage);
                     }
+                    ele.timestamp = "_" + count++;
                     html = messageTemplate(ele);
                     $messageList.prepend(html);
+//                    let elementId = '#' + ele.timestamp;
+//                    console.log(elementId);
+//                    let cb = new Clipboard(elementId);
+//                    cb.on('success', function(e) {
+//                        console.info('Action:', e.action);
+//                        console.info('Text:', e.text);
+//                        console.info('Trigger:', e.trigger);
+//
+//                        e.clearSelection();
+//                    });
+//                    cb.on('error', function(e) {
+//                        console.error('Action:', e.action);
+//                        console.error('Trigger:', e.trigger);
+//                    });
+//                    clipboards.push(cb);
+//                    console.log(clipboards);
                 });
+                new Clipboard('.copy-btn');
             }
 
             function syntaxHighlight(json) {
