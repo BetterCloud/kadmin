@@ -8,12 +8,15 @@ import com.bettercloud.logger.services.LoggerFactory;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 
 import java.util.concurrent.ConcurrentMap;
 
-
+@EnableAutoConfiguration
+@ComponentScan
 @SpringBootApplication
 public class KadminApplication {
 
