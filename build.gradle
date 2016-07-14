@@ -28,9 +28,15 @@ apply plugin: 'com.bettercloud.gradle.base-gradle-plugin'
 apply plugin: "io.spring.dependency-management"
 
 jar {
-	baseName = 'kadmin'
-	version = '0.0.1-SNAPSHOT'
+	baseName = 'kadmin-micro'
+	version = '0.1.0'
 }
+
+war {
+	baseName = 'kadmin-micro'
+	version =  '0.1.0'
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -96,4 +102,8 @@ configurations {
     unitTestCompile.extendsFrom testCompile
     unitTestRuntime.extendsFrom testRuntime
     all*.exclude module : 'slf4j-log4j12'
+}
+
+bcdocker {
+	imageName="kadmin-micro"
 }
