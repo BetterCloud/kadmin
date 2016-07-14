@@ -7,11 +7,18 @@
                 padding: 5px;
                 margin: 5px;
             }
-            .string { color: green; }
-            .number { color: darkorange; }
-            .boolean { color: blue; }
-            .null { color: magenta; }
-            .key { color: red; }
+            .string { color: #1A1AA6; }
+            .number { color: rgb(0, 0, 205); }
+            .boolean { color: rgb(88, 92, 246); }
+            .null { color: black; }
+            .key { color: rgb(49, 132, 149); }
+
+            .copy-btn {
+                float: right;
+            }
+            .raw-message {
+                display: none;
+            }
         </style>
     </head>
     <body>
@@ -26,16 +33,6 @@
             </div>
             <div class="panel panel-default" id="form-container">
                 <div class="panel-body">
-                    <div class="row">
-                        <div class="form-group col-sm-6">
-                            <label for="kafkahost">Kafka Host</label>
-                            <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092">
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="schemaurl">Kafka Schema Registry Url</label>
-                            <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081">
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label for="topic">Topic</label>
                         <input type="text" class="form-control" id="topic">
@@ -62,10 +59,13 @@
                 </div>
                 <div class="col-sm-6">
                     <button id="refresh-btn" class="btn btn-success disabled">
-                        <span class="glyphicon glyphicon-refresh"></span> Refresh Now
+                        <span class="glyphicon glyphicon-refresh"></span> Refresh
                     </button>
-                    <button id="clear-btn" class="btn btn-danger disabled">
-                        <span class="glyphicon glyphicon-trash"></span> Truncate Queue
+                    <button id="clear-btn" class="btn btn-warning disabled">
+                        <span class="glyphicon glyphicon-trash"></span> Truncate
+                    </button>
+                    <button id="dispose-btn" class="btn btn-danger disabled">
+                        <span class="glyphicon glyphicon-trash"></span> Close
                     </button>
                 </div>
             </div>
@@ -82,9 +82,13 @@
         <script type="text/javascript" src="js/underscore-min.js"></script>
         <script type="text/javascript" src="js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/moment.min.js"></script>
+        <script type="text/javascript" src="js/clipboard.min.js"></script>
         <script type="text/template" id="message-tile-template">
             <div class="panel panel-default">
                 <div class="panel-body">
+                    <button class="btn btn-default copy-btn btn-sm" data-clipboard-text='<%= rawMessage %>'>
+                        <span class="glyphicon glyphicon-copy"></span> Copy
+                    </button>
                     <div class="key-row">
                         Key: "<%= key %>"
                     </div>
@@ -100,15 +104,14 @@
                 $refreshRate = $('#refresh-rate'),
                 consumerConfig = {
                     started: false,
-                    kafkaUrl: null,
-                    schemaUrl: null,
                     topic: null,
                     since: null,
                     refreshHandle: null,
                     refreshRate: $refreshRate.val()
                 },
                 messageTemplate = _.template($('#message-tile-template').html()),
-                $messageList = $('#message-list');
+                $messageList = $('#message-list'),
+                clipboard = null;
 
             function initConfig() {
                 let topic = $('#topic').val();
@@ -118,27 +121,17 @@
                 }
                 consumerConfig = {
                     started: true,
-                    kafkaUrl: $('#kafkahost').val(),
-                    schemaUrl: $('#schemaurl').val(),
                     topic: $('#topic').val(),
                     since: -1,
                     autoRefresh: null,
                     refreshRate: $refreshRate.val()
                 };
-                if (consumerConfig.kafkaUrl === "") {
-                    consumerConfig.kafkaUrl = null;
-                }
-                if (consumerConfig.schemaUrl === "") {
-                    consumerConfig.schemaUrl = null;
-                }
                 disableForm();
                 initMessageList();
                 return true;
             }
 
             function disableForm() {
-                $("#kafkahost").prop("disabled", true);
-                $("#schemaurl").prop("disabled", true);
                 $("#topic").prop("disabled", true);
                 $("#start-consumer-btn").addClass("disabled");
             }
@@ -151,6 +144,9 @@
                 var $clear = $("#clear-btn");
                 $clear.removeClass("disabled");
                 $clear.click(truncateList);
+                var $dispose = $("#dispose-btn");
+                $dispose.removeClass("disabled");
+                $dispose.click(disposeConsumer);
             }
 
             function truncateList() {
@@ -163,6 +159,20 @@
                 $.ajax({
                     type: "DELETE",
                     url: url,
+                    success: refresh
+                });
+            }
+
+            function disposeConsumer() {
+                if (!consumerConfig.started) {
+                    if (!initConfig()) {
+                        return;
+                    }
+                }
+                let url = buildUrl();
+                $.ajax({
+                    type: "DELETE",
+                    url: url + "/kill",
                     success: refresh
                 });
             }
@@ -183,18 +193,14 @@
             }
 
             function buildUrl() {
-                let url = "/kafka/read/" + consumerConfig.topic + "?";
-                if (!!consumerConfig.kafkaUrl) {
-                    url += "kafkaUrl=" + consumerConfig.kafkaUrl + "&";
-                }
-                if (!!consumerConfig.schemaUrl) {
-                    url += "schemaUrl=" + consumerConfig.schemaUrl;
-                }
-                return url;
+                return "/kafka/read/" + consumerConfig.topic;
             }
 
             function handleResults(data) {
-                console.log(data);
+                let count = 0;
+                if (!!clipboard) {
+                    clipboard.destroy();
+                }
                 $messageList.html('');
                 document.title = "(" + data.totalElements + ") " + consumerConfig.topic;
                 _.each(data.content, function(ele) {
@@ -202,11 +208,14 @@
                     ele.writeTimeText = moment(ele.writeTime).format('LTS');
                     ele.messageText = "null";
                     if (!!ele.message) {
-                        ele.messageText = syntaxHighlight(JSON.stringify(ele.message, null, 2));
+                        ele.rawMessage = JSON.stringify(ele.message, null, 2);
+                        ele.messageText = syntaxHighlight(ele.rawMessage);
                     }
+                    ele.timestamp = "_" + count++;
                     html = messageTemplate(ele);
                     $messageList.prepend(html);
                 });
+                clipboard = new Clipboard('.copy-btn');
             }
 
             function syntaxHighlight(json) {

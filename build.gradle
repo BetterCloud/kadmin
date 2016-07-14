@@ -13,8 +13,8 @@ buildscript {
 		classpath "io.spring.gradle:dependency-management-plugin:0.5.2.RELEASE"
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.2.RELEASE")
 		classpath("org.springframework:springloaded:1.2.3.RELEASE")
-//		classpath("com.bettercloud:docker-plugin:${docker_plugin_version}")
-//		classpath("com.bettercloud:base-gradle-plugin:1.+")
+		classpath("com.bettercloud:docker-plugin:${docker_plugin_version}")
+		classpath("com.bettercloud:base-gradle-plugin:1.+")
 	}
 }
 
@@ -23,14 +23,20 @@ apply plugin: 'idea'
 apply plugin: 'spring-boot'
 apply plugin: 'java'
 apply plugin: 'war'
-//apply plugin: 'com.bettercloud.docker-plugin'
-//apply plugin: 'com.bettercloud.gradle.base-gradle-plugin'
+apply plugin: 'com.bettercloud.docker-plugin'
+apply plugin: 'com.bettercloud.gradle.base-gradle-plugin'
 apply plugin: "io.spring.dependency-management"
 
 jar {
-	baseName = 'kadmin'
-	version = '0.0.1-SNAPSHOT'
+	baseName = 'shared-kafka-admin-micro'
+	version = '0.1.0'
 }
+
+war {
+	baseName = 'shared-kafka-admin-micro'
+	version =  '0.1.0'
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -51,7 +57,8 @@ dependencies {
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: spring_boot_version
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-amqp', version: spring_boot_version
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
-	compile group: 'org.springframework.boot', name: 'spring-boot-starter-aop', version: spring_boot_version
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-aop', version: spring_boot_version
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-config', version: spring_cloud_version
 
 	//Apache
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: apache_commons_lang_version
@@ -95,4 +102,8 @@ configurations {
     unitTestCompile.extendsFrom testCompile
     unitTestRuntime.extendsFrom testRuntime
     all*.exclude module : 'slf4j-log4j12'
+}
+
+bcdocker {
+	imageName="shared-kafka-admin-micro"
 }

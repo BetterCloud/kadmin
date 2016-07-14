@@ -7,6 +7,7 @@ import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
+import com.bettercloud.util.Opt;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
@@ -14,11 +15,9 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -35,16 +34,16 @@ import java.util.UUID;
 public class DefaultKafkaProviderService implements KafkaProviderService {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultKafkaProviderService.class);
+    private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
 
     private final Joiner keyJoiner = Joiner.on("<:=:>");
 
-    @Value("${kafka.schema.registry.url:http://localhost:8081}")
+    @Value("${kafka.host:http://localhost:8081}")
     private String schemaRegistryUrl;
-    @Value("${kafka.schema.host.url:localhost:9092}")
+    @Value("${schema.registry.url:localhost:9092}")
     private String bootstrapServers;
 
     private final Map<String, ProducerService<String, Object>> producerMap = Maps.newHashMap();
-    private final Map<String, ProducerService<String, byte[]>> rawProducerMap = Maps.newHashMap();
     private final Map<String, ConsumerGroup<String, Object>> consumerMap = Maps.newHashMap();
 
     protected Properties producerProperties(String schemaRegistryUrl, String kafkaUrl) {
@@ -76,7 +75,7 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
     }
 
     @Override
-    public ProducerService<String, byte[]> rawProducerService(String schemaRegistryUrl, String kafkaUrl) {
+    public boolean disposeProducer(String schemaRegistryUrl, String kafkaUrl) {
         if (kafkaUrl == null) {
             kafkaUrl = bootstrapServers;
         }
@@ -84,11 +83,12 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
             schemaRegistryUrl = this.schemaRegistryUrl;
         }
         String key = getProducerKey(schemaRegistryUrl, kafkaUrl);
-        if (!rawProducerMap.containsKey(key)) {
-            Properties props = producerProperties(schemaRegistryUrl, kafkaUrl);
-            rawProducerMap.put(key, rawProducerService(props));
-        }
-        return rawProducerMap.get(key);
+        return Opt.of(producerMap.get(key)).ifPresent(prod -> prod.dispose()).isPresent();
+    }
+
+    @Override
+    public ProducerService<String, Object> lookupProducer(String key) {
+        return producerMap.get(key);
     }
 
     protected ProducerService<String, Object> producerService(Properties producerProperties) {
@@ -96,14 +96,6 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 .withProducerProperties(producerProperties)
                 .withKeySerializer(new StringSerializer())
                 .withMessageSerializer(new KafkaAvroSerializer())
-                .build();
-    }
-
-    protected ProducerService<String, byte[]> rawProducerService(Properties producerProperties) {
-        return ProducerService.<String, byte[]>create()
-                .withProducerProperties(producerProperties)
-                .withKeySerializer(new StringSerializer())
-                .withMessageSerializer(new ByteArraySerializer())
                 .build();
     }
 
@@ -152,6 +144,23 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 /* ignore metrics registration exception */
             }
         }
+        return consumerMap.get(key);
+    }
+
+    @Override
+    public boolean disposeConsumer(String topic, String kafkaUrl, String schemaRegistryUrl) {
+        if (kafkaUrl == null) {
+            kafkaUrl = bootstrapServers;
+        }
+        if (schemaRegistryUrl == null) {
+            schemaRegistryUrl = this.schemaRegistryUrl;
+        }
+        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
+        return Opt.of(consumerMap.get(key)).ifPresent(con -> con.dispose()).isPresent();
+    }
+
+    @Override
+    public ConsumerGroup<String, Object> lookupConsumer(String key) {
         return consumerMap.get(key);
     }
 

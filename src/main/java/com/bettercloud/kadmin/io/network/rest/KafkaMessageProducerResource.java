@@ -4,6 +4,7 @@ import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
 import com.bettercloud.kadmin.api.kafka.KafkaMessageConverter;
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
 import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
+import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.LoggerFactory;
@@ -57,12 +58,12 @@ public class KafkaMessageProducerResource {
             try {
                 requestModel.setRawMessage(mapper.readTree(requestModel.getRawMessage().asText()));
             } catch (IOException e) {
-                e.printStackTrace();
+                return ResponseUtil.error(e);
             }
         }
         KafkaProduceMessageMeta meta = requestModel.getMeta();
         GenericRecord message = genericRecordKafkaConverter.convert(requestModel.getRawMessage(), meta);
-        ProducerService<String, Object> ps = providerService.producerService(meta.getKafkaUrl(), meta.getSchemaRegistryUrl());
+        ProducerService<String, Object> ps = providerService.producerService(null, null);
         boolean sendMessage = message != null && ps != null;
         ProducerResponse res = ProducerResponse.builder()
                 .sent(sendMessage)
@@ -90,7 +91,7 @@ public class KafkaMessageProducerResource {
             try {
                 requestModel.setRawMessage(mapper.readTree(requestModel.getRawMessage().asText()));
             } catch (IOException e) {
-                e.printStackTrace();
+                return ResponseUtil.error(e);
             }
         }
         KafkaProduceMessageMeta meta = requestModel.getMeta();
@@ -98,9 +99,9 @@ public class KafkaMessageProducerResource {
         try {
             message = jtaConverter.convert(requestModel.getRawMessage().toString(), meta.getRawSchema());
         } catch (AvroTypeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseUtil.error(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        ProducerService<String, Object> ps = providerService.producerService(meta.getKafkaUrl(), meta.getSchemaRegistryUrl());
+        ProducerService<String, Object> ps = providerService.producerService(null, null);
         boolean sendMessage = message != null && ps != null;
         ProducerResponse res = ProducerResponse.builder()
                 .sent(sendMessage)

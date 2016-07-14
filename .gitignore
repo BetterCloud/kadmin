@@ -3,7 +3,5 @@ out/
 
 .idea
 
-gradlew*
-gradle/
 .gradle
 
