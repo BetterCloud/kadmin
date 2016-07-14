@@ -28,12 +28,12 @@ apply plugin: 'com.bettercloud.gradle.base-gradle-plugin'
 apply plugin: "io.spring.dependency-management"
 
 jar {
-	baseName = 'kadmin-micro'
+	baseName = 'shared-kafka-admin-micro'
 	version = '0.1.0'
 }
 
 war {
-	baseName = 'kadmin-micro'
+	baseName = 'shared-kafka-admin-micro'
 	version =  '0.1.0'
 }
 
@@ -105,5 +105,5 @@ configurations {
 }
 
 bcdocker {
-	imageName="kadmin-micro"
+	imageName="shared-kafka-admin-micro"
 }
