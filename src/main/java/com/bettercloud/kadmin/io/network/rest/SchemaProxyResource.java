@@ -36,7 +36,7 @@ public class SchemaProxyResource {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LoggerFactory.getLogger(SchemaProxyResource.class);
 
-    @Value("${kafka.schema.registry.url:http://localhost:8081}")
+    @Value("${schema.registry.url:http://localhost:8081}")
     private String schemaRegistryUrl;
 
     private final HttpClient client;
