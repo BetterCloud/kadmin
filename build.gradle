@@ -50,6 +50,8 @@ repositories {
 dependencies {
 	compile group: 'com.google.guava', name: 'guava', version: guava_version
 
+	compile group: 'mysql', name: 'mysql-connector-java', version: mysql_connector_version
+
 	//Spring Boot
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: spring_boot_version
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: spring_boot_version
