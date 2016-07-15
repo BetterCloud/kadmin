@@ -1,8 +1,5 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -13,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -135,7 +134,7 @@ public class SchemaProxyResource {
             HttpResponse res = client.execute(get);
             int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                logger.log(LogLevel.ERROR, "Non 200 status: {}", statusCode);
+                logger.error("Non 200 status: {}", statusCode);
                 return ResponseEntity.status(statusCode).body(defaultVal);
             }
             ResponseT val = c.convert(mapper.readTree(res.getEntity().getContent()));
@@ -144,10 +143,10 @@ public class SchemaProxyResource {
             }
             return ResponseEntity.ok(val);
         } catch (IOException e) {
-            logger.log(LogLevel.ERROR, "There was an error: {}", e.getMessage());
+            logger.error("There was an error: {}", e.getMessage());
             e.printStackTrace();
         }
-        logger.log(LogLevel.ERROR, "There was an error");
+        logger.error("There was an error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultVal);
     }
 
@@ -157,16 +156,16 @@ public class SchemaProxyResource {
             HttpResponse res = client.execute(get);
             int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                logger.log(LogLevel.ERROR, "Non 200 status: {}", statusCode);
+                logger.error("Non 200 status: {}", statusCode);
                 return null;
             }
             ResponseT val = c.convert(mapper.readTree(res.getEntity().getContent()));
             return val;
         } catch (IOException e) {
-            logger.log(LogLevel.ERROR, "There was an error: {}", e.getMessage());
+            logger.error("There was an error: {}", e.getMessage());
             e.printStackTrace();
         }
-        logger.log(LogLevel.ERROR, "There was an error");
+        logger.error("There was an error");
         return null;
     }
 

@@ -5,15 +5,17 @@ import com.bettercloud.kadmin.api.kafka.KafkaMessageConverter;
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
 import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -75,7 +77,7 @@ public class KafkaMessageProducerResource {
         if (sendMessage) {
             res = sendMessage(ps, meta.getTopic(), message, oCount.orElse(1));
         }
-        logger.log(LogLevel.INFO, "Produced: {}", res);
+        logger.info("Produced: {}", res);
         return ResponseEntity.ok(res);
     }
 
@@ -113,7 +115,7 @@ public class KafkaMessageProducerResource {
         if (sendMessage) {
             res = sendMessage(ps, meta.getTopic(), message, oCount.orElse(1));
         }
-        logger.log(LogLevel.INFO, "Produced: {}", res);
+        logger.info("Produced: {}", res);
         return ResponseEntity.ok(res);
     }
 
