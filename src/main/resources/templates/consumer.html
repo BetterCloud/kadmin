@@ -1,7 +1,8 @@
-<html>
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
     <head>
         <title>Kadmin @ BetterCloud</title>
-        <link href="/kadmin/css/bootstrap.min.css" rel="stylesheet">
+        <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
         <style>
             pre {
                 padding: 5px;
@@ -25,20 +26,19 @@
         <div class="container">
             <div>
                 <ul class="nav nav-pills">
-                    <li role="presentation"><a href="/">Home</a></li>
-                    <li role="presentation"><a href="/kadmin/bproducer.html" target="_blank">BetterCloud Producer</a></li>
-                    <li role="presentation"><a href="/kadmin/cproducer.html" target="_blank">Custom Producer</a></li>
-                    <li role="presentation" class="active"><a href="/kadmin/consumer.html" target="_blank">Consumer</a></li>
+                    <li role="presentation"><a th:href="@{/}">Home</a></li>
+                    <li role="presentation"><a th:href="@{/producer}">Custom Producer</a></li>
+                    <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>
                 </ul>
             </div>
             <div class="panel panel-default" id="form-container">
                 <div class="panel-body">
                     <div class="form-group">
                         <label for="topic">Topic</label>
-                        <input type="text" class="form-control" id="topic">
+                        <input type="text" class="form-control" id="topic" />
                     </div>
                     <div class="row text-right">
-                        <button class="btn btn-primary" id="start-consumer-btn">
+                        <button class="btn btn-primary" id="start-consumer-btn" >
                             Start Consumer
                         </button>
                     </div>
@@ -51,7 +51,7 @@
                             <option value="-1">Manual</option>
                             <option value="1000">1 Second</option>
                             <option value="5000">5 Seconds</option>
-                            <option value="10000" selected>10 Seconds</option>
+                            <option value="10000" selected="selected">10 Seconds</option>
                             <option value="30000">30 Seconds</option>
                             <option value="60000">1 Minute</option>
                         </select>
@@ -78,28 +78,13 @@
             </div>
         </div>
 
-        <script type="text/javascript" src="/kadmin/js/jquery.min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/underscore-min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/moment.min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/clipboard.min.js"></script>
-        <script type="text/template" id="message-tile-template">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <button class="btn btn-default copy-btn btn-sm" data-clipboard-text='<%= rawMessage %>'>
-                        <span class="glyphicon glyphicon-copy"></span> Copy
-                    </button>
-                    <div class="key-row">
-                        Key: "<%= key %>"
-                    </div>
-                    <div class="time-row">
-                        @<%= writeTimeText %>
-                    </div>
-                    <pre><%= messageText %></pre>
-                </div>
-            </div>
-        </script>
-        <script>
+        <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/underscore-min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/moment.min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/clipboard.min.js}"></script>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
             var count = 0,
                 $refreshRate = $('#refresh-rate'),
                 consumerConfig = {
@@ -109,9 +94,13 @@
                     refreshHandle: null,
                     refreshRate: $refreshRate.val()
                 },
-                messageTemplate = _.template($('#message-tile-template').html()),
+                messageTemplate = _.template(""),
                 $messageList = $('#message-list'),
                 clipboard = null;
+
+            $.get([[${contextPath}]] + "/message-tile-template.html", function (html) {
+                messageTemplate = _.template(html);
+            });
 
             function initConfig() {
                 let topic = $('#topic').val();
@@ -193,7 +182,8 @@
             }
 
             function buildUrl() {
-                return "/kadmin/kafka/read/" + consumerConfig.topic;
+                let url = [[${contextPath}]] + "/kafka/read/" + consumerConfig.topic + "?";
+                return url;
             }
 
             function handleResults(data) {
@@ -254,6 +244,7 @@
                     refresh();
                 });
             });
+            /*]]>*/
         </script>
     </body>
 </html>

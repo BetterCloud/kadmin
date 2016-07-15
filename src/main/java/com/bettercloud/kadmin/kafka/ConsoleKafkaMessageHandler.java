@@ -1,9 +1,8 @@
 package com.bettercloud.kadmin.kafka;
 
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,6 +15,6 @@ public class ConsoleKafkaMessageHandler implements MessageHandler<String, Object
 
     @Override
     public void handleMessage(String s, Object o) {
-        logger.log(LogLevel.INFO, "{}: {}", s, o);
+        logger.info("{}: {}", s, o);
     }
 }

@@ -1,0 +1,14 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <button class="btn btn-default copy-btn btn-sm" data-clipboard-text='<%= rawMessage %>'>
+            <span class="glyphicon glyphicon-copy"></span> Copy
+        </button>
+        <div class="key-row">
+            Key: "<%= key %>"
+        </div>
+        <div class="time-row">
+            @<%= writeTimeText %>
+        </div>
+        <pre><%= messageText %></pre>
+    </div>
+</div>

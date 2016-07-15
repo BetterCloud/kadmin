@@ -13,6 +13,8 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJsonToAvroConverter.class);
 
     @Override
     public Object convert(String json, String schemaStr) {
@@ -214,7 +217,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 .collect(Collectors.groupingBy(s -> s.getType()));
         typeMap.entrySet().stream().forEach(e -> {
             if (e.getValue().size() > 1) {
-                System.err.println("Found duplicate schemas for type: " + e.getKey());
+                LOGGER.error("Found duplicate schemas for type: " + e.getKey());
             }
         });
         Schema bestGuess = null;
@@ -266,22 +269,4 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         }
         return bestGuess;
     }
-
-//    public GenericRecord avrify(String rawJson, String rawSchema) {
-//        GenericRecord record = null;
-//        try {
-//            JsonNode json = mapper.readTree(rawJson);
-//            if (json.isObject()) {
-//                Schema schema = new Schema.Parser().parse(rawSchema);
-//                final GenericRecord tempRecord = new GenericData.Record(schema);
-//                json.fields().forEachRemaining(n -> {
-//                    tempRecord.put(n.getKey(), n.getValue());
-//                });
-//                record = tempRecord;
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        return record;
-//    }
 }

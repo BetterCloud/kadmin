@@ -55,16 +55,21 @@ dependencies {
 	//Spring Boot
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: spring_boot_version
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: spring_boot_version
-    compile group: 'org.springframework.cloud', name: 'spring-cloud-config', version: spring_cloud_version
+
+	compile group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf', version: spring_boot_version
+	compile group: 'org.springframework.boot', name: 'spring-boot-devtools', version: spring_boot_version
+
+	compile group: 'org.springframework.cloud', name: 'spring-cloud-config', version: spring_cloud_version
+
 
 	//Apache
-	compile group: 'org.apache.commons', name: 'commons-lang3', version: apache_commons_lang_version
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: apache_commons_lang_version
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: apache_httpclient_version
 	//lombok
 	compile group: 'org.projectlombok', name: 'lombok', version: lombok_version
 
 	//bettercloud
 //	compile group: 'com.bettercloud', name: 'projectx-environment-loader', version: environment_loader
-	compile group: 'com.bettercloud', name: 'logger-lib', version: logger_version
 	compile group: 'com.bettercloud', name: 'wf-avro-model-lib', version: avro_model_version
 	compile group: 'com.bettercloud', name: 'kafka-java-lib', version: bc_kafka_lib
 

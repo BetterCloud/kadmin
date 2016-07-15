@@ -1,9 +1,6 @@
 package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
@@ -17,6 +14,8 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -132,7 +131,7 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
             schemaRegistryUrl = this.schemaRegistryUrl;
         }
         String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
-        logger.log(LogLevel.INFO, "Consumer Key: {}", key);
+        logger.info("Consumer Key: {}", key);
         if (!consumerMap.containsKey(key)) {
             Properties props = null;
             try {
