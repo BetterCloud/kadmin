@@ -53,9 +53,6 @@ dependencies {
 	//Spring Boot
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: spring_boot_version
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: spring_boot_version
-	compile group: 'org.springframework.boot', name: 'spring-boot-starter-amqp', version: spring_boot_version
-	compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-aop', version: spring_boot_version
     compile group: 'org.springframework.cloud', name: 'spring-cloud-config', version: spring_cloud_version
 
 	//Apache
@@ -74,9 +71,6 @@ dependencies {
 	compile group: 'org.apache.avro', name: 'avro', version: avro_version
 	compile group: 'org.apache.kafka', name: 'kafka_2.11', version: kafka_version
 	compile group: 'io.confluent', name: 'kafka-avro-serializer', version: confluent_version
-
-	runtime('com.h2database:h2')
-
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

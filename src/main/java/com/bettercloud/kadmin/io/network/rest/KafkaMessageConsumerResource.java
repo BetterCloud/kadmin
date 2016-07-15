@@ -8,20 +8,13 @@ import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.LoggerFactory;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.TimedWrapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
-import javafx.collections.ObservableMap;
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -89,33 +82,34 @@ public class KafkaMessageConsumerResource {
         }
         QueuedKafkaMessageHandler handler = handlerMap.get(key).getData();
         Long since = getSince(oSince, oWindow);
-        PageImpl<JsonNode> page = null;
+        Page<JsonNode> page = null;
         try {
-            page = new PageImpl<>(
-                    handler.get(since).stream()
-                            .map(m -> (QueuedKafkaMessageHandler.MessageContainer) m)
-                            .map(mc -> {
-                                ObjectNode node = mapper.createObjectNode();
-                                node.put("key", mc.getKey());
-                                node.put("writeTime", mc.getWriteTime());
-                            /*
-                             * There appears to be some incompatibility with JSON serializing Avro models. So,
-                             *
-                             * disgusting hack start...
-                             */
-                                JsonNode message = null;
-                                try {
-                                    message = mapper.readTree(mc.getMessage().toString());
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                                node.replace("message", message);
-                                // disgusting hack end
-                                return node;
-                            })
-                            .collect(Collectors.toList()
-                            ),
-                    new PageRequest(0, 25), handler.total());
+            page = new Page<JsonNode>();
+            page.setContent(handler.get(since).stream()
+                    .map(m -> (QueuedKafkaMessageHandler.MessageContainer) m)
+                    .map(mc -> {
+                        ObjectNode node = mapper.createObjectNode();
+                        node.put("key", mc.getKey());
+                        node.put("writeTime", mc.getWriteTime());
+                        /*
+                         * There appears to be some incompatibility with JSON serializing Avro models. So,
+                         *
+                         * disgusting hack start...
+                         */
+                        JsonNode message = null;
+                        try {
+                            message = mapper.readTree(mc.getMessage().toString());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        node.replace("message", message);
+                        // disgusting hack end
+                        return node;
+                    })
+                    .map(n -> (JsonNode)n)
+                    .collect(Collectors.toList()));
+            page.setTotalElements(handler.total());
+            new Page<JsonNode>();
         } catch (RuntimeException e) {
             return ResponseUtil.error(e);
         }
@@ -160,5 +154,11 @@ public class KafkaMessageConsumerResource {
     protected long getSince(Optional<Long> oSince, Optional<Long> oWindow) {
         return oSince.isPresent() ? oSince.get() :
                 oWindow.map(win -> System.currentTimeMillis() - win * 1000).orElse(-1L);
+    }
+
+    @Data
+    private static class Page<T> {
+        private List<T> content;
+        private long totalElements;
     }
 }
