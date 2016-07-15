@@ -1,7 +1,8 @@
-<html>
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
     <head>
         <title>Kadmin @ BetterCloud</title>
-        <link href="/kadmin/css/bootstrap.min.css" rel="stylesheet">
+        <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
         <style>
             #ace-message, #ace-schema {
                 width: 100%;
@@ -14,10 +15,9 @@
         <div class="container">
             <div>
                 <ul class="nav nav-pills">
-                    <li role="presentation"><a href="/">Home</a></li>
-                    <li role="presentation"><a href="/kadmin/bproducer.html" target="_blank">BetterCloud Producer</a></li>
-                    <li role="presentation" class="active"><a href="/kadmin/cproducer.html" target="_blank">Custom Producer</a></li>
-                    <li role="presentation"><a href="/kadmin/consumer.html" target="_blank">Consumer</a></li>
+                    <li role="presentation"><a th:href="@{/}">Home</a></li>
+                    <li role="presentation" class="active"><a th:href="@{/producer}">Custom Producer</a></li>
+                    <li role="presentation"><a th:href="@{/consumer}">Consumer</a></li>
                 </ul>
             </div>
             <div class="panel panel-default">
@@ -25,7 +25,7 @@
                     <div class="row">
                         <div class="form-group col-sm-6">
                             <label for="topic">Topic</label>
-                            <input type="text" class="form-control" id="topic">
+                            <input type="text" class="form-control" id="topic" />
                         </div>
                         <div class="form-group col-sm-6">
                             <label for="count">Count (number to send)</label>
@@ -64,14 +64,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="ace-message">
-                    Avro Encoded JSON Message
-                    (
-                        <a href="https://avro.apache.org/docs/1.7.7/spec.html#json_encoding" target="_blank">docs</a>/
-                        <a href="http://stackoverflow.com/a/27499930" target="_blank">example</a>
-                    )
-                </label>
-                <div class="text-muted"><i>Not "normal" JSON</i></div>
+                <label for="ace-message">JSON Message</label>
                 <div id="ace-message"></div>
             </div>
             <div class="row text-right">
@@ -82,44 +75,29 @@
             <div id="sent-results-row"></div>
         </div>
 
-        <script type="text/javascript" src="/kadmin/js/jquery.min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/underscore-min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/moment.min.js"></script>
-        <script type="text/javascript" src="/kadmin/js/ace.min.js"></script>
+        <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/underscore-min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/moment.min.js}"></script>
+        <script type="text/javascript" th:src="@{/js/ace.min.js}"></script>
 
-        <script type="text/template" id="sent-info-template">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <h5>Sent</h5>
-                    <div><%= timeText %></div>
-                    <ul>
-                        <li>Success: <%= success %></li>
-                        <li>Count: <%= count %></li>
-                        <li>Duration: <%= duration %>ms</li>
-                        <li>Rate: <%= rate %> messages/second</li>
-                    </ul>
-                </div>
-            </div>
-        </script>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
 
-        <script type="text/template" id="sent-error-template">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <h5 class="error">There was an error</h5>
-                    <div><%= timeText %></div>
-                </div>
-            </div>
-        </script>
-
-        <script>
-            var sentInfoTemplate = _.template($('#sent-info-template').html()),
-                sentErrorTemplate = _.template($('#sent-error-template').html()),
+            var sentInfoTemplate = _.template(""),
+                sentErrorTemplate = _.template(""),
                 $results = $('#sent-results-row'),
                 $schemas = $('#schema'),
                 $schemaVersions = $('#schema-version'),
                 $aceMessage = ace.edit("ace-message"),
                 $aceSchema = ace.edit("ace-schema");
+
+            $.get([[${contextPath}]] + "/sent-info-template.html", function (html) {
+                sentInfoTemplate = _.template(html);
+            });
+            $.get([[${contextPath}]] + "/sent-error-template.html", function (html) {
+                sentErrorTemplate = _.template(html);
+            });
 
             $aceMessage.setTheme("ace/theme/chrome");
             $aceMessage.getSession().setMode("ace/mode/json");
@@ -130,7 +108,7 @@
                 let req = buildRequest();
                 $.ajax({
                     type: "POST",
-                    url: "/kadmin/kafka/publish?count=" + getCount(),
+                    url: [[${contextPath}]] + "/kafka/publish?count=" + getCount(),
                     headers: {
                         "Content-Type": "application/json",
                         Accept: "application/json;charset=UTF-8"
@@ -181,7 +159,7 @@
             }
 
             function refreshSchemas() {
-                let url = "/kadmin/schemas";
+                let url = [[${contextPath}]] + "/schemas";
                 $.get(url)
                     .done(function(data) {
                         console.log(data);
@@ -198,7 +176,7 @@
             function handleNewSchema() {
                 let name = $schemas.val();
                 if (name !== 'null') {
-                    $.get('/kadmin/schemas/' + name, function(data) {
+                    $.get([[${contextPath}]] + '/schemas/' + name, function(data) {
                         console.log(data);
                         let curr = data.currSchema,
                             v = curr.version,
@@ -218,7 +196,7 @@
                 let name = $schemas.val(),
                     ver = $schemaVersions.val();
                 if (!!name && name !== '' && !!ver && ver !== '') {
-                    $.get('/kadmin/schemas/' + name + "/" + ver, function(data) {
+                    $.get([[${contextPath}]] + '/schemas/' + name + "/" + ver, function(data) {
                         console.log(data);
                         let rawSchema = JSON.stringify(JSON.parse(data.schema), null, 2);
                         $aceSchema.setValue(rawSchema);
@@ -239,6 +217,7 @@
                 $schemas.change(handleNewSchema);
                 $schemaVersions.change(handleNewVersion);
             });
+            /*]]>*/
         </script>
     </body>
 </html>
