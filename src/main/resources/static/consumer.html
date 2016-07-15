@@ -1,7 +1,7 @@
 <html>
     <head>
         <title>Kadmin @ BetterCloud</title>
-        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="/kadmin/css/bootstrap.min.css" rel="stylesheet">
         <style>
             pre {
                 padding: 5px;
@@ -26,9 +26,9 @@
             <div>
                 <ul class="nav nav-pills">
                     <li role="presentation"><a href="/">Home</a></li>
-                    <li role="presentation"><a href="/bproducer.html" target="_blank">BetterCloud Producer</a></li>
-                    <li role="presentation"><a href="/cproducer.html" target="_blank">Custom Producer</a></li>
-                    <li role="presentation" class="active"><a href="/consumer.html" target="_blank">Consumer</a></li>
+                    <li role="presentation"><a href="/kadmin/bproducer.html" target="_blank">BetterCloud Producer</a></li>
+                    <li role="presentation"><a href="/kadmin/cproducer.html" target="_blank">Custom Producer</a></li>
+                    <li role="presentation" class="active"><a href="/kadmin/consumer.html" target="_blank">Consumer</a></li>
                 </ul>
             </div>
             <div class="panel panel-default" id="form-container">
@@ -78,11 +78,11 @@
             </div>
         </div>
 
-        <script type="text/javascript" src="js/jquery.min.js"></script>
-        <script type="text/javascript" src="js/underscore-min.js"></script>
-        <script type="text/javascript" src="js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="js/moment.min.js"></script>
-        <script type="text/javascript" src="js/clipboard.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/underscore-min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/moment.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/clipboard.min.js"></script>
         <script type="text/template" id="message-tile-template">
             <div class="panel panel-default">
                 <div class="panel-body">
@@ -193,7 +193,7 @@
             }
 
             function buildUrl() {
-                return "/kafka/read/" + consumerConfig.topic;
+                return "/kadmin/kafka/read/" + consumerConfig.topic;
             }
 
             function handleResults(data) {

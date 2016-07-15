@@ -1,7 +1,7 @@
 <html>
     <head>
         <title>Kadmin @ BetterCloud</title>
-        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="/kadmin/css/bootstrap.min.css" rel="stylesheet">
         <style>
             #ace-message, #ace-schema {
                 width: 100%;
@@ -15,9 +15,9 @@
             <div>
                 <ul class="nav nav-pills">
                     <li role="presentation"><a href="/">Home</a></li>
-                    <li role="presentation"><a href="/bproducer.html" target="_blank">BetterCloud Producer</a></li>
-                    <li role="presentation" class="active"><a href="/cproducer.html" target="_blank">Custom Producer</a></li>
-                    <li role="presentation"><a href="/consumer.html" target="_blank">Consumer</a></li>
+                    <li role="presentation"><a href="/kadmin/bproducer.html" target="_blank">BetterCloud Producer</a></li>
+                    <li role="presentation" class="active"><a href="/kadmin/cproducer.html" target="_blank">Custom Producer</a></li>
+                    <li role="presentation"><a href="/kadmin/consumer.html" target="_blank">Consumer</a></li>
                 </ul>
             </div>
             <div class="panel panel-default">
@@ -82,11 +82,11 @@
             <div id="sent-results-row"></div>
         </div>
 
-        <script type="text/javascript" src="js/jquery.min.js"></script>
-        <script type="text/javascript" src="js/underscore-min.js"></script>
-        <script type="text/javascript" src="js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="js/moment.min.js"></script>
-        <script type="text/javascript" src="js/ace.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/underscore-min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/moment.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/ace.min.js"></script>
 
         <script type="text/template" id="sent-info-template">
             <div class="panel panel-default">
@@ -130,7 +130,7 @@
                 let req = buildRequest();
                 $.ajax({
                     type: "POST",
-                    url: "kafka/publish?count=" + getCount(),
+                    url: "/kadmin/kafka/publish?count=" + getCount(),
                     headers: {
                         "Content-Type": "application/json",
                         Accept: "application/json;charset=UTF-8"
@@ -181,7 +181,7 @@
             }
 
             function refreshSchemas() {
-                let url = "/schemas";
+                let url = "/kadmin/schemas";
                 $.get(url)
                     .done(function(data) {
                         console.log(data);
@@ -198,7 +198,7 @@
             function handleNewSchema() {
                 let name = $schemas.val();
                 if (name !== 'null') {
-                    $.get('/schemas/' + name, function(data) {
+                    $.get('/kadmin/schemas/' + name, function(data) {
                         console.log(data);
                         let curr = data.currSchema,
                             v = curr.version,
@@ -218,7 +218,7 @@
                 let name = $schemas.val(),
                     ver = $schemaVersions.val();
                 if (!!name && name !== '' && !!ver && ver !== '') {
-                    $.get('/schemas/' + name + "/" + ver, function(data) {
+                    $.get('/kadmin/schemas/' + name + "/" + ver, function(data) {
                         console.log(data);
                         let rawSchema = JSON.stringify(JSON.parse(data.schema), null, 2);
                         $aceSchema.setValue(rawSchema);

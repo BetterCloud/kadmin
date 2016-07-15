@@ -1,7 +1,7 @@
 <html>
     <head>
         <title>Kadmin @ BetterCloud</title>
-        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="/kadmin/css/bootstrap.min.css" rel="stylesheet">
         <style>
             #ace-message {
                 width: 100%;
@@ -15,9 +15,9 @@
             <div>
                 <ul class="nav nav-pills">
                     <li role="presentation"><a href="/">Home</a></li>
-                    <li role="presentation" class="active"><a href="/bproducer.html" target="_blank">BetterCloud Producer</a></li>
-                    <li role="presentation"><a href="/cproducer.html" target="_blank">Custom Producer</a></li>
-                    <li role="presentation"><a href="/consumer.html" target="_blank">Consumer</a></li>
+                    <li role="presentation" class="active"><a href="/kadmin/bproducer.html" target="_blank">BetterCloud Producer</a></li>
+                    <li role="presentation"><a href="/kadmin/cproducer.html" target="_blank">Custom Producer</a></li>
+                    <li role="presentation"><a href="/kadmin/consumer.html" target="_blank">Consumer</a></li>
                 </ul>
             </div>
             <div class="form-group">
@@ -59,11 +59,11 @@
             <div id="sent-results-row"></div>
         </div>
 
-        <script type="text/javascript" src="js/jquery.min.js"></script>
-        <script type="text/javascript" src="js/underscore-min.js"></script>
-        <script type="text/javascript" src="js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="js/moment.min.js"></script>
-        <script type="text/javascript"  src="js/ace.min.js" charset="utf-8"></script>
+        <script type="text/javascript" src="/kadmin/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/underscore-min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/kadmin/js/moment.min.js"></script>
+        <script type="text/javascript"  src="/kadmin/js/ace.min.js" charset="utf-8"></script>
 
         <script type="text/template" id="sent-info-template">
             <div class="panel panel-default">
@@ -102,7 +102,7 @@
                 let req = buildRequest();
                 $.ajax({
                     type: "POST",
-                    url: "kafka/send?count=" + getCount(),
+                    url: "/kadmin/kafka/send?count=" + getCount(),
                     headers: {
                         "Content-Type": "application/json",
                         Accept: "application/json;charset=UTF-8"
