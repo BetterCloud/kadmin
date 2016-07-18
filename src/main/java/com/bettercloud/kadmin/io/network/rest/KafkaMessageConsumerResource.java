@@ -5,6 +5,7 @@ import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
+import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.TimedWrapper;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/kafka/read")
 public class KafkaMessageConsumerResource {
 
-    private static final Logger logger = LoggerUtils.get(KafkaMessageConsumerResource.class);
+    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Joiner keyBuilder = Joiner.on(':');
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
@@ -50,7 +51,7 @@ public class KafkaMessageConsumerResource {
 
     @Scheduled(fixedRate = IDLE_CHECK_DELAY)
     private void clearMemory() {
-        logger.log(LogLevel.INFO, "Cleaning up connections/memory");
+        LOGGER.log(LogModel.info("Cleaning up connections/memory").build());
         List<String> keys = handlerMap.keySet().stream()
                 .filter(k -> handlerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
                 .collect(Collectors.toList());
@@ -59,7 +60,9 @@ public class KafkaMessageConsumerResource {
                     Opt.of(handlerMap.get(k)).ifPresent(handler -> handler.getData().clear());
                     Opt.of(kps.lookupConsumer(k)).ifPresent(con -> con.dispose());
                     Opt.of(kps.lookupProducer(k)).ifPresent(prod -> prod.dispose());
-                    logger.log(LogLevel.INFO, "Disposing queue {} with timeout {}", k, handlerMap.get(k).getIdleTime());
+                    LOGGER.log(LogModel.info("Disposing queue {} with timeout {}")
+                            .args(k, handlerMap.get(k).getIdleTime())
+                            .build());
                 });
         System.gc();
     }

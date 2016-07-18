@@ -3,6 +3,7 @@ package com.bettercloud.kadmin.kafka;
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
+import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Service
 public class DefaultKafkaProviderService implements KafkaProviderService {
 
-    private static final Logger logger = LoggerUtils.get(DefaultKafkaProviderService.class);
+    private static final Logger LOGGER = LoggerUtils.get(DefaultKafkaProviderService.class, LogLevel.DEBUG);
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
 
     private final Joiner keyJoiner = Joiner.on("<:=:>");
@@ -132,7 +133,9 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
             schemaRegistryUrl = this.schemaRegistryUrl;
         }
         String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
-        logger.log(LogLevel.INFO, "Consumer Key: {}", key);
+        LOGGER.log(LogModel.debug("Consumer Key: {}")
+                .addArg(key)
+                .build());
         if (!consumerMap.containsKey(key)) {
             Properties props = null;
             try {
