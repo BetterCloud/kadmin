@@ -2,6 +2,7 @@ package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
+import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.util.LoggerUtils;
 import com.google.common.collect.Lists;
@@ -19,7 +20,7 @@ import java.util.stream.Stream;
  */
 public class QueuedKafkaMessageHandler implements MessageHandler<String, Object> {
 
-    private static final Logger logger = LoggerUtils.get(QueuedKafkaMessageHandler.class);
+    private static final Logger LOGGER = LoggerUtils.get(QueuedKafkaMessageHandler.class);
 
     private final FixedSizeList<MessageContainer> messageQueue;
     private final AtomicLong total = new AtomicLong(0L);
@@ -30,7 +31,9 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
 
     @Override
     public void handleMessage(String s, Object o) {
-        logger.log(LogLevel.INFO, "receiving => {}, queued => {}", total.get() + 1, messageQueue.spine.size());
+        LOGGER.log(LogModel.debug("receiving => {}, queued => {}")
+                .args(total.get() + 1, messageQueue.spine.size())
+                .build());
         total.incrementAndGet();
         this.messageQueue.add(MessageContainer.builder()
                 .key(s)
@@ -41,7 +44,9 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
 
     @Override
     public void onError(Throwable cause) throws Throwable {
-        logger.log(LogLevel.INFO, cause.getMessage(), cause);
+        LOGGER.log(LogModel.error(cause.getMessage())
+                .error(cause)
+                .build());
     }
 
     public List<Object> get(Long since) {
