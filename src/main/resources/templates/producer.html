@@ -156,6 +156,7 @@
                 data.timeText = timeText;
                 $results.html(template(data));
                 $('#send-message-btn').removeClass("disabled");
+                window.scrollTo(0, document.body.scrollHeight);
             }
 
             function refreshSchemas() {

@@ -2,6 +2,9 @@ package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.AvrifyConverter;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
+import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.logger.services.Logger;
+import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,8 +16,6 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -33,13 +34,18 @@ import java.util.stream.Collectors;
 public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJsonToAvroConverter.class);
+    private static final Logger LOGGER = LoggerUtils.get(DefaultJsonToAvroConverter.class);
 
     @Override
     public Object convert(String json, String schemaStr) {
-        String avroJson = avrify(json, schemaStr);
+        LOGGER.log(LogLevel.INFO, json);
+        json = avrify(json, schemaStr);
 
-        InputStream input = new ByteArrayInputStream(avroJson.getBytes());
+        LOGGER.log(LogLevel.INFO, "Avrified to:");
+        LOGGER.log(LogLevel.INFO, json);
+
+
+        InputStream input = new ByteArrayInputStream(json.getBytes());
         DataInputStream din = new DataInputStream(input);
 
         Schema schema = new Schema.Parser().parse(schemaStr);
@@ -52,7 +58,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        LOGGER.log(LogLevel.INFO, "Converted: {}", datum);
         return datum;
     }
 
@@ -217,7 +223,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 .collect(Collectors.groupingBy(s -> s.getType()));
         typeMap.entrySet().stream().forEach(e -> {
             if (e.getValue().size() > 1) {
-                LOGGER.error("Found duplicate schemas for type: " + e.getKey());
+                LOGGER.log(LogLevel.ERROR, "Found duplicate schemas for type: " + e.getKey());
             }
         });
         Schema bestGuess = null;
