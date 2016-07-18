@@ -1,8 +1,9 @@
 package com.bettercloud.kadmin.kafka;
 
+import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.logger.services.Logger;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.bettercloud.util.LoggerUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,10 +12,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConsoleKafkaMessageHandler implements MessageHandler<String, Object> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConsoleKafkaMessageHandler.class);
+    private static final Logger logger = LoggerUtils.get(ConsoleKafkaMessageHandler.class);
 
     @Override
     public void handleMessage(String s, Object o) {
-        logger.info("{}: {}", s, o);
+        logger.log(LogLevel.INFO, "{}: {}", s, o);
     }
 }

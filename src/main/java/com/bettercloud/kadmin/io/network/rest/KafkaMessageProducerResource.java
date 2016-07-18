@@ -1,10 +1,11 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import ch.qos.logback.classic.Level;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
 import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
+import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.logger.services.Logger;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +15,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.avro.AvroTypeException;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,7 +31,7 @@ import java.util.Optional;
 @RequestMapping("/kafka")
 public class KafkaMessageProducerResource {
 
-    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class, Level.TRACE);
+    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final KafkaProviderService providerService;
@@ -52,7 +52,7 @@ public class KafkaMessageProducerResource {
     )
     public ResponseEntity<ProducerResponse> publish(@RequestBody KafkaProduceRequestModel requestModel,
                                                  @RequestParam("count") Optional<Integer> oCount) {
-        LOGGER.trace("/publish Received {}", requestModel);
+        LOGGER.log(LogLevel.INFO, "/publish Received {}", requestModel);
         if (requestModel.getRawMessage().getNodeType().equals(JsonNodeType.STRING)) {
             try {
                 requestModel.setRawMessage(MAPPER.readTree(requestModel.getRawMessage().asText()));
@@ -60,7 +60,7 @@ public class KafkaMessageProducerResource {
                 return ResponseUtil.error(e);
             }
         }
-        LOGGER.trace("/publish Processing: {}", requestModel);
+        LOGGER.log(LogLevel.INFO, "/publish Processing: {}", requestModel);
         KafkaProduceMessageMeta meta = requestModel.getMeta();
         Object message;
         try {
@@ -68,11 +68,11 @@ public class KafkaMessageProducerResource {
         } catch (AvroTypeException e) {
             return ResponseUtil.error(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        LOGGER.trace("/publish Avrified: {}", message);
+        LOGGER.log(LogLevel.INFO, "/publish Avrified: {}", message);
         ProducerService<String, Object> ps = providerService.producerService(null, null);
-        LOGGER.trace("/publish Producer not null {}", ps != null);
+        LOGGER.log(LogLevel.INFO, "/publish Producer not null {}", ps != null);
         boolean sendMessage = message != null && ps != null;
-        LOGGER.trace("/publish Send message {}", sendMessage);
+        LOGGER.log(LogLevel.INFO, "/publish Send message {}", sendMessage);
         ProducerResponse res = ProducerResponse.builder()
                 .sent(sendMessage)
                 .count(0)
@@ -83,13 +83,13 @@ public class KafkaMessageProducerResource {
         if (sendMessage) {
             res = sendMessage(ps, meta.getTopic(), message, oCount.orElse(1));
         }
-        LOGGER.debug("/publish Produced: {}", res);
+        LOGGER.log(LogLevel.INFO, "/publish Produced: {}", res);
         return ResponseEntity.ok(res);
     }
 
     private <PayloadT> ProducerResponse sendMessage(ProducerService<String, PayloadT> ps, String topic,
                                                     PayloadT payload, int count) {
-        LOGGER.trace("/publish Sending message (x{}) on {}", count, topic);
+        LOGGER.log(LogLevel.INFO, "/publish Sending message (x{}) on {}", count, topic);
         int success = 0;
         long duration;
         double rate;
@@ -99,10 +99,10 @@ public class KafkaMessageProducerResource {
                 ps.send(topic, payload);
                 success++;
             } catch (Exception e) {
-                LOGGER.error("There was an error", e);
+                LOGGER.log(LogLevel.ERROR, "There was an error", e);
             }
         }
-        LOGGER.trace("/publish Done sending ({}/{})", success, count);
+        LOGGER.log(LogLevel.INFO, "/publish Done sending ({}/{})", success, count);
         duration = System.currentTimeMillis() - startTime;
         rate = count * 1000.0 / duration;
         return ProducerResponse.builder()
