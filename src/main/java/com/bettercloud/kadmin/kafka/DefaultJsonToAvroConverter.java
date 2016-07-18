@@ -1,7 +1,9 @@
 package com.bettercloud.kadmin.kafka;
 
+import ch.qos.logback.classic.Level;
 import com.bettercloud.kadmin.api.kafka.AvrifyConverter;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
+import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +16,6 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -33,13 +34,18 @@ import java.util.stream.Collectors;
 public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJsonToAvroConverter.class);
+    private static final Logger LOGGER = LoggerUtils.get(DefaultJsonToAvroConverter.class, Level.TRACE);
 
     @Override
     public Object convert(String json, String schemaStr) {
-        String avroJson = avrify(json, schemaStr);
+        LOGGER.debug(json);
+        json = avrify(json, schemaStr);
 
-        InputStream input = new ByteArrayInputStream(avroJson.getBytes());
+        LOGGER.debug("Avrified to:");
+        LOGGER.debug(json);
+
+
+        InputStream input = new ByteArrayInputStream(json.getBytes());
         DataInputStream din = new DataInputStream(input);
 
         Schema schema = new Schema.Parser().parse(schemaStr);
@@ -52,7 +58,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        LOGGER.debug("Converted: {}", datum);
         return datum;
     }
 
