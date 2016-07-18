@@ -1,8 +1,9 @@
 package com.bettercloud.kadmin.kafka;
 
-import ch.qos.logback.classic.Level;
 import com.bettercloud.kadmin.api.kafka.AvrifyConverter;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
+import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.logger.services.Logger;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,7 +16,6 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
-import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -34,15 +34,15 @@ import java.util.stream.Collectors;
 public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Logger LOGGER = LoggerUtils.get(DefaultJsonToAvroConverter.class, Level.TRACE);
+    private static final Logger LOGGER = LoggerUtils.get(DefaultJsonToAvroConverter.class);
 
     @Override
     public Object convert(String json, String schemaStr) {
-        LOGGER.debug(json);
+        LOGGER.log(LogLevel.INFO, json);
         json = avrify(json, schemaStr);
 
-        LOGGER.debug("Avrified to:");
-        LOGGER.debug(json);
+        LOGGER.log(LogLevel.INFO, "Avrified to:");
+        LOGGER.log(LogLevel.INFO, json);
 
 
         InputStream input = new ByteArrayInputStream(json.getBytes());
@@ -58,7 +58,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LOGGER.debug("Converted: {}", datum);
+        LOGGER.log(LogLevel.INFO, "Converted: {}", datum);
         return datum;
     }
 
@@ -223,7 +223,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 .collect(Collectors.groupingBy(s -> s.getType()));
         typeMap.entrySet().stream().forEach(e -> {
             if (e.getValue().size() > 1) {
-                LOGGER.error("Found duplicate schemas for type: " + e.getKey());
+                LOGGER.log(LogLevel.ERROR, "Found duplicate schemas for type: " + e.getKey());
             }
         });
         Schema bestGuess = null;

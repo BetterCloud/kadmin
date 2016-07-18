@@ -3,6 +3,9 @@ package com.bettercloud.kadmin.io.network.rest;
 import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
+import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.logger.services.Logger;
+import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,8 +14,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/kafka/read")
 public class KafkaMessageConsumerResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(KafkaMessageConsumerResource.class);
+    private static final Logger logger = LoggerUtils.get(KafkaMessageConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Joiner keyBuilder = Joiner.on(':');
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
@@ -49,7 +50,7 @@ public class KafkaMessageConsumerResource {
 
     @Scheduled(fixedRate = IDLE_CHECK_DELAY)
     private void clearMemory() {
-        logger.info("Cleaning up connections/memory");
+        logger.log(LogLevel.INFO, "Cleaning up connections/memory");
         List<String> keys = handlerMap.keySet().stream()
                 .filter(k -> handlerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
                 .collect(Collectors.toList());
@@ -58,7 +59,7 @@ public class KafkaMessageConsumerResource {
                     Opt.of(handlerMap.get(k)).ifPresent(handler -> handler.getData().clear());
                     Opt.of(kps.lookupConsumer(k)).ifPresent(con -> con.dispose());
                     Opt.of(kps.lookupProducer(k)).ifPresent(prod -> prod.dispose());
-                    logger.info("Disposing queue {} with timeout {}", k, handlerMap.get(k).getIdleTime());
+                    logger.log(LogLevel.INFO, "Disposing queue {} with timeout {}", k, handlerMap.get(k).getIdleTime());
                 });
         System.gc();
     }
