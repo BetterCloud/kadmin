@@ -2,6 +2,7 @@ package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
+import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +35,7 @@ import java.util.stream.StreamSupport;
 public class SchemaProxyResource {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Logger logger = LoggerUtils.get(SchemaProxyResource.class);
+    private static final Logger LOGGER = LoggerUtils.get(SchemaProxyResource.class);
 
     @Value("${schema.registry.url:http://localhost:8081}")
     private String schemaRegistryUrl;
@@ -135,7 +136,9 @@ public class SchemaProxyResource {
             HttpResponse res = client.execute(get);
             int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                logger.log(LogLevel.ERROR, "Non 200 status: {}", statusCode);
+                LOGGER.log(LogModel.error("Non 200 status: {}")
+                        .addArg(statusCode)
+                        .build());
                 return ResponseEntity.status(statusCode).body(defaultVal);
             }
             ResponseT val = c.convert(mapper.readTree(res.getEntity().getContent()));
@@ -144,10 +147,13 @@ public class SchemaProxyResource {
             }
             return ResponseEntity.ok(val);
         } catch (IOException e) {
-            logger.log(LogLevel.ERROR, "There was an error: {}", e.getMessage());
+            LOGGER.log(LogModel.error("There was an error: {}")
+                    .addArg(e.getMessage())
+                    .error(e)
+                    .build());
             e.printStackTrace();
         }
-        logger.log(LogLevel.ERROR, "There was an error");
+        LOGGER.log(LogModel.error("There was an unknown error").build());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultVal);
     }
 
@@ -157,16 +163,21 @@ public class SchemaProxyResource {
             HttpResponse res = client.execute(get);
             int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                logger.log(LogLevel.ERROR, "Non 200 status: {}", statusCode);
+                LOGGER.log(LogModel.error("Non 200 status: {}")
+                        .addArg(statusCode)
+                        .build());
                 return null;
             }
             ResponseT val = c.convert(mapper.readTree(res.getEntity().getContent()));
             return val;
         } catch (IOException e) {
-            logger.log(LogLevel.ERROR, "There was an error: {}", e.getMessage());
+            LOGGER.log(LogModel.error("There was an error: {}")
+                    .args(e.getMessage())
+                    .error(e)
+                    .build());
             e.printStackTrace();
         }
-        logger.log(LogLevel.ERROR, "There was an error");
+        LOGGER.log(LogModel.error("There was an unknown error").build());
         return null;
     }
 
