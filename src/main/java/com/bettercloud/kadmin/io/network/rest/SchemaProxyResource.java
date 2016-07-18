@@ -1,5 +1,6 @@
 package com.bettercloud.kadmin.io.network.rest;
 
+import com.bettercloud.kadmin.api.models.SchemaInfo;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
@@ -155,45 +156,5 @@ public class SchemaProxyResource {
         }
         LOGGER.log(LogModel.error("There was an unknown error").build());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultVal);
-    }
-
-    private <ResponseT> ResponseT proxy(String url, NodeConverter<ResponseT> c) {
-        HttpGet get = new HttpGet(url);
-        try {
-            HttpResponse res = client.execute(get);
-            int statusCode = res.getStatusLine().getStatusCode();
-            if (statusCode != 200) {
-                LOGGER.log(LogModel.error("Non 200 status: {}")
-                        .addArg(statusCode)
-                        .build());
-                return null;
-            }
-            ResponseT val = c.convert(mapper.readTree(res.getEntity().getContent()));
-            return val;
-        } catch (IOException e) {
-            LOGGER.log(LogModel.error("There was an error: {}")
-                    .args(e.getMessage())
-                    .error(e)
-                    .build());
-            e.printStackTrace();
-        }
-        LOGGER.log(LogModel.error("There was an unknown error").build());
-        return null;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SchemaInfo {
-        private String name;
-        private List<Integer> versions;
-        private JsonNode currSchema;
-    }
-
-    public interface NodeConverter<ToT> extends Converter<JsonNode, ToT> { }
-
-    public interface Converter<FromT, ToT> {
-        ToT convert(FromT o);
     }
 }

@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.api.kafka;
+package com.bettercloud.kadmin.api.services;
 
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
 import com.bettercloud.messaging.kafka.consume.MessageHandler;

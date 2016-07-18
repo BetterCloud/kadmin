@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
-import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
+import com.bettercloud.kadmin.api.services.KafkaProviderService;
 import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.logger.services.LogLevel;
