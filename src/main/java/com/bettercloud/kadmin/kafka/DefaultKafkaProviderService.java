@@ -38,10 +38,10 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
 
     private final Joiner keyJoiner = Joiner.on("<:=:>");
 
-    @Value("${kafka.host:http://localhost:8081}")
-    private String schemaRegistryUrl;
-    @Value("${schema.registry.url:localhost:9092}")
+    @Value("${kafka.host:localhost:9092}")
     private String bootstrapServers;
+    @Value("${schema.registry.url:http://localhost:8081}")
+    private String schemaRegistryUrl;
 
     private final Map<String, ProducerService<String, Object>> producerMap = Maps.newHashMap();
     private final Map<String, ConsumerGroup<String, Object>> consumerMap = Maps.newHashMap();
