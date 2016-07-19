@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.api.kafka;
+package com.bettercloud.kadmin.api.kafka.exception;
 
 /**
  * Created by davidesposito on 7/18/16.

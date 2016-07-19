@@ -1,10 +1,9 @@
 package com.bettercloud.kadmin.services;
 
-import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
+import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
 import com.bettercloud.kadmin.api.models.SchemaInfo;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.kadmin.io.network.rest.SchemaProxyResource;
-import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
@@ -18,8 +17,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

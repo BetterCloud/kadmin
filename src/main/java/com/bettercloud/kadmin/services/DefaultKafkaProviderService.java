@@ -1,5 +1,6 @@
 package com.bettercloud.kadmin.services;
 
+import com.bettercloud.kadmin.api.kafka.model.KafkaConsumerProperties;
 import com.bettercloud.kadmin.api.services.KafkaProviderService;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
@@ -22,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceAlreadyExistsException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Properties;
@@ -110,18 +110,23 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
         return keyJoiner.join(kafkaUrl, schemaRegistryUrl, topic);
     }
 
-    protected Properties kafkaConsumerProperties(String kafkaHost, String schemaRegistryUrl) throws UnknownHostException {
+    protected KafkaConsumerProperties kafkaConsumerProperties(String kafkaHost, String schemaRegistryUrl) throws UnknownHostException {
         final Properties properties = new Properties();
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());
-        properties.put(ConsumerConfig.CLIENT_ID_CONFIG, InetAddress.getLocalHost().getHostName());
+        String groupId = UUID.randomUUID().toString();
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        String clientId = UUID.randomUUID().toString();
+        properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         properties.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         properties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 1000);
         properties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 32 * 1024);
         properties.put("auto.offset.reset", "earliest");
-        return properties;
-
+        return KafkaConsumerProperties.builder()
+                .clientId(clientId)
+                .groupId(groupId)
+                .properties(properties)
+                .build();
     }
 
     @Override
@@ -138,7 +143,7 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 .addArg(key)
                 .build());
         if (!consumerMap.containsKey(key)) {
-            Properties props = null;
+            KafkaConsumerProperties props = null;
             try {
                 props = kafkaConsumerProperties(kafkaUrl, schemaRegistryUrl);
                 consumerMap.put(key, consumerService(props, topic, handler));
@@ -168,10 +173,10 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
         return consumerMap.get(key);
     }
 
-    protected ConsumerGroup<String, Object> consumerService(Properties kafkaConsumerProperties, String topic,
+    protected ConsumerGroup<String, Object> consumerService(KafkaConsumerProperties kafkaConsumerProperties, String topic,
                                                             MessageHandler<String, Object> handler) throws InstanceAlreadyExistsException {
         return ConsumerGroup.<String, Object>create()
-                .withConsumerProperties(kafkaConsumerProperties)
+                .withConsumerProperties(kafkaConsumerProperties.getProperties())
                 .withMessageHandler(handler)
                 .withKeyDeserializer(new StringDeserializer())
                 .withMessageDeserializer(new KafkaAvroDeserializer())

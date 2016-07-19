@@ -1,34 +1,19 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
+import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
 import com.bettercloud.kadmin.api.models.SchemaInfo;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
-import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Created by davidesposito on 7/6/16.
