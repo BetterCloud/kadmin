@@ -4,12 +4,15 @@ import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
 import com.bettercloud.kadmin.api.models.SchemaInfo;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.kadmin.io.network.rest.SchemaProxyResource;
+import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -38,12 +42,26 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
 
     private final HttpClient client;
 
+    private final Cache<String, List<String>> schemasCache;
+    private final Cache<String, SchemaInfo> schemaInfoCache;
+    private final Cache<String, JsonNode> schemaVersionCache;
+
     @Autowired
     public DefaultSchemaRegistryService(HttpClient defaultClient,
                 @Value("${schema.registry.url:http://localhost:8081}")
                 String schemaRegistryUrl) {
         this.client = defaultClient;
         this.schemaRegistryUrl = schemaRegistryUrl;
+        schemasCache = defaultCache();
+        schemaInfoCache = defaultCache();
+        schemaVersionCache = defaultCache();
+    }
+
+    private <ValueT> Cache<String, ValueT> defaultCache() {
+        return CacheBuilder.newBuilder()
+                .expireAfterAccess(30, TimeUnit.SECONDS)
+                .expireAfterWrite(90, TimeUnit.SECONDS)
+                .build();
     }
 
     @Override
@@ -51,17 +69,22 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
         String url = String.format("%s/subjects",
                 oUrl.orElse(this.schemaRegistryUrl)
         );
-        NodeConverter<List<String>> c = (node) -> {
-            if (node.isArray()) {
-                ArrayNode arr = (ArrayNode) node;
-                return StreamSupport.stream(arr.spliterator(), false)
-                        .map(n -> n.asText())
-                        .sorted()
-                        .collect(Collectors.toList());
-            }
-            return null;
-        };
-        return proxyResponse(url, c, null);
+        if (schemasCache.getIfPresent(url) == null) {
+            NodeConverter<List<String>> c = (node) -> {
+                if (node.isArray()) {
+                    ArrayNode arr = (ArrayNode) node;
+                    return StreamSupport.stream(arr.spliterator(), false)
+                            .map(n -> n.asText())
+                            .sorted()
+                            .collect(Collectors.toList());
+                }
+                return null;
+            };
+            schemasCache.put(url, proxyResponse(url, c, null));
+        } else {
+            LOGGER.log(LogModel.debug("Hit schema cache for: {}").addArg(url).build());
+        }
+        return schemasCache.getIfPresent(url);
     }
 
     @Override
@@ -77,23 +100,28 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
                 oUrl.orElse(this.schemaRegistryUrl),
                 name
         );
-        NodeConverter<List<Integer>> c = (node) -> {
-            if (node.isArray()) {
-                ArrayNode arr = (ArrayNode) node;
-                return StreamSupport.stream(arr.spliterator(), false)
-                        .map(n -> n.asInt())
-                        .collect(Collectors.toList());
-            }
-            return null;
-        };
-        List<Integer> versions = proxyResponse(url, c, null);
-        JsonNode info = getVersion(name, versions.get(versions.size() - 1), oUrl);
-        JsonNode currSchema = info;
-        return SchemaInfo.builder()
-                .name(name)
-                .versions(versions)
-                .currSchema(currSchema)
-                .build();
+        if (schemaInfoCache.getIfPresent(url) == null) {
+            NodeConverter<List<Integer>> c = (node) -> {
+                if (node.isArray()) {
+                    ArrayNode arr = (ArrayNode) node;
+                    return StreamSupport.stream(arr.spliterator(), false)
+                            .map(n -> n.asInt())
+                            .collect(Collectors.toList());
+                }
+                return null;
+            };
+            List<Integer> versions = proxyResponse(url, c, null);
+            JsonNode info = getVersion(name, versions.get(versions.size() - 1), oUrl);
+            JsonNode currSchema = info;
+            schemaInfoCache.put(url, SchemaInfo.builder()
+                    .name(name)
+                    .versions(versions)
+                    .currSchema(currSchema)
+                    .build());
+        } else {
+            LOGGER.log(LogModel.debug("Hit info cache for: {}").addArg(url).build());
+        }
+        return schemaInfoCache.getIfPresent(url);
     }
 
     @Override
@@ -103,7 +131,12 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
                 name,
                 version
         );
-        return proxyResponse(url, n -> n, null);
+        if (schemaVersionCache.getIfPresent(url) == null) {
+            schemaVersionCache.put(url, proxyResponse(url, n -> n, null));
+        } else {
+            LOGGER.log(LogModel.debug("Hit version cache for: {}").addArg(url).build());
+        }
+        return schemaVersionCache.getIfPresent(url);
     }
 
     private <ResponseT> ResponseT proxyResponse(String url, NodeConverter<ResponseT> c, ResponseT defaultVal)
