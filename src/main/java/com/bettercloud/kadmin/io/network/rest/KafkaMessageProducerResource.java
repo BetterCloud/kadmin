@@ -53,9 +53,9 @@ public class KafkaMessageProducerResource {
     )
     public ResponseEntity<ProducerResponse> publish(@RequestBody KafkaProduceRequestModel requestModel,
                                                  @RequestParam("count") Optional<Integer> oCount) {
-        LOGGER.log(LogModel.trace("/publish Received {}")
-                .addArg(requestModel)
-                .build());
+//        LOGGER.log(LogModel.trace("/publish Received {}")
+//                .addArg(requestModel)
+//                .build());
         if (requestModel.getRawMessage().getNodeType().equals(JsonNodeType.STRING)) {
             try {
                 requestModel.setRawMessage(MAPPER.readTree(requestModel.getRawMessage().asText()));
@@ -63,9 +63,9 @@ public class KafkaMessageProducerResource {
                 return ResponseUtil.error(e);
             }
         }
-        LOGGER.log(LogModel.trace("/publish Processing: {}")
-                .addArg(requestModel)
-                .build());
+//        LOGGER.log(LogModel.trace("/publish Processing: {}")
+//                .addArg(requestModel)
+//                .build());
         KafkaProduceMessageMeta meta = requestModel.getMeta();
         Object message;
         try {
@@ -94,9 +94,9 @@ public class KafkaMessageProducerResource {
         if (sendMessage) {
             res = sendMessage(ps, meta.getTopic(), message, oCount.orElse(1));
         }
-        LOGGER.log(LogModel.debug("/publish Produced: {}")
-                .addArg(requestModel)
-                .build());
+//        LOGGER.log(LogModel.debug("/publish Produced: {}")
+//                .addArg(requestModel)
+//                .build());
         return ResponseEntity.ok(res);
     }
 
@@ -114,6 +114,7 @@ public class KafkaMessageProducerResource {
                 ps.send(topic, payload);
                 success++;
             } catch (Exception e) {
+                e.printStackTrace();
                 LOGGER.log(LogModel.error("There was an error")
                         .error(e)
                         .build());

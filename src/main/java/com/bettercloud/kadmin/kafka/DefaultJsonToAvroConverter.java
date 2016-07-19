@@ -7,6 +7,7 @@ import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
+import com.bettercloud.util.StreamUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyConverter {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Logger LOGGER = LoggerUtils.get(DefaultJsonToAvroConverter.class, LogLevel.DEBUG);
+    private static final Logger LOGGER = LoggerUtils.get(DefaultJsonToAvroConverter.class);
 
     @Override
     public Object convert(String json, String schemaStr) {
@@ -86,7 +87,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
 
     private JsonNode avrify(JsonNode message, Schema schema) {
         if (message.isObject() && isRecord(schema, true)) {
-            Schema recSchema = isUnion(schema) ? getRecordSchema(schema) : schema;
+            Schema recSchema = isUnion(schema) ? getRecordSchema(message, schema) : schema;
             ObjectNode oMessage = (ObjectNode) message;
             // recursion before union mapping
             Map<String, Schema.Field> fieldMap = getFieldMap(recSchema);
@@ -96,8 +97,20 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 JsonNode newField = avrify(e.getValue(), fs);
                 oMessage.replace(e.getKey(), newField);
             });
+        } else if (message.isObject() && isMap(schema, true)) {
+            Schema recSchema = isUnion(schema) ? getMapSchema(message, schema) : schema;
+            ObjectNode oMessage = (ObjectNode) message;
+            // recursion before union mapping
+            Schema valueType = recSchema.getValueType();
+            message.fields().forEachRemaining(e -> {
+                if (e.getKey().equals("orgUnitRelationalId")) {
+                    System.out.println(e);
+                }
+                JsonNode newField = avrify(e.getValue(), valueType);
+                oMessage.replace(e.getKey(), newField);
+            });
         } else if (message.isArray() && isArray(schema, true)) {
-            Schema arrSchema = isUnion(schema) ? getArraySchema(schema) : schema;
+            Schema arrSchema = isUnion(schema) ? getArraySchema(message, schema) : schema;
             arrSchema = arrSchema.getElementType();
             List<Schema> validSchemas = isUnion(arrSchema) ? arrSchema.getTypes() : Lists.newArrayList(arrSchema);
             ArrayNode tempArrNode = mapper.createArrayNode();
@@ -128,7 +141,28 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 }
                 break;
             case STRING:
-                if (unionTypes.contains(Schema.Type.STRING)) {
+                if (unionTypes.contains(Schema.Type.ENUM)) {
+                    String val = message.asText();
+                    List<Schema> validEnumSchemas = schema.getTypes().stream()
+                            .filter(s -> isEnum(s, false))
+                            .filter(s -> s.getEnumSymbols().contains(val))
+                            .collect(Collectors.toList());
+                    switch (validEnumSchemas.size()) {
+                        case 0:
+                            break;
+                        case 1:
+                            mappedObject.replace(validEnumSchemas.get(0).getFullName(), message);
+                        default:
+                            // TODO: matched multiple enums, what to do?
+                            LOGGER.log(LogModel.warning("Matched multiple enums: {} => {}")
+                                    .addArg(message.asText())
+                                    .addArg(validEnumSchemas.stream()
+                                            .map(s -> s.getName())
+                                            .collect(Collectors.toList()))
+                                    .build());
+                            break;
+                    }
+                } else if (unionTypes.contains(Schema.Type.STRING)) {
                     mappedObject.put("string", message.asText());
                 }
                 break;
@@ -144,8 +178,11 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 break;
             case OBJECT:
                 if (unionTypes.contains(Schema.Type.RECORD)) {
-                    Opt.of(getRecordSchema(schema))
-                        .ifPresent(recSchema -> mappedObject.replace(recSchema.getFullName(), message));
+                    Opt.of(getRecordSchema(message, schema))
+                            .ifPresent(recSchema -> mappedObject.replace(recSchema.getFullName(), message));
+                }
+                if (unionTypes.contains(Schema.Type.MAP)) {
+                    mappedObject.replace("map", message);
                 }
                 break;
             case POJO:
@@ -183,6 +220,18 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         return isType(schema, allowUnion, Schema.Type.RECORD);
     }
 
+    private boolean isMap(Schema schema, boolean allowUnion) {
+        return isType(schema, allowUnion, Schema.Type.MAP);
+    }
+
+    private boolean isNullable(Schema schema, boolean allowUnion) {
+        return isType(schema, allowUnion, Schema.Type.NULL);
+    }
+
+    private boolean isEnum(Schema schema, boolean allowUnion) {
+        return isType(schema, allowUnion, Schema.Type.ENUM);
+    }
+
     private boolean isArray(Schema schema, boolean allowUnion) {
         return isType(schema, allowUnion, Schema.Type.ARRAY);
     }
@@ -197,7 +246,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         return schema.getType().equals(type);
     }
 
-    public Schema getRecordSchema(Schema unionSchema) {
+    public Schema getRecordSchema(JsonNode message, Schema unionSchema) {
         Schema recSchema = null;
         List<Schema> records = unionSchema.getTypes().stream()
                 .filter(t -> isRecord(t, false))
@@ -205,34 +254,42 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         if (records.size() == 1) {
             recSchema = records.get(0);
         } else {
-            // uhhhhh... wut now?
+            List<Schema> matchedSchemas = records.stream()
+                    .filter(r -> checkSchemaMatch(message, r))
+                    .collect(Collectors.toList());
+            recSchema = getSingleFromList(matchedSchemas);
         }
         return recSchema;
     }
 
-    public Schema getArraySchema(Schema unionSchema) {
-        Schema arrSchema = null;
-        List<Schema> records = unionSchema.getTypes().stream()
+    public Schema getMapSchema(JsonNode message, Schema unionSchema) {
+        List<Schema> maps = unionSchema.getTypes().stream()
+                .filter(t -> isMap(t, false))
+                .collect(Collectors.toList());
+        return getSingleFromList(maps);
+    }
+
+    public Schema getArraySchema(JsonNode message, Schema unionSchema) {
+        List<Schema> arraySchemas = unionSchema.getTypes().stream()
                 .filter(t -> isArray(t, false))
                 .collect(Collectors.toList());
-        if (records.size() == 1) {
-            arrSchema = records.get(0);
-        } else {
-            // uhhhhh... wut now?
+        return getSingleFromList(arraySchemas);
+    }
+
+    private Schema getSingleFromList(List<Schema> schemas) {
+        switch (schemas.size()) {
+            case 0:
+                throw new RuntimeException("Could not find any matching schemas");
+            case 1:
+                return schemas.get(0);
+            default:
+                throw new RuntimeException("Found multiple matching schemas");
         }
-        return arrSchema;
     }
 
     public Schema guessSchema(JsonNode message, List<Schema> validSchemas) {
         Map<Schema.Type, List<Schema>> typeMap = validSchemas.stream()
                 .collect(Collectors.groupingBy(s -> s.getType()));
-        typeMap.entrySet().stream().forEach(e -> {
-            if (e.getValue().size() > 1) {
-                LOGGER.log(LogModel.error("Found duplicate schemas for type: ")
-                        .addArg(e.getKey())
-                        .build());
-            }
-        });
         Schema bestGuess = null;
         switch (message.getNodeType()) {
             case BOOLEAN:
@@ -244,7 +301,25 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 if (typeMap.containsKey(Schema.Type.BOOLEAN)) {
                     bestGuess = typeMap.get(Schema.Type.BOOLEAN).get(0);
                 }
-                if (typeMap.containsKey(Schema.Type.STRING)) {
+                if (bestGuess == null && typeMap.containsKey(Schema.Type.ENUM)) {
+                    List<Schema> validEnumSchemas = guessEnumType(message.asText(), typeMap.get(Schema.Type.ENUM));
+                    switch (validEnumSchemas.size()) {
+                        case 0:
+                            break;
+                        case 1:
+                            bestGuess = validEnumSchemas.get(0);
+                        default:
+                            // TODO: matched multiple enums, what to do?
+                            LOGGER.log(LogModel.warning("Matched multiple enums: {} => {}")
+                                    .addArg(message.asText())
+                                    .addArg(validEnumSchemas.stream()
+                                            .map(s -> s.getName())
+                                            .collect(Collectors.toList()))
+                                    .build());
+                            break;
+                    }
+                }
+                if (bestGuess == null && typeMap.containsKey(Schema.Type.STRING)) {
                     bestGuess = typeMap.get(Schema.Type.STRING).get(0);
                 }
                 break;
@@ -261,7 +336,18 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 break;
             case OBJECT:
                 if (typeMap.containsKey(Schema.Type.RECORD)) {
-                    bestGuess = typeMap.get(Schema.Type.RECORD).get(0);
+                    List<Schema> matchedSchemas = typeMap.get(Schema.Type.RECORD).stream()
+                            .filter(s -> checkSchemaMatch(message, s))
+                            .collect(Collectors.toList());
+                    switch (matchedSchemas.size()) {
+                        case 0:
+                            throw new RuntimeException("Could not find matching schema");
+                        case 1:
+                            bestGuess = matchedSchemas.get(0);
+                            break;
+                        default:
+                            throw new RuntimeException("Found multiple matching schemas");
+                    }
                 }
                 break;
             case POJO:
@@ -281,5 +367,31 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                 break;
         }
         return bestGuess;
+    }
+
+    public List<Schema> guessEnumType(String val, List<Schema> validEnumSchemas) {
+        return validEnumSchemas.stream()
+                .filter(s -> isEnum(s, false))
+                .filter(s -> s.getEnumSymbols().contains(val))
+                .collect(Collectors.toList());
+    }
+
+    public boolean checkSchemaMatch(JsonNode message, Schema recordSchema) {
+        List<Schema.Field> fields = recordSchema.getFields();
+        Set<String> schemaFieldNameSet = fields.stream()
+                .map(f -> f.name())
+                .collect(Collectors.toSet());
+        long extraSchemaFields = fields.stream()
+                .filter(f -> !fieldIsValid(message, f))
+                .count();
+        long extraMessageFields = StreamUtils.asStream(message.fieldNames())
+                .filter(n -> !schemaFieldNameSet.contains(n))
+                .count();
+        return extraSchemaFields == 0 && extraMessageFields == 0;
+    }
+
+    public boolean fieldIsValid(JsonNode message, Schema.Field f) {
+        String name = f.name();
+        return message.has(name) || isNullable(f.schema(), true);
     }
 }

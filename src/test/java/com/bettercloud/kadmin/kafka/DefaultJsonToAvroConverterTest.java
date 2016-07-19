@@ -291,6 +291,23 @@ public class DefaultJsonToAvroConverterTest {
         test(json.toString(), schema.toString(), expected.toString());
     }
 
+    @Test
+    public void testCanonicalPayload() throws IOException {
+        JsonNode json = mapper.readTree(
+                DefaultJsonToAvroConverterTest.class.getResource("/test/avro/CanonicalPayload.01.json")
+        );
+
+        JsonNode expected = mapper.readTree(
+                DefaultJsonToAvroConverterTest.class.getResourceAsStream("/test/avro/CanonicalPayload.01.expected.json")
+        );
+
+        JsonNode schema = mapper.readTree(
+                DefaultJsonToAvroConverterTest.class.getResourceAsStream("/test/avro/CanonicalPayload.schema.json")
+        );
+
+        test(json.toString(), schema.toString(), expected.toString());
+    }
+
     public void test(String json, String schema) {
         test(json, schema, json);
     }
