@@ -79,7 +79,7 @@ public class KafkaMessageConsumerResource {
                                                @RequestParam("size") Optional<Integer> queueSize) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         if (!handlerMap.containsKey(key)) {
-            Integer maxSize = queueSize.orElse(25);
+            Integer maxSize = queueSize.filter(s -> s < 100).orElse(50);
             QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
             handlerMap.put(key, TimedWrapper.of(queue));
             kps.consumerService(queue, topic, kafkaUrl.orElse(null), schemaUrl.orElse(null)).start();
@@ -88,7 +88,7 @@ public class KafkaMessageConsumerResource {
         Long since = getSince(oSince, oWindow);
         Page<JsonNode> page = null;
         try {
-            page = new Page<JsonNode>();
+            page = new Page<>();
             page.setContent(handler.get(since).stream()
                     .map(m -> (QueuedKafkaMessageHandler.MessageContainer) m)
                     .map(mc -> {
