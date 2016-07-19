@@ -1,6 +1,8 @@
 package com.bettercloud.kadmin.io.network.rest;
 
+import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
 import com.bettercloud.kadmin.api.models.SchemaInfo;
+import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
@@ -32,129 +34,79 @@ import java.util.stream.StreamSupport;
  * Created by davidesposito on 7/6/16.
  */
 @RestController
-@RequestMapping(path = "/schemas")
+@RequestMapping(path = "/api")
 public class SchemaProxyResource {
 
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger LOGGER = LoggerUtils.get(SchemaProxyResource.class);
 
-    @Value("${schema.registry.url:http://localhost:8081}")
-    private String schemaRegistryUrl;
-
-    private final HttpClient client;
+    private final SchemaRegistryService schemaRegistryService;
 
     @Autowired
-    public SchemaProxyResource(HttpClient defaultClient) {
-        this.client = defaultClient;
+    public SchemaProxyResource(SchemaRegistryService schemaRegistryService) {
+        this.schemaRegistryService = schemaRegistryService;
     }
 
     @RequestMapping(
+            path = "/schemas",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<List<String>> schemas(@RequestParam("url") Optional<String> oUrl) {
-        String url = String.format("%s/subjects",
-                oUrl.orElse(this.schemaRegistryUrl)
-        );
-        NodeConverter<List<String>> c = (node) -> {
-            if (node.isArray()) {
-                ArrayNode arr = (ArrayNode) node;
-                return StreamSupport.stream(arr.spliterator(), false)
-                        .map(n -> n.asText())
-                        .collect(Collectors.toList());
-            }
-            return null;
-        };
-        return proxyResponse(url, c, null);
+        try {
+            return ResponseEntity.ok(schemaRegistryService.findAll(oUrl));
+        } catch (SchemaRegistryRestException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .header("error-message", e.getMessage())
+                    .body(null);
+        }
     }
 
     @RequestMapping(
-            path = "/{name}",
+            path = "/topics",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<List<String>> topics(@RequestParam("url") Optional<String> oUrl) {
+        try {
+            return ResponseEntity.ok(schemaRegistryService.guessAllTopics(oUrl));
+        } catch (SchemaRegistryRestException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .header("error-message", e.getMessage())
+                    .body(null);
+        }
+    }
+
+    @RequestMapping(
+            path = "/schemas/{name}",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<SchemaInfo> info(@PathVariable("name") String name,
                                                   @RequestParam("url") Optional<String> oUrl) {
-        String url = String.format("%s/subjects/%s/versions",
-                oUrl.orElse(this.schemaRegistryUrl),
-                name
-        );
-        NodeConverter<List<Integer>> c = (node) -> {
-            if (node.isArray()) {
-                ArrayNode arr = (ArrayNode) node;
-                return StreamSupport.stream(arr.spliterator(), false)
-                        .map(n -> n.asInt())
-                        .collect(Collectors.toList());
-            }
-            return null;
-        };
-        List<Integer> versions = null;
-        JsonNode currSchema = null;
-        int statusCode = 200;
-        ResponseEntity<List<Integer>> versionsRes = proxyResponse(url, c, null);
-        if (versionsRes.getStatusCode().is2xxSuccessful()) {
-            versions = versionsRes.getBody();
-            ResponseEntity<JsonNode> info = version(name, versions.get(versions.size() - 1), oUrl);
-            if (info.getStatusCode().is2xxSuccessful()) {
-                currSchema = info.getBody();
-            } else {
-                statusCode = info.getStatusCode().value();
-            }
-        } else {
-            statusCode = versionsRes.getStatusCode().value();
+        try {
+            return ResponseEntity.ok(schemaRegistryService.getInfo(name, oUrl));
+        } catch (SchemaRegistryRestException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .header("error-message", e.getMessage())
+                    .body(null);
         }
-        if (statusCode != 200) {
-            return ResponseEntity.status(statusCode).body(SchemaInfo.builder()
-                    .name(name)
-                    .build());
-        }
-        return ResponseEntity.ok(SchemaInfo.builder()
-                .name(name)
-                .versions(versions)
-                .currSchema(currSchema)
-                .build());
     }
 
     @RequestMapping(
-            path = "/{name}/{version}",
+            path = "/schemas/{name}/{version}",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<JsonNode> version(@PathVariable("name") String name,
                                                   @PathVariable("version") Integer version,
                                                   @RequestParam("url") Optional<String> oUrl) {
-        String url = String.format("%s/subjects/%s/versions/%d",
-                oUrl.orElse(this.schemaRegistryUrl),
-                name,
-                version
-        );
-        return proxyResponse(url, n -> n, null);
-    }
-
-    private <ResponseT> ResponseEntity<ResponseT> proxyResponse(String url, NodeConverter<ResponseT> c, ResponseT defaultVal) {
-        HttpGet get = new HttpGet(url);
         try {
-            HttpResponse res = client.execute(get);
-            int statusCode = res.getStatusLine().getStatusCode();
-            if (statusCode != 200) {
-                LOGGER.log(LogModel.error("Non 200 status: {}")
-                        .addArg(statusCode)
-                        .build());
-                return ResponseEntity.status(statusCode).body(defaultVal);
-            }
-            ResponseT val = c.convert(mapper.readTree(res.getEntity().getContent()));
-            if (val == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultVal);
-            }
-            return ResponseEntity.ok(val);
-        } catch (IOException e) {
-            LOGGER.log(LogModel.error("There was an error: {}")
-                    .addArg(e.getMessage())
-                    .error(e)
-                    .build());
-            e.printStackTrace();
+            return ResponseEntity.ok(schemaRegistryService.getVersion(name, version, oUrl));
+        } catch (SchemaRegistryRestException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .header("error-message", e.getMessage())
+                    .body(null);
         }
-        LOGGER.log(LogModel.error("There was an unknown error").build());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(defaultVal);
     }
 }

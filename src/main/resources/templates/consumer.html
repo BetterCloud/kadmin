@@ -41,11 +41,21 @@
                         <div class="form-group col-sm-6">
                             <label for="schemaurl">Kafka Schema Registry Url</label>
                             <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081" />
+                            <button class="btn btn-success" id="refresh-topics-btn">Refresh Topics</button>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="topic">Topic</label>
-                        <input type="text" class="form-control" id="topic" />
+                        <div class="row">
+                            <div class="col-xs-4">
+                                <select id="topic-dd" class="form-control">
+                                    <option>Loading topics...</option>
+                                </select>
+                            </div>
+                            <div class="col-xs-8">
+                                <input type="text" class="form-control" id="topic" />
+                            </div>
+                        </div>
                     </div>
                     <div class="row text-right">
                         <button class="btn btn-primary" id="start-consumer-btn" >
@@ -108,11 +118,25 @@
                 },
                 messageTemplate = _.template(""),
                 $messageList = $('#message-list'),
-                clipboard = null;
+                clipboard = null,
+                $topicsSelect = $('#topic-dd');
 
             $.get([[${contextPath}]] + "/message-tile-template.html", function (html) {
                 messageTemplate = _.template(html);
             });
+
+            function refreshTopics() {
+                $.get([[${contextPath}]] + "/api/topics", handleNewTopics);
+            }
+
+            function handleNewTopics(data) {
+                $topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
+                _.each(data, function(topicName) {
+                    $topicsSelect.append("<option>" + topicName + "</option>");
+                });
+            }
+            // call immediately
+            refreshTopics();
 
             function initConfig() {
                 let topic = $('#topic').val();
@@ -204,7 +228,7 @@
             }
 
             function buildUrl() {
-                let url = [[${contextPath}]] + "/kafka/read/" + consumerConfig.topic + "?";
+                let url = [[${contextPath}]] + "/api/kafka/read/" + consumerConfig.topic + "?";
                 if (!!consumerConfig.kafkaUrl) {
                     url += "kafkaUrl=" + consumerConfig.kafkaUrl + "&";
                 }
@@ -270,6 +294,14 @@
                 $('#start-consumer-btn').click(function(e) {
                     e.preventDefault();
                     refresh();
+                });
+                $('#refresh-topics-btn').click(refreshTopics);
+                $topicsSelect.change(function() {
+                    let val = $topicsSelect.val();
+                    // TODO: regex check
+//                    if (val.matches(/[\w-]+/)) {
+                        $('#topic').val(val);
+//                    }
                 });
             });
             /*]]>*/

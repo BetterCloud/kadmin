@@ -30,6 +30,11 @@
                         <div class="form-group col-sm-6">
                             <label for="schemaurl">Kafka Schema Registry Url</label>
                             <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081" />
+                            <div>
+                                <button class="btn btn-success" id="refresh-schemas-btn">
+                                    Refresh Schemas
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -39,7 +44,17 @@
                     <div class="row">
                         <div class="form-group col-sm-6">
                             <label for="topic">Topic</label>
-                            <input type="text" class="form-control" id="topic" />
+                            <!--<input type="text" class="form-control" id="topic" />-->
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <select id="topic-dd" class="form-control">
+                                        <option>Loading topics...</option>
+                                    </select>
+                                </div>
+                                <div class="col-xs-8">
+                                    <input type="text" class="form-control" id="topic" />
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group col-sm-6">
                             <label for="count">Count (number to send)</label>
@@ -52,11 +67,6 @@
                 <div class="panel-body">
                     <div class="select-row row">
                         <div class="col-sm-3">
-                            <div>
-                                <button class="btn btn-success" id="refresh-schemas-btn">
-                                    Refresh Schemas
-                                </button>
-                            </div>
                             <div class="form-group">
                                 <label for="schema">Schema</label>
                                 <select class="form-control" id="schema">
@@ -104,7 +114,8 @@
                 $schemas = $('#schema'),
                 $schemaVersions = $('#schema-version'),
                 $aceMessage = ace.edit("ace-message"),
-                $aceSchema = ace.edit("ace-schema");
+                $aceSchema = ace.edit("ace-schema"),
+                $topicsSelect = $('#topic-dd');
 
             $.get([[${contextPath}]] + "/sent-info-template.html", function (html) {
                 sentInfoTemplate = _.template(html);
@@ -118,11 +129,24 @@
             $aceSchema.setTheme("ace/theme/chrome");
             $aceSchema.getSession().setMode("ace/mode/json");
 
+            function refreshTopics() {
+                $.get([[${contextPath}]] + "/api/topics", handleNewTopics);
+            }
+
+            function handleNewTopics(data) {
+                $topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
+                _.each(data, function(topicName) {
+                    $topicsSelect.append("<option>" + topicName + "</option>");
+                });
+            }
+            // call immediately
+            refreshTopics();
+
             function sendMessage() {
                 let req = buildRequest();
                 $.ajax({
                     type: "POST",
-                    url: [[${contextPath}]] + "/kafka/publish?count=" + getCount(),
+                    url: [[${contextPath}]] + "/api/kafka/publish?count=" + getCount(),
                     headers: {
                         "Content-Type": "application/json",
                         Accept: "application/json;charset=UTF-8"
@@ -182,7 +206,7 @@
             }
 
             function refreshSchemas() {
-                let url = [[${contextPath}]] + "/schemas",
+                let url = [[${contextPath}]] + "/api/schemas",
                     schemaUrl = $('#schemaurl').val();
                 if (schemaUrl !== '') {
                     url += "?url=" + schemaUrl;
@@ -203,7 +227,7 @@
             function handleNewSchema() {
                 let name = $schemas.val();
                 if (name !== 'null') {
-                    $.get([[${contextPath}]] + '/schemas/' + name, function(data) {
+                    $.get([[${contextPath}]] + '/api/schemas/' + name, function(data) {
                         console.log(data);
                         let curr = data.currSchema,
                             v = curr.version,
@@ -223,7 +247,7 @@
                 let name = $schemas.val(),
                     ver = $schemaVersions.val();
                 if (!!name && name !== '' && !!ver && ver !== '') {
-                    $.get([[${contextPath}]] + '/schemas/' + name + "/" + ver, function(data) {
+                    $.get([[${contextPath}]] + '/api/schemas/' + name + "/" + ver, function(data) {
                         console.log(data);
                         let rawSchema = JSON.stringify(JSON.parse(data.schema), null, 2);
                         $aceSchema.setValue(rawSchema);
@@ -239,10 +263,18 @@
                 $('#refresh-schemas-btn').click(function(e) {
                     e.preventDefault();
                     refreshSchemas();
+                    refreshTopics();
                 });
                 refreshSchemas();
                 $schemas.change(handleNewSchema);
                 $schemaVersions.change(handleNewVersion);
+                $topicsSelect.change(function() {
+                    let val = $topicsSelect.val();
+                    // TODO: regex check
+//                    if (val.matches(/[\w-]+/)) {
+                    $('#topic').val(val);
+//                    }
+                });
             });
             /*]]>*/
         </script>

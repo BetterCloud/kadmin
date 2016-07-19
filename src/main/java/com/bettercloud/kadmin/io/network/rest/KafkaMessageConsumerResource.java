@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Created by davidesposito on 7/5/16.
  */
 @RestController
-@RequestMapping("/kafka/read")
+@RequestMapping("/api/kafka/read")
 public class KafkaMessageConsumerResource {
 
     private static final Logger LOGGER = LoggerUtils.get(KafkaMessageConsumerResource.class);

@@ -5,11 +5,19 @@ package com.bettercloud.kadmin.api.kafka;
  */
 public class SchemaRegistryRestException extends Exception {
 
-    public SchemaRegistryRestException(String message) {
+    private final int statusCode;
+
+    public SchemaRegistryRestException(String message, int statusCode) {
         super(message);
+        this.statusCode = statusCode;
     }
 
-    public SchemaRegistryRestException(String message, Throwable cause) {
+    public SchemaRegistryRestException(String message, Throwable cause, int statusCode) {
         super(message, cause);
+        this.statusCode = statusCode;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
     }
 }

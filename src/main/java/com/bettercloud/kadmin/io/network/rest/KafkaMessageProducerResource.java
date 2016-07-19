@@ -29,7 +29,7 @@ import java.util.Optional;
  * Created by davidesposito on 7/1/16.
  */
 @RestController
-@RequestMapping("/kafka")
+@RequestMapping("/api/kafka")
 public class KafkaMessageProducerResource {
 
     private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class, LogLevel.TRACE);
