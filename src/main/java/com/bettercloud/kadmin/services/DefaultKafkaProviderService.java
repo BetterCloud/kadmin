@@ -119,7 +119,8 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         properties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 1000);
         properties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 32 * 1024);
-        properties.put("auto.offset.reset", "earliest");
+        // TODO: getting rid of this because of log infinite loop hell
+//        properties.put("auto.offset.reset", "earliest");
         return properties;
 
     }
