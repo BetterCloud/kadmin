@@ -1,0 +1,196 @@
+{
+  "header": {
+    "tenantId": "bd303621-c0d5-4625-8235-afb52488f277",
+    "providerId": "7c7cb499-00ef-11e6-a8bb-09d7f4163a23",
+    "operation": "UpdatedUser",
+    "correlationId": "06233055-a797-4030-b899-43854afbc8f0",
+    "timestamp": 1468869220294
+  },
+  "data": {
+    "com.bettercloud.directory.models.canonical.UpdatedEventData": {
+      "changedData": {
+        "com.bettercloud.directory.models.canonical.ChangedData": {
+          "oldValues": {
+            "map": {
+              "orgUnitRelationalId": null
+            }
+          },
+          "newValues": {
+            "map": {
+              "orgUnitRelationalId": {
+                "string": "/test OU"
+              }
+            }
+          }
+        }
+      },
+      "oldData": {
+        "com.bettercloud.directory.models.canonical.CanonicalUser": {
+          "userId": {
+            "string": "3dc8b322-4542-11e6-9b9b-811164c15f64"
+          },
+          "externalUserId": {
+            "string": "108285540337714935123"
+          },
+          "betterCloudUserId": {
+            "string": "3dc8b323-4542-11e6-9b9b-7b556c73fd81"
+          },
+          "orgUnit": null,
+          "name": {
+            "com.bettercloud.directory.models.canonical.CanonicalUserName": {
+              "displayName": {
+                "string": "Robert Plant"
+              },
+              "familyName": {
+                "string": "Plant"
+              },
+              "givenName": {
+                "string": "Robert"
+              },
+              "middleName": null,
+              "nickName": null,
+              "honorificPrefix": null,
+              "honorificSuffix": null
+            }
+          },
+          "addresses": null,
+          "department": null,
+          "title": null,
+          "manager": null,
+          "phoneNumbers": null,
+          "active": {
+            "boolean": true
+          },
+          "language": null,
+          "locale": null,
+          "timezone": null,
+          "userType": null,
+          "emails": {
+            "array": [{
+              "value": {
+                "string": "robert.plant@autotestalias.cloud8labs.com"
+              },
+              "type": null,
+              "primary": {
+                "boolean": false
+              }
+            }, {
+              "value": {
+                "string": "robert.plant@autotest.cloud8labs.com"
+              },
+              "type": null,
+              "primary": {
+                "boolean": true
+              }
+            }]
+          },
+          "admin": {
+            "boolean": false
+          },
+          "lastLogin": null,
+          "meta": {
+            "com.bettercloud.directory.models.canonical.CanonicalMeta": {
+              "lastModified": null,
+              "created": {
+                "string": "2016-06-22T20:58:45Z"
+              }
+            }
+          },
+          "raw": {
+            "string": "{\"agreedToTerms\":true,\"changePasswordAtNextLogin\":true,\"creationTime\":\"2016-06-22T20:58:45.000Z\",\"customerId\":\"C025v3b7k\",\"emails\":[{\"address\":\"robert.plant@autotestalias.cloud8labs.com\"},{\"address\":\"robert.plant@autotest.cloud8labs.com\",\"primary\":true}],\"etag\":\"\\\"XGyyUMiAmCo7o31SWwFDDNla4RE/9J7W_5kOcDppzddRRXwUVR7qEQY\\\"\",\"id\":\"108285540337714935123\",\"includeInGlobalAddressList\":true,\"ipWhitelisted\":false,\"isAdmin\":false,\"isDelegatedAdmin\":false,\"isMailboxSetup\":true,\"kind\":\"admin#directory#user\",\"lastLoginTime\":\"1970-01-01T00:00:00.000Z\",\"name\":{\"familyName\":\"Plant\",\"fullName\":\"Robert Plant\",\"givenName\":\"Robert\"},\"nonEditableAliases\":[\"robert.plant@autotest.cloud8labs.com.test-google-a.com\",\"robert.plant@autotestalias.cloud8labs.com\"],\"orgUnitPath\":\"/test OU\",\"primaryEmail\":\"robert.plant@autotest.cloud8labs.com\",\"suspended\":false}"
+          }
+        }
+      },
+      "newData": {
+        "com.bettercloud.directory.models.canonical.CanonicalUser": {
+          "userId": {
+            "string": "3dc8b322-4542-11e6-9b9b-811164c15f64"
+          },
+          "externalUserId": {
+            "string": "108285540337714935123"
+          },
+          "betterCloudUserId": {
+            "string": "3dc8b323-4542-11e6-9b9b-7b556c73fd81"
+          },
+          "orgUnit": {
+            "com.bettercloud.directory.models.canonical.CanonicalOrgUnit": {
+              "orgUnitId": null,
+              "externalOrgUnitId": "/test OU",
+              "name": null,
+              "description": null,
+              "parentOrgUnit": null,
+              "memberCount": null,
+              "inheritsSettings": null,
+              "meta": null,
+              "raw": null,
+              "path": null
+            }
+          },
+          "name": {
+            "com.bettercloud.directory.models.canonical.CanonicalUserName": {
+              "displayName": {
+                "string": "Robert Plant"
+              },
+              "familyName": {
+                "string": "Plant"
+              },
+              "givenName": {
+                "string": "Robert"
+              },
+              "middleName": null,
+              "nickName": null,
+              "honorificPrefix": null,
+              "honorificSuffix": null
+            }
+          },
+          "addresses": null,
+          "department": null,
+          "title": null,
+          "manager": null,
+          "phoneNumbers": null,
+          "active": {
+            "boolean": true
+          },
+          "language": null,
+          "locale": null,
+          "timezone": null,
+          "userType": null,
+          "emails": {
+            "array": [{
+              "value": {
+                "string": "robert.plant@autotestalias.cloud8labs.com"
+              },
+              "type": null,
+              "primary": {
+                "boolean": false
+              }
+            }, {
+              "value": {
+                "string": "robert.plant@autotest.cloud8labs.com"
+              },
+              "type": null,
+              "primary": {
+                "boolean": true
+              }
+            }]
+          },
+          "admin": {
+            "boolean": false
+          },
+          "lastLogin": null,
+          "meta": {
+            "com.bettercloud.directory.models.canonical.CanonicalMeta": {
+              "lastModified": null,
+              "created": {
+                "string": "2016-06-22T20:58:45Z"
+              }
+            }
+          },
+          "raw": {
+            "string": "{\"agreedToTerms\":true,\"changePasswordAtNextLogin\":true,\"creationTime\":\"2016-06-22T20:58:45.000Z\",\"customerId\":\"C025v3b7k\",\"emails\":[{\"address\":\"robert.plant@autotestalias.cloud8labs.com\"},{\"address\":\"robert.plant@autotest.cloud8labs.com\",\"primary\":true}],\"etag\":\"\\\"XGyyUMiAmCo7o31SWwFDDNla4RE/nspdO-LT5tBniT3E1njNdLVh9cU\\\"\",\"id\":\"108285540337714935123\",\"includeInGlobalAddressList\":true,\"ipWhitelisted\":false,\"isAdmin\":false,\"isDelegatedAdmin\":false,\"isMailboxSetup\":true,\"kind\":\"admin#directory#user\",\"lastLoginTime\":\"1970-01-01T00:00:00.000Z\",\"name\":{\"familyName\":\"Plant\",\"fullName\":\"Robert Plant\",\"givenName\":\"Robert\"},\"nonEditableAliases\":[\"robert.plant@autotest.cloud8labs.com.test-google-a.com\",\"robert.plant@autotestalias.cloud8labs.com\"],\"orgUnitPath\":\"/test OU\",\"primaryEmail\":\"robert.plant@autotest.cloud8labs.com\",\"suspended\":false}"
+          }
+        }
+      }
+    }
+  }
+}
