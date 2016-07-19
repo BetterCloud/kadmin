@@ -14,7 +14,7 @@
             .null { color: black; }
             .key { color: rgb(49, 132, 149); }
 
-            .copy-btn {
+            .copy-btn, .collapse-btn {
                 float: right;
             }
             .raw-message {
@@ -93,6 +93,7 @@
                 <div class="header-row">
                     <h2 id="message-list-title">Messages</h2>
                     <div id="since-row"></div>
+                    <div class="text-muted">NOTE: Collapse works weird with auto-refresh intervals. You should set the refresh interval to manual before using the collapse button.</div>
                 </div>
                 <div id="message-list"></div>
             </div>
@@ -168,6 +169,7 @@
                 $("#kafkahost").prop("disabled", true);
                 $("#schemaurl").prop("disabled", true);
                 $("#topic").prop("disabled", true);
+                $topicsSelect.prop("disabled", true);
                 $("#start-consumer-btn").addClass("disabled");
             }
 
@@ -247,6 +249,7 @@
                 document.title = "(" + data.totalElements + ") " + consumerConfig.topic;
                 _.each(data.content, function(ele) {
                     let html = "";
+                    ele.uuid = uniqueId();
                     ele.writeTimeText = moment(ele.writeTime).format('LTS');
                     ele.messageText = "null";
                     if (!!ele.message) {
@@ -258,6 +261,13 @@
                     $messageList.prepend(html);
                 });
                 clipboard = new Clipboard('.copy-btn');
+            }
+
+            function uniqueId() {
+                return 'xxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+                    return v.toString(16);
+                });
             }
 
             function syntaxHighlight(json) {

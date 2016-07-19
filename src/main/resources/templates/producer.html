@@ -9,6 +9,10 @@
                 height: 30em;
                 border: 1px solid #cccccc;
             }
+
+            .send-and-results-row {
+                margin-bottom: 4em;
+            }
         </style>
     </head>
     <body>
@@ -91,12 +95,16 @@
                 <label for="ace-message">JSON Message</label>
                 <div id="ace-message"></div>
             </div>
-            <div class="row text-right">
-                <button class="btn btn-primary" id="send-message-btn">
-                    Send
-                </button>
+            <div class="row send-and-results-row">
+                <div class="col-xs-10">
+                    <div id="sent-results-row"></div>
+                </div>
+                <div class="col-xs-2 text-center">
+                    <button class="btn btn-primary" id="send-message-btn">
+                        Send
+                    </button>
+                </div>
             </div>
-            <div id="sent-results-row"></div>
         </div>
 
         <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
