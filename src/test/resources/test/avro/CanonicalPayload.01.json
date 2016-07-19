@@ -1,0 +1,118 @@
+{
+  "header": {
+    "tenantId": "bd303621-c0d5-4625-8235-afb52488f277",
+    "providerId": "7c7cb499-00ef-11e6-a8bb-09d7f4163a23",
+    "operation": "UpdatedUser",
+    "correlationId": "06233055-a797-4030-b899-43854afbc8f0",
+    "timestamp": 1468869220294
+  },
+  "data": {
+    "changedData": {
+      "oldValues": {
+        "orgUnitRelationalId": null
+      },
+      "newValues": {
+        "orgUnitRelationalId": "/test OU"
+      }
+    },
+    "oldData": {
+      "userId": "3dc8b322-4542-11e6-9b9b-811164c15f64",
+      "externalUserId": "108285540337714935123",
+      "betterCloudUserId": "3dc8b323-4542-11e6-9b9b-7b556c73fd81",
+      "orgUnit": null,
+      "name": {
+        "displayName": "Robert Plant",
+        "familyName": "Plant",
+        "givenName": "Robert",
+        "middleName": null,
+        "nickName": null,
+        "honorificPrefix": null,
+        "honorificSuffix": null
+      },
+      "addresses": null,
+      "department": null,
+      "title": null,
+      "manager": null,
+      "phoneNumbers": null,
+      "active": true,
+      "language": null,
+      "locale": null,
+      "timezone": null,
+      "userType": null,
+      "emails": [
+        {
+          "value": "robert.plant@autotestalias.cloud8labs.com",
+          "type": null,
+          "primary": false
+        },
+        {
+          "value": "robert.plant@autotest.cloud8labs.com",
+          "type": null,
+          "primary": true
+        }
+      ],
+      "admin": false,
+      "lastLogin": null,
+      "meta": {
+        "lastModified": null,
+        "created": "2016-06-22T20:58:45Z"
+      },
+      "raw": "{\"agreedToTerms\":true,\"changePasswordAtNextLogin\":true,\"creationTime\":\"2016-06-22T20:58:45.000Z\",\"customerId\":\"C025v3b7k\",\"emails\":[{\"address\":\"robert.plant@autotestalias.cloud8labs.com\"},{\"address\":\"robert.plant@autotest.cloud8labs.com\",\"primary\":true}],\"etag\":\"\\\"XGyyUMiAmCo7o31SWwFDDNla4RE/9J7W_5kOcDppzddRRXwUVR7qEQY\\\"\",\"id\":\"108285540337714935123\",\"includeInGlobalAddressList\":true,\"ipWhitelisted\":false,\"isAdmin\":false,\"isDelegatedAdmin\":false,\"isMailboxSetup\":true,\"kind\":\"admin#directory#user\",\"lastLoginTime\":\"1970-01-01T00:00:00.000Z\",\"name\":{\"familyName\":\"Plant\",\"fullName\":\"Robert Plant\",\"givenName\":\"Robert\"},\"nonEditableAliases\":[\"robert.plant@autotest.cloud8labs.com.test-google-a.com\",\"robert.plant@autotestalias.cloud8labs.com\"],\"orgUnitPath\":\"/test OU\",\"primaryEmail\":\"robert.plant@autotest.cloud8labs.com\",\"suspended\":false}"
+    },
+    "newData": {
+      "userId": "3dc8b322-4542-11e6-9b9b-811164c15f64",
+      "externalUserId": "108285540337714935123",
+      "betterCloudUserId": "3dc8b323-4542-11e6-9b9b-7b556c73fd81",
+      "orgUnit": {
+        "orgUnitId": null,
+        "externalOrgUnitId": "/test OU",
+        "name": null,
+        "description": null,
+        "parentOrgUnit": null,
+        "memberCount": null,
+        "inheritsSettings": null,
+        "meta": null,
+        "raw": null,
+        "path": null
+      },
+      "name": {
+        "displayName": "Robert Plant",
+        "familyName": "Plant",
+        "givenName": "Robert",
+        "middleName": null,
+        "nickName": null,
+        "honorificPrefix": null,
+        "honorificSuffix": null
+      },
+      "addresses": null,
+      "department": null,
+      "title": null,
+      "manager": null,
+      "phoneNumbers": null,
+      "active": true,
+      "language": null,
+      "locale": null,
+      "timezone": null,
+      "userType": null,
+      "emails": [
+        {
+          "value": "robert.plant@autotestalias.cloud8labs.com",
+          "type": null,
+          "primary": false
+        },
+        {
+          "value": "robert.plant@autotest.cloud8labs.com",
+          "type": null,
+          "primary": true
+        }
+      ],
+      "admin": false,
+      "lastLogin": null,
+      "meta": {
+        "lastModified": null,
+        "created": "2016-06-22T20:58:45Z"
+      },
+      "raw": "{\"agreedToTerms\":true,\"changePasswordAtNextLogin\":true,\"creationTime\":\"2016-06-22T20:58:45.000Z\",\"customerId\":\"C025v3b7k\",\"emails\":[{\"address\":\"robert.plant@autotestalias.cloud8labs.com\"},{\"address\":\"robert.plant@autotest.cloud8labs.com\",\"primary\":true}],\"etag\":\"\\\"XGyyUMiAmCo7o31SWwFDDNla4RE/nspdO-LT5tBniT3E1njNdLVh9cU\\\"\",\"id\":\"108285540337714935123\",\"includeInGlobalAddressList\":true,\"ipWhitelisted\":false,\"isAdmin\":false,\"isDelegatedAdmin\":false,\"isMailboxSetup\":true,\"kind\":\"admin#directory#user\",\"lastLoginTime\":\"1970-01-01T00:00:00.000Z\",\"name\":{\"familyName\":\"Plant\",\"fullName\":\"Robert Plant\",\"givenName\":\"Robert\"},\"nonEditableAliases\":[\"robert.plant@autotest.cloud8labs.com.test-google-a.com\",\"robert.plant@autotestalias.cloud8labs.com\"],\"orgUnitPath\":\"/test OU\",\"primaryEmail\":\"robert.plant@autotest.cloud8labs.com\",\"suspended\":false}"
+    }
+  }
+}

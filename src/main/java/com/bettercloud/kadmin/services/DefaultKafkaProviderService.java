@@ -1,6 +1,6 @@
-package com.bettercloud.kadmin.kafka;
+package com.bettercloud.kadmin.services;
 
-import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
+import com.bettercloud.kadmin.api.services.KafkaProviderService;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;

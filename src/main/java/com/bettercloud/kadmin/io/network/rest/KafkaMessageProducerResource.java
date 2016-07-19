@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
-import com.bettercloud.kadmin.api.kafka.KafkaProviderService;
+import com.bettercloud.kadmin.api.services.KafkaProviderService;
 import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.logger.services.LogLevel;
@@ -29,7 +29,7 @@ import java.util.Optional;
  * Created by davidesposito on 7/1/16.
  */
 @RestController
-@RequestMapping("/kafka")
+@RequestMapping("/api/kafka")
 public class KafkaMessageProducerResource {
 
     private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class, LogLevel.TRACE);
@@ -53,9 +53,9 @@ public class KafkaMessageProducerResource {
     )
     public ResponseEntity<ProducerResponse> publish(@RequestBody KafkaProduceRequestModel requestModel,
                                                  @RequestParam("count") Optional<Integer> oCount) {
-        LOGGER.log(LogModel.trace("/publish Received {}")
-                .addArg(requestModel)
-                .build());
+//        LOGGER.log(LogModel.trace("/publish Received {}")
+//                .addArg(requestModel)
+//                .build());
         if (requestModel.getRawMessage().getNodeType().equals(JsonNodeType.STRING)) {
             try {
                 requestModel.setRawMessage(MAPPER.readTree(requestModel.getRawMessage().asText()));
@@ -63,9 +63,9 @@ public class KafkaMessageProducerResource {
                 return ResponseUtil.error(e);
             }
         }
-        LOGGER.log(LogModel.trace("/publish Processing: {}")
-                .addArg(requestModel)
-                .build());
+//        LOGGER.log(LogModel.trace("/publish Processing: {}")
+//                .addArg(requestModel)
+//                .build());
         KafkaProduceMessageMeta meta = requestModel.getMeta();
         Object message;
         try {
@@ -95,9 +95,9 @@ public class KafkaMessageProducerResource {
         if (sendMessage) {
             res = sendMessage(ps, meta.getTopic(), message, oCount.orElse(1));
         }
-        LOGGER.log(LogModel.debug("/publish Produced: {}")
-                .addArg(requestModel)
-                .build());
+//        LOGGER.log(LogModel.debug("/publish Produced: {}")
+//                .addArg(requestModel)
+//                .build());
         return ResponseEntity.ok(res);
     }
 
@@ -115,6 +115,7 @@ public class KafkaMessageProducerResource {
                 ps.send(topic, payload);
                 success++;
             } catch (Exception e) {
+                e.printStackTrace();
                 LOGGER.log(LogModel.error("There was an error")
                         .error(e)
                         .build());
