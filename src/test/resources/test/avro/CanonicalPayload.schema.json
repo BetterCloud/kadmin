@@ -1,0 +1,874 @@
+{
+  "type": "record",
+  "name": "CanonicalPayload",
+  "namespace": "com.bettercloud.directory.models.canonical",
+  "fields": [
+    {
+      "name": "header",
+      "type": {
+        "type": "record",
+        "name": "CanonicalHeader",
+        "fields": [
+          {
+            "name": "tenantId",
+            "type": {
+              "type": "string",
+              "avro.java.string": "String"
+            }
+          },
+          {
+            "name": "providerId",
+            "type": {
+              "type": "string",
+              "avro.java.string": "String"
+            }
+          },
+          {
+            "name": "operation",
+            "type": {
+              "type": "enum",
+              "name": "CanonicalOperation",
+              "symbols": [
+                "CreatedUser",
+                "UpdatedUser",
+                "DeletedUser",
+                "CreatedGroup",
+                "UpdatedGroup",
+                "DeletedGroup",
+                "CreatedOrgUnit",
+                "UpdatedOrgUnit",
+                "DeletedOrgUnit",
+                "AddedGroupToGroup",
+                "RemovedGroupFromGroup",
+                "AddedUserToGroup",
+                "RemovedUserFromGroup"
+              ]
+            }
+          },
+          {
+            "name": "correlationId",
+            "type": {
+              "type": "string",
+              "avro.java.string": "String"
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "long"
+          }
+        ]
+      }
+    },
+    {
+      "name": "data",
+      "type": [
+        {
+          "type": "record",
+          "name": "CanonicalGroup",
+          "fields": [
+            {
+              "name": "groupId",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "externalGroupId",
+              "type": {
+                "type": "string",
+                "avro.java.string": "String"
+              }
+            },
+            {
+              "name": "name",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "description",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "orgUnit",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "CanonicalOrgUnit",
+                  "fields": [
+                    {
+                      "name": "orgUnitId",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "externalOrgUnitId",
+                      "type": {
+                        "type": "string",
+                        "avro.java.string": "String"
+                      }
+                    },
+                    {
+                      "name": "name",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "description",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "parentOrgUnit",
+                      "type": [
+                        "null",
+                        "CanonicalOrgUnit"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "memberCount",
+                      "type": [
+                        "null",
+                        "int"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "inheritsSettings",
+                      "type": [
+                        "null",
+                        "boolean"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "meta",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "CanonicalMeta",
+                          "fields": [
+                            {
+                              "name": "lastModified",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "created",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            }
+                          ]
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "raw",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "path",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "groupType",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "memberCount",
+              "type": [
+                "null",
+                "int"
+              ],
+              "default": null
+            },
+            {
+              "name": "status",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "emails",
+              "type": [
+                "null",
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "record",
+                    "name": "CanonicalEmail",
+                    "fields": [
+                      {
+                        "name": "value",
+                        "type": [
+                          "null",
+                          {
+                            "type": "string",
+                            "avro.java.string": "String"
+                          }
+                        ],
+                        "default": null
+                      },
+                      {
+                        "name": "type",
+                        "type": [
+                          "null",
+                          {
+                            "type": "string",
+                            "avro.java.string": "String"
+                          }
+                        ],
+                        "default": null
+                      },
+                      {
+                        "name": "primary",
+                        "type": [
+                          "null",
+                          "boolean"
+                        ],
+                        "default": null
+                      }
+                    ]
+                  }
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "meta",
+              "type": [
+                "null",
+                "CanonicalMeta"
+              ],
+              "default": null
+            },
+            {
+              "name": "raw",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "CanonicalMembership",
+          "fields": [
+            {
+              "name": "parent",
+              "type": "CanonicalGroup"
+            },
+            {
+              "name": "child",
+              "type": [
+                "CanonicalGroup",
+                {
+                  "type": "record",
+                  "name": "CanonicalUser",
+                  "fields": [
+                    {
+                      "name": "userId",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "externalUserId",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "betterCloudUserId",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "orgUnit",
+                      "type": [
+                        "null",
+                        "CanonicalOrgUnit"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "name",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "CanonicalUserName",
+                          "fields": [
+                            {
+                              "name": "displayName",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "familyName",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "givenName",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "middleName",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "nickName",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "honorificPrefix",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "honorificSuffix",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            }
+                          ]
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "addresses",
+                      "type": [
+                        "null",
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "CanonicalAddress",
+                            "fields": [
+                              {
+                                "name": "type",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "streetAddress",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "locality",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "region",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "postalCode",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "country",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "primary",
+                                "type": [
+                                  "null",
+                                  "boolean"
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "formatted",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "department",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "title",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "manager",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "phoneNumbers",
+                      "type": [
+                        "null",
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "CanonicalPhoneNumber",
+                            "fields": [
+                              {
+                                "name": "type",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "value",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "display",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                ],
+                                "default": null
+                              },
+                              {
+                                "name": "primary",
+                                "type": [
+                                  "null",
+                                  "boolean"
+                                ],
+                                "default": null
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "active",
+                      "type": [
+                        "null",
+                        "boolean"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "language",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "locale",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "timezone",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "userType",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "emails",
+                      "type": [
+                        "null",
+                        {
+                          "type": "array",
+                          "items": "CanonicalEmail"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "admin",
+                      "type": [
+                        "null",
+                        "boolean"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "lastLogin",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "meta",
+                      "type": [
+                        "null",
+                        "CanonicalMeta"
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "raw",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "raw",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            }
+          ]
+        },
+        "CanonicalOrgUnit",
+        "CanonicalUser",
+        {
+          "type": "record",
+          "name": "UpdatedEventData",
+          "fields": [
+            {
+              "name": "changedData",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "ChangedData",
+                  "fields": [
+                    {
+                      "name": "oldValues",
+                      "type": [
+                        "null",
+                        {
+                          "type": "map",
+                          "values": [
+                            "null",
+                            {
+                              "type": "string",
+                              "avro.java.string": "String"
+                            }
+                          ],
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "newValues",
+                      "type": [
+                        "null",
+                        {
+                          "type": "map",
+                          "values": [
+                            "null",
+                            {
+                              "type": "string",
+                              "avro.java.string": "String"
+                            }
+                          ],
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "oldData",
+              "type": [
+                "null",
+                "CanonicalGroup",
+                "CanonicalOrgUnit",
+                "CanonicalUser"
+              ],
+              "default": null
+            },
+            {
+              "name": "newData",
+              "type": [
+                "CanonicalGroup",
+                "CanonicalOrgUnit",
+                "CanonicalUser"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
