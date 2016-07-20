@@ -1,5 +1,9 @@
 package com.bettercloud.kadmin.io.network.rest;
 
+import com.bettercloud.kadmin.api.kafka.ConsumerGroup;
+import com.bettercloud.kadmin.api.kafka.KafkaConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.MessageHandler;
+import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.api.services.KafkaProviderService;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
@@ -7,13 +11,16 @@ import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
+import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import lombok.Builder;
 import lombok.Data;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,35 +43,36 @@ public class KafkaMessageConsumerResource {
     private static final Logger LOGGER = LoggerUtils.get(KafkaMessageConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Joiner keyBuilder = Joiner.on(':');
-    private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
-    private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
+//    private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
+//    private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
 
-    private final KafkaProviderService kps;
-    private final Map<String, TimedWrapper<QueuedKafkaMessageHandler>> handlerMap;
+    private final AvroConsumerGroupProviderService consumerProvider;
+    private final Map<String, TimedWrapper<ConsumerContainer>> consumerMap;
 
     @Autowired
-    public KafkaMessageConsumerResource(KafkaProviderService kps) {
-        this.kps = kps;
-        this.handlerMap = Maps.newHashMap();
+    public KafkaMessageConsumerResource(AvroConsumerGroupProviderService consumerProvider) {
+        this.consumerProvider = consumerProvider;
+        consumerMap = Maps.newConcurrentMap();
     }
 
-    @Scheduled(fixedRate = IDLE_CHECK_DELAY)
-    private void clearMemory() {
-        LOGGER.log(LogModel.info("Cleaning up connections/memory").build());
-        List<String> keys = handlerMap.keySet().stream()
-                .filter(k -> handlerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
-                .collect(Collectors.toList());
-        keys.stream()
-                .forEach(k -> {
-                    Opt.of(handlerMap.get(k)).ifPresent(handler -> handler.getData().clear());
-                    Opt.of(kps.lookupConsumer(k)).ifPresent(con -> con.dispose());
-                    Opt.of(kps.lookupProducer(k)).ifPresent(prod -> prod.dispose());
-                    LOGGER.log(LogModel.info("Disposing queue {} with timeout {}")
-                            .args(k, handlerMap.get(k).getIdleTime())
-                            .build());
-                });
-        System.gc();
-    }
+    // TODO: move to consumer provider service
+//    @Scheduled(fixedRate = IDLE_CHECK_DELAY)
+//    private void clearMemory() {
+//        LOGGER.log(LogModel.info("Cleaning up connections/memory").build());
+//        List<String> keys = handlerMap.keySet().stream()
+//                .filter(k -> handlerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
+//                .collect(Collectors.toList());
+//        keys.stream()
+//                .forEach(k -> {
+//                    Opt.of(handlerMap.get(k)).ifPresent(handler -> handler.getData().clear());
+//                    Opt.of(kps.lookupConsumer(k)).ifPresent(con -> con.dispose());
+//                    Opt.of(kps.lookupProducer(k)).ifPresent(prod -> prod.dispose());
+//                    LOGGER.log(LogModel.info("Disposing queue {} with timeout {}")
+//                            .args(k, handlerMap.get(k).getIdleTime())
+//                            .build());
+//                });
+//        System.gc();
+//    }
 
     @RequestMapping(
             path = "/{topic}",
@@ -78,18 +86,26 @@ public class KafkaMessageConsumerResource {
                                                @RequestParam("schemaUrl") Optional<String> schemaUrl,
                                                @RequestParam("size") Optional<Integer> queueSize) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
-        if (!handlerMap.containsKey(key)) {
+        if (!consumerMap.containsKey(key)) {
             Integer maxSize = queueSize.filter(s -> s < 100).orElse(50);
             QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
-            handlerMap.put(key, TimedWrapper.of(queue));
-            kps.consumerService(queue, topic, kafkaUrl.orElse(null), schemaUrl.orElse(null)).start();
+            ConsumerGroup<String, Object> consumer = consumerProvider.get(KafkaConsumerConfig.builder()
+                            .topic(topic)
+                            .kafkaHost(kafkaUrl.orElse(null))
+                            .schemaRegistryUrl(schemaUrl.orElse(null))
+                            .build(),
+                    true);
+            consumer.register(queue);
+            consumerMap.put(key, TimedWrapper.of(ConsumerContainer.builder()
+                    .consumer(consumer)
+                    .handler(queue)
+                    .build()));
         }
-        QueuedKafkaMessageHandler handler = handlerMap.get(key).getData();
+        QueuedKafkaMessageHandler handler = consumerMap.get(key).getData().getHandler();
         Long since = getSince(oSince, oWindow);
         Page<JsonNode> page = null;
         try {
-            page = new Page<>();
-            page.setContent(handler.get(since).stream()
+            List<JsonNode> messages = handler.get(since).stream()
                     .map(m -> (QueuedKafkaMessageHandler.MessageContainer) m)
                     .map(mc -> {
                         ObjectNode node = mapper.createObjectNode();
@@ -110,10 +126,13 @@ public class KafkaMessageConsumerResource {
                         // disgusting hack end
                         return node;
                     })
-                    .map(n -> (JsonNode)n)
-                    .collect(Collectors.toList()));
+                    .map(n -> (JsonNode) n)
+                    .collect(Collectors.toList());
+            page = new Page<>();
+            page.setPage(0);
+            page.setSize(messages.size());
             page.setTotalElements(handler.total());
-            new Page<JsonNode>();
+            page.setContent(messages);
         } catch (RuntimeException e) {
             return ResponseUtil.error(e);
         }
@@ -130,8 +149,8 @@ public class KafkaMessageConsumerResource {
                                          @RequestParam("schemaUrl") Optional<String> schemaUrl) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         boolean cleared = false;
-        if (handlerMap.containsKey(key) && handlerMap.get(key) != null) {
-            handlerMap.get(key).getData().clear();
+        if (consumerMap.containsKey(key) && consumerMap.get(key) != null) {
+            consumerMap.get(key).getData().getHandler().clear();
             cleared = true;
         }
         return ResponseEntity.ok(cleared);
@@ -147,9 +166,10 @@ public class KafkaMessageConsumerResource {
                                          @RequestParam("schemaUrl") Optional<String> schemaUrl) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         boolean cleared = false;
-        if (handlerMap.containsKey(key) && handlerMap.get(key) != null) {
-            handlerMap.get(key).getData().clear();
-            kps.disposeConsumer(topic, kafkaUrl.get(), schemaUrl.get());
+        if (consumerMap.containsKey(key) && consumerMap.get(key) != null) {
+            ConsumerContainer container = consumerMap.get(key).getData();
+            container.getHandler().clear();
+            container.getConsumer().shutdown();
             cleared = true;
         }
         return ResponseEntity.ok(cleared);
@@ -161,8 +181,9 @@ public class KafkaMessageConsumerResource {
     }
 
     @Data
-    private static class Page<T> {
-        private List<T> content;
-        private long totalElements;
+    @Builder
+    private static class ConsumerContainer {
+        private ConsumerGroup<String, Object> consumer;
+        private QueuedKafkaMessageHandler handler;
     }
 }

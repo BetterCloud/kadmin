@@ -1,13 +1,13 @@
 package com.bettercloud.kadmin.kafka;
 
-import com.bettercloud.logger.services.LogLevel;
+import com.bettercloud.kadmin.api.kafka.MessageHandler;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.logger.services.model.LogModel;
-import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.util.LoggerUtils;
 import com.google.common.collect.Lists;
 import lombok.Builder;
 import lombok.Data;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -30,22 +30,18 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
     }
 
     @Override
-    public void handleMessage(String s, Object o) {
+    public void handle(ConsumerRecord<String, Object> record) {
         LOGGER.log(LogModel.debug("receiving => {}, queued => {}")
                 .args(total.get() + 1, messageQueue.spine.size())
                 .build());
         total.incrementAndGet();
         this.messageQueue.add(MessageContainer.builder()
-                .key(s)
-                .message(o)
+                .key(record.key())
+                .message(record.value())
+                .offset(record.offset())
+                .partition(record.partition())
+                .topic(record.topic())
                 .writeTime(System.currentTimeMillis())
-                .build());
-    }
-
-    @Override
-    public void onError(Throwable cause) throws Throwable {
-        LOGGER.log(LogModel.error(cause.getMessage())
-                .error(cause)
                 .build());
     }
 
@@ -81,6 +77,9 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
         private final long writeTime;
         private final String key;
         private final Object message;
+        private final String topic;
+        private final int partition;
+        private final long offset;
     }
 
     protected static class FixedSizeList<E> {

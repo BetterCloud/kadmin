@@ -103,9 +103,6 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
             // recursion before union mapping
             Schema valueType = recSchema.getValueType();
             message.fields().forEachRemaining(e -> {
-                if (e.getKey().equals("orgUnitRelationalId")) {
-                    System.out.println(e);
-                }
                 JsonNode newField = avrify(e.getValue(), valueType);
                 oMessage.replace(e.getKey(), newField);
             });

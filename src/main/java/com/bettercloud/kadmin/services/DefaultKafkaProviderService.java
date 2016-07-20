@@ -1,32 +1,23 @@
 package com.bettercloud.kadmin.services;
 
-import com.bettercloud.kadmin.api.kafka.model.KafkaConsumerProperties;
 import com.bettercloud.kadmin.api.services.KafkaProviderService;
 import com.bettercloud.logger.services.LogLevel;
 import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
-import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.management.InstanceAlreadyExistsException;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 
 /**
  * Created by davidesposito on 6/28/16.
@@ -100,88 +91,88 @@ public class DefaultKafkaProviderService implements KafkaProviderService {
                 .build();
     }
 
-    /*
-    ========================================================
-                        CONSUMER
-    ========================================================
-     */
-
-    private String getConsumerKey(String kafkaUrl, String schemaRegistryUrl, String topic) {
-        return keyJoiner.join(kafkaUrl, schemaRegistryUrl, topic);
-    }
-
-    protected KafkaConsumerProperties kafkaConsumerProperties(String kafkaHost, String schemaRegistryUrl) throws UnknownHostException {
-        final Properties properties = new Properties();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
-        String groupId = UUID.randomUUID().toString();
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        String clientId = UUID.randomUUID().toString();
-        properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-        properties.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        properties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 1000);
-        properties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 32 * 1024);
-        return KafkaConsumerProperties.builder()
-                .clientId(clientId)
-                .groupId(groupId)
-                .properties(properties)
-                .build();
-    }
-
-    @Override
-    public ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
-                                                         String kafkaUrl, String schemaRegistryUrl) {
-        if (kafkaUrl == null) {
-            kafkaUrl = bootstrapServers;
-        }
-        if (schemaRegistryUrl == null) {
-            schemaRegistryUrl = this.schemaRegistryUrl;
-        }
-        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
-        LOGGER.log(LogModel.debug("Consumer Key: {}")
-                .addArg(key)
-                .build());
-        if (!consumerMap.containsKey(key)) {
-            KafkaConsumerProperties props = null;
-            try {
-                props = kafkaConsumerProperties(kafkaUrl, schemaRegistryUrl);
-                consumerMap.put(key, consumerService(props, topic, handler));
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (InstanceAlreadyExistsException e) {
-                /* ignore metrics registration exception */
-            }
-        }
-        return consumerMap.get(key);
-    }
-
-    @Override
-    public boolean disposeConsumer(String topic, String kafkaUrl, String schemaRegistryUrl) {
-        if (kafkaUrl == null) {
-            kafkaUrl = bootstrapServers;
-        }
-        if (schemaRegistryUrl == null) {
-            schemaRegistryUrl = this.schemaRegistryUrl;
-        }
-        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
-        return Opt.of(consumerMap.get(key)).ifPresent(con -> con.dispose()).isPresent();
-    }
-
-    @Override
-    public ConsumerGroup<String, Object> lookupConsumer(String key) {
-        return consumerMap.get(key);
-    }
-
-    protected ConsumerGroup<String, Object> consumerService(KafkaConsumerProperties kafkaConsumerProperties, String topic,
-                                                            MessageHandler<String, Object> handler) throws InstanceAlreadyExistsException {
-        return ConsumerGroup.<String, Object>create()
-                .withConsumerProperties(kafkaConsumerProperties.getProperties())
-                .withMessageHandler(handler)
-                .withKeyDeserializer(new StringDeserializer())
-                .withMessageDeserializer(new KafkaAvroDeserializer())
-                .forTopic(topic)
-                .withPollTimeout(2000)
-                .withThreads(1)
-                .build();
-    }
+//    /*
+//    ========================================================
+//                        CONSUMER
+//    ========================================================
+//     */
+//
+//    private String getConsumerKey(String kafkaUrl, String schemaRegistryUrl, String topic) {
+//        return keyJoiner.join(kafkaUrl, schemaRegistryUrl, topic);
+//    }
+//
+//    protected KafkaConsumerProperties kafkaConsumerProperties(String kafkaHost, String schemaRegistryUrl) throws UnknownHostException {
+//        final Properties properties = new Properties();
+//        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
+//        String groupId = UUID.randomUUID().toString();
+//        properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+//        String clientId = UUID.randomUUID().toString();
+//        properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
+//        properties.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+//        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+//        properties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 1000);
+//        properties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 32 * 1024);
+//        return KafkaConsumerProperties.builder()
+//                .clientId(clientId)
+//                .groupId(groupId)
+//                .properties(properties)
+//                .build();
+//    }
+//
+//    @Override
+//    public ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
+//                                                         String kafkaUrl, String schemaRegistryUrl) {
+//        if (kafkaUrl == null) {
+//            kafkaUrl = bootstrapServers;
+//        }
+//        if (schemaRegistryUrl == null) {
+//            schemaRegistryUrl = this.schemaRegistryUrl;
+//        }
+//        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
+//        LOGGER.log(LogModel.debug("Consumer Key: {}")
+//                .addArg(key)
+//                .build());
+//        if (!consumerMap.containsKey(key)) {
+//            KafkaConsumerProperties props = null;
+//            try {
+//                props = kafkaConsumerProperties(kafkaUrl, schemaRegistryUrl);
+//                consumerMap.put(key, consumerService(props, topic, handler));
+//            } catch (UnknownHostException e) {
+//                e.printStackTrace();
+//            } catch (InstanceAlreadyExistsException e) {
+//                /* ignore metrics registration exception */
+//            }
+//        }
+//        return consumerMap.get(key);
+//    }
+//
+//    @Override
+//    public boolean disposeConsumer(String topic, String kafkaUrl, String schemaRegistryUrl) {
+//        if (kafkaUrl == null) {
+//            kafkaUrl = bootstrapServers;
+//        }
+//        if (schemaRegistryUrl == null) {
+//            schemaRegistryUrl = this.schemaRegistryUrl;
+//        }
+//        String key = getConsumerKey(kafkaUrl, schemaRegistryUrl, topic);
+//        return Opt.of(consumerMap.get(key)).ifPresent(con -> con.dispose()).isPresent();
+//    }
+//
+//    @Override
+//    public ConsumerGroup<String, Object> lookupConsumer(String key) {
+//        return consumerMap.get(key);
+//    }
+//
+//    protected ConsumerGroup<String, Object> consumerService(KafkaConsumerProperties kafkaConsumerProperties, String topic,
+//                                                            MessageHandler<String, Object> handler) throws InstanceAlreadyExistsException {
+//        return ConsumerGroup.<String, Object>create()
+//                .withConsumerProperties(kafkaConsumerProperties.getProperties())
+//                .withMessageHandler(handler)
+//                .withKeyDeserializer(new StringDeserializer())
+//                .withMessageDeserializer(new KafkaAvroDeserializer())
+//                .forTopic(topic)
+//                .withPollTimeout(2000)
+//                .withThreads(1)
+//                .build();
+//    }
 }

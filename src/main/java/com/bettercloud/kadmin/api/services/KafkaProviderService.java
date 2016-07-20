@@ -1,7 +1,5 @@
 package com.bettercloud.kadmin.api.services;
 
-import com.bettercloud.messaging.kafka.consume.ConsumerGroup;
-import com.bettercloud.messaging.kafka.consume.MessageHandler;
 import com.bettercloud.messaging.kafka.produce.ProducerService;
 
 /**
@@ -15,10 +13,4 @@ public interface KafkaProviderService {
 
     ProducerService<String, Object> lookupProducer(String key);
 
-    ConsumerGroup<String, Object> consumerService(MessageHandler<String, Object> handler, String topic,
-                                                  String kafkaUrl, String schemaRegistryUrl);
-
-    boolean disposeConsumer(String topic, String kafkaUrl, String schemaRegistryUrl);
-
-    ConsumerGroup<String, Object> lookupConsumer(String key);
 }

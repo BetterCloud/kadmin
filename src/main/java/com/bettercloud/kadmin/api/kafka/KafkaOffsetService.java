@@ -9,7 +9,7 @@ import java.util.Optional;
  */
 public interface KafkaOffsetService {
 
-    long getOffset(Optional<String> oUrl, String topic) throws KafkaOffsetException;
-
-    boolean setOffset(Optional<String> oUrl, String topic, long newOffset) throws KafkaOffsetException;
+//    long getOffset(Optional<String> oUrl, String topic) throws KafkaOffsetException;
+//
+//    boolean setOffset(Optional<String> oUrl, String topic, long newOffset) throws KafkaOffsetException;
 }
