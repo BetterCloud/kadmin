@@ -24,267 +24,50 @@
                     <li role="presentation"><a th:href="@{/consumer}">Consumer</a></li>
                 </ul>
             </div>
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="form-group col-sm-6">
-                            <label for="kafkahost">Kafka Host</label>
-                            <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092" />
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="schemaurl">Kafka Schema Registry Url</label>
-                            <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081" />
-                            <div>
-                                <button class="btn btn-success" id="refresh-schemas-btn">
-                                    Refresh Schemas
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="form-group col-sm-6">
-                            <label for="topic">Topic</label>
-                            <!--<input type="text" class="form-control" id="topic" />-->
-                            <div class="row">
-                                <div class="col-xs-4">
-                                    <select id="topic-dd" class="form-control">
-                                        <option>Loading topics...</option>
-                                    </select>
-                                </div>
-                                <div class="col-xs-8">
-                                    <input type="text" class="form-control" id="topic" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="count">Count (number to send)</label>
-                            <input type="text" class="form-control" id="count" value="1" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div class="select-row row">
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                                <label for="schema">Schema</label>
-                                <select class="form-control" id="schema">
-
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="schema-version">Schema Version</label>
-                                <select class="form-control" id="schema-version">
-
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-sm-9">
-                            <label for="ace-schema">Raw Schema</label>
-                            <div id="ace-schema"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="ace-message">JSON Message</label>
-                <div id="ace-message"></div>
-            </div>
-            <div class="row send-and-results-row">
-                <div class="col-xs-10">
-                    <div id="sent-results-row"></div>
-                </div>
-                <div class="col-xs-2 text-center">
-                    <button class="btn btn-primary" id="send-message-btn">
-                        Send
-                    </button>
-                </div>
-            </div>
+            <div id="main-content"></div>
         </div>
 
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            var App = {
+                contextPath: [[${contextPath}]],
+                infoTemplateLoaded: false,
+                errorTemplateLoaded: false,
+                mainTemplateLoaded: false,
+                pageLoaded: false,
+                producer: {}
+            };
+
+            /*]]>*/
+        </script>
         <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/underscore-min.js}"></script>
         <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/moment.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/ace.min.js}"></script>
+        <script type="text/javascript" th:src="@{/producer/main.js}"></script>
 
-        <script th:inline="javascript">
-            /*<![CDATA[*/
-
-            var sentInfoTemplate = _.template(""),
-                sentErrorTemplate = _.template(""),
-                $results = $('#sent-results-row'),
-                $schemas = $('#schema'),
-                $schemaVersions = $('#schema-version'),
-                $aceMessage = ace.edit("ace-message"),
-                $aceSchema = ace.edit("ace-schema"),
-                $topicsSelect = $('#topic-dd');
-
-            $.get([[${contextPath}]] + "/producer/sent-info-template.html", function (html) {
-                sentInfoTemplate = _.template(html);
+        <script>
+            $.get(App.contextPath + "/producer/main.html", function (html) {
+                $('#main-content').html(html);
+                App.mainTemplateLoaded = true;
+                initMain();
             });
-            $.get([[${contextPath}]] + "/producer/sent-error-template.html", function (html) {
-                sentErrorTemplate = _.template(html);
+            $.get(App.contextPath + "/producer/sent-info-template.html", function (html) {
+                App.producer.sentInfoTemplate = _.template(html);
+                App.infoTemplateLoaded = true;
+                initMain();
             });
-
-            $aceMessage.setTheme("ace/theme/chrome");
-            $aceMessage.getSession().setMode("ace/mode/json");
-            $aceSchema.setTheme("ace/theme/chrome");
-            $aceSchema.getSession().setMode("ace/mode/json");
-
-            function refreshTopics() {
-                $.get([[${contextPath}]] + "/api/topics", handleNewTopics);
-            }
-
-            function handleNewTopics(data) {
-                $topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
-                _.each(data, function(topicName) {
-                    $topicsSelect.append("<option>" + topicName + "</option>");
-                });
-            }
-            // call immediately
-            refreshTopics();
-
-            function sendMessage() {
-                let req = buildRequest();
-                $.ajax({
-                    type: "POST",
-                    url: [[${contextPath}]] + "/api/kafka/publish?count=" + getCount(),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json;charset=UTF-8"
-                    },
-                    data: JSON.stringify(req),
-                    success: handleResponse
-                });
-                $('#send-message-btn').addClass("disabled");
-            }
-
-            function buildRequest() {
-                let req = {
-                    meta: {
-                        kafkaUrl: $('#kafkahost').val(),
-                        schemaRegistryUrl: $('#schemaurl').val(),
-                        schema: $('#schema').val(),
-                        rawSchema: $aceSchema.getValue(),
-                        topic: $('#topic').val()
-                    },
-                    rawMessage: $aceMessage.getValue()
-                };
-                if (req.meta.kafkaUrl === "") {
-                    req.meta.kafkaUrl = null;
-                }
-                if (req.meta.schemaRegistryUrl === "") {
-                    req.meta.schemaRegistryUrl = null;
-                }
-                return req;
-            }
-
-            function getCount() {
-                let count = $('#count').val();
-                if (count !== '') {
-                    count = parseInt(count);
-                    if (count !== NaN && count > 0 && count < 10000) {
-                        return count;
-                    }
-                }
-                return 1;
-            }
-
-            function handleResponse(data) {
-                console.log(data);
-                let timeText = moment().format('LTS'),
-                    template = null;
-                if (!!data && !!data.sent && data.sent && !!data.success && data.success) {
-                    // request was successful
-                    template = sentInfoTemplate;
-                } else {
-                    data = {};
-                    template = sentErrorTemplate;
-                }
-                data.timeText = timeText;
-                $results.html(template(data));
-                $('#send-message-btn').removeClass("disabled");
-                window.scrollTo(0, document.body.scrollHeight);
-            }
-
-            function refreshSchemas() {
-                let url = [[${contextPath}]] + "/api/schemas",
-                    schemaUrl = $('#schemaurl').val();
-                if (schemaUrl !== '') {
-                    url += "?url=" + schemaUrl;
-                }
-                $.get(url)
-                    .done(function(data) {
-                        console.log(data);
-                        $schemas.html('<option value="null">**Select Value**</option>');
-                        _.each(data, function(schemaName) {
-                            $schemas.append('<option>' + schemaName + '</option>');
-                        });
-                    })
-                    .fail(function(err) {
-                        $schemas.html('<option value="null">**Invalid Schema Url**</option>');
-                    });
-            }
-
-            function handleNewSchema() {
-                let name = $schemas.val();
-                if (name !== 'null') {
-                    $.get([[${contextPath}]] + '/api/schemas/' + name, function(data) {
-                        console.log(data);
-                        let curr = data.currSchema,
-                            v = curr.version,
-                            rawSchema = JSON.stringify(JSON.parse(curr.schema), null, 2);
-
-                        $schemaVersions.html('<option value="' + v + '">' + v + ' (Current)</option>');
-                        _.each(data.versions, function(ver) {
-                            $schemaVersions.append('<option>' + ver + '</option>');
-                        });
-
-                        $aceSchema.setValue(rawSchema);
-                    });
-                }
-            }
-
-            function handleNewVersion() {
-                let name = $schemas.val(),
-                    ver = $schemaVersions.val();
-                if (!!name && name !== '' && !!ver && ver !== '') {
-                    $.get([[${contextPath}]] + '/api/schemas/' + name + "/" + ver, function(data) {
-                        console.log(data);
-                        let rawSchema = JSON.stringify(JSON.parse(data.schema), null, 2);
-                        $aceSchema.setValue(rawSchema);
-                    });
-                }
-            }
+            $.get(App.contextPath + "/producer/sent-error-template.html", function (html) {
+                App.producer.sentErrorTemplate = _.template(html);
+                App.errorTemplateLoaded = true;
+                initMain();
+            });
 
             $(document).ready(function() {
-                $('#send-message-btn').click(function(e) {
-                    e.preventDefault();
-                    sendMessage();
-                });
-                $('#refresh-schemas-btn').click(function(e) {
-                    e.preventDefault();
-                    refreshSchemas();
-                    refreshTopics();
-                });
-                refreshSchemas();
-                $schemas.change(handleNewSchema);
-                $schemaVersions.change(handleNewVersion);
-                $topicsSelect.change(function() {
-                    let val = $topicsSelect.val();
-                    // TODO: regex check
-//                    if (val.matches(/[\w-]+/)) {
-                    $('#topic').val(val);
-//                    }
-                });
+                App.pageLoaded = true;
+                initMain();
             });
-            /*]]>*/
         </script>
     </body>
 </html>
