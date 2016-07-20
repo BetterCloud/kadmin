@@ -1,12 +1,12 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
-import com.bettercloud.kadmin.api.models.SchemaInfo;
+import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
-import com.bettercloud.logger.services.Logger;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

@@ -2,9 +2,6 @@ package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.AvrifyConverter;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.StreamUtils;
@@ -18,6 +15,7 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -40,13 +38,9 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
 
     @Override
     public Object convert(String json, String schemaStr) {
-        LOGGER.log(LogModel.debug("Converting: {}")
-                .addArg(json.replaceAll("\n", " "))
-                .build());
+        LOGGER.debug("Converting: {}", json.replaceAll("\n", " "));
         json = avrify(json, schemaStr);
-        LOGGER.log(LogModel.debug("Avrified to: {}")
-                .addArg(json.replaceAll("\n", " "))
-                .build());
+        LOGGER.debug("Avrified to: {}", json.replaceAll("\n", " "));
 
         InputStream input = new ByteArrayInputStream(json.getBytes());
         DataInputStream din = new DataInputStream(input);
@@ -61,10 +55,7 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LOGGER.log(LogModel.debug("Final Model: {} - {}")
-                .addArg(datum.getClass().getSimpleName())
-                .addArg(datum)
-                .build());
+        LOGGER.debug("Final Model: {} - {}", datum.getClass().getSimpleName(), datum);
         return datum;
     }
 
@@ -103,9 +94,6 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
             // recursion before union mapping
             Schema valueType = recSchema.getValueType();
             message.fields().forEachRemaining(e -> {
-                if (e.getKey().equals("orgUnitRelationalId")) {
-                    System.out.println(e);
-                }
                 JsonNode newField = avrify(e.getValue(), valueType);
                 oMessage.replace(e.getKey(), newField);
             });
@@ -154,12 +142,11 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                             mappedObject.replace(validEnumSchemas.get(0).getFullName(), message);
                         default:
                             // TODO: matched multiple enums, what to do?
-                            LOGGER.log(LogModel.warning("Matched multiple enums: {} => {}")
-                                    .addArg(message.asText())
-                                    .addArg(validEnumSchemas.stream()
+                            LOGGER.warn("Matched multiple enums: {} => {}",
+                                    message.asText(),
+                                    validEnumSchemas.stream()
                                             .map(s -> s.getName())
-                                            .collect(Collectors.toList()))
-                                    .build());
+                                            .collect(Collectors.toList()));
                             break;
                     }
                 } else if (unionTypes.contains(Schema.Type.STRING)) {
@@ -310,12 +297,11 @@ public class DefaultJsonToAvroConverter implements JsonToAvroConverter, AvrifyCo
                             bestGuess = validEnumSchemas.get(0);
                         default:
                             // TODO: matched multiple enums, what to do?
-                            LOGGER.log(LogModel.warning("Matched multiple enums: {} => {}")
-                                    .addArg(message.asText())
-                                    .addArg(validEnumSchemas.stream()
+                            LOGGER.warn("Matched multiple enums: {} => {}",
+                                    message.asText(),
+                                    validEnumSchemas.stream()
                                             .map(s -> s.getName())
-                                            .collect(Collectors.toList()))
-                                    .build());
+                                            .collect(Collectors.toList()));
                             break;
                     }
                 }

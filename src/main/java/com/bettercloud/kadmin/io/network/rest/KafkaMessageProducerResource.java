@@ -1,13 +1,13 @@
 package com.bettercloud.kadmin.io.network.rest;
 
+import ch.qos.logback.classic.Level;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
-import com.bettercloud.kadmin.api.services.KafkaProviderService;
-import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
+import com.bettercloud.kadmin.api.kafka.KadminProducer;
+import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
+import com.bettercloud.kadmin.api.services.AvroProducerProviderService;
+import com.bettercloud.kadmin.io.network.dto.KafkaProduceMessageMeta;
+import com.bettercloud.kadmin.io.network.dto.KafkaProduceRequestModel;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
-import com.bettercloud.messaging.kafka.produce.ProducerService;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -16,6 +16,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.avro.AvroTypeException;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,16 +33,16 @@ import java.util.Optional;
 @RequestMapping("/api/kafka")
 public class KafkaMessageProducerResource {
 
-    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class, LogLevel.TRACE);
+    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class, Level.TRACE);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private final KafkaProviderService providerService;
+    private final AvroProducerProviderService producerProvider;
     private final JsonToAvroConverter jtaConverter;
 
     @Autowired
-    public KafkaMessageProducerResource(KafkaProviderService providerService,
+    public KafkaMessageProducerResource(AvroProducerProviderService producerProvider,
                                         JsonToAvroConverter jtaConverter) {
-        this.providerService = providerService;
+        this.producerProvider = producerProvider;
         this.jtaConverter = jtaConverter;
     }
 
@@ -53,9 +54,6 @@ public class KafkaMessageProducerResource {
     )
     public ResponseEntity<ProducerResponse> publish(@RequestBody KafkaProduceRequestModel requestModel,
                                                  @RequestParam("count") Optional<Integer> oCount) {
-//        LOGGER.log(LogModel.trace("/publish Received {}")
-//                .addArg(requestModel)
-//                .build());
         if (requestModel.getRawMessage().getNodeType().equals(JsonNodeType.STRING)) {
             try {
                 requestModel.setRawMessage(MAPPER.readTree(requestModel.getRawMessage().asText()));
@@ -63,9 +61,6 @@ public class KafkaMessageProducerResource {
                 return ResponseUtil.error(e);
             }
         }
-//        LOGGER.log(LogModel.trace("/publish Processing: {}")
-//                .addArg(requestModel)
-//                .build());
         KafkaProduceMessageMeta meta = requestModel.getMeta();
         Object message;
         try {
@@ -73,18 +68,10 @@ public class KafkaMessageProducerResource {
         } catch (AvroTypeException e) {
             return ResponseUtil.error(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
-        LOGGER.log(LogModel.trace("/publish Avrified: {}")
-                .addArg(message)
+        KadminProducer<String, Object> producer = producerProvider.get(KadminProducerConfig.builder()
+                .topic(meta.getTopic())
                 .build());
-        ProducerService<String, Object> ps = providerService.producerService(null, null);
-        LOGGER.log(LogModel.trace("/publish Producer not null {}")
-                .addArg(ps != null)
-                .build());
-        boolean sendMessage = message != null && ps != null;
-        LOGGER.log(LogModel.trace("/publish Send message {}")
-                .addArg(sendMessage)
-                .build());
+        boolean sendMessage = message != null && producer != null;
         ProducerResponse res = ProducerResponse.builder()
                 .sent(sendMessage)
                 .count(0)
@@ -93,37 +80,27 @@ public class KafkaMessageProducerResource {
                 .rate(-1)
                 .build();
         if (sendMessage) {
-            res = sendMessage(ps, meta.getTopic(), message, oCount.orElse(1));
+            res = sendMessage(producer, requestModel.getKey(), message, oCount.orElse(1));
         }
-//        LOGGER.log(LogModel.debug("/publish Produced: {}")
-//                .addArg(requestModel)
-//                .build());
         return ResponseEntity.ok(res);
     }
 
-    private <PayloadT> ProducerResponse sendMessage(ProducerService<String, PayloadT> ps, String topic,
-                                                    PayloadT payload, int count) {
-        LOGGER.log(LogModel.trace("/publish Sending message (x{}) on {}")
-                .args(count, topic)
-                .build());
+    private <PayloadT> ProducerResponse sendMessage(KadminProducer<String, PayloadT> producer, String key,
+                PayloadT payload, int count) {
         int success = 0;
         long duration;
         double rate;
         long startTime = System.currentTimeMillis();
         for (int i=0;i<count;i++) {
             try {
-                ps.send(topic, payload);
+                producer.send(key, payload);
                 success++;
             } catch (Exception e) {
                 e.printStackTrace();
-                LOGGER.log(LogModel.error("There was an error")
-                        .error(e)
-                        .build());
+                LOGGER.error("There was an error: {}", e);
             }
         }
-        LOGGER.log(LogModel.trace("/publish Done sending ({}/{})")
-                .args(success, count)
-                .build());
+        LOGGER.trace("/publish Done sending ({}/{}) on {}", success, count, producer.getConfig().getTopic());
         duration = System.currentTimeMillis() - startTime;
         rate = count * 1000.0 / duration;
         return ProducerResponse.builder()
