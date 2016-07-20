@@ -106,6 +106,8 @@ public class KafkaMessageConsumerResource {
                         ObjectNode node = mapper.createObjectNode();
                         node.put("key", mc.getKey());
                         node.put("writeTime", mc.getWriteTime());
+                        node.put("offset", mc.getOffset());
+                        node.put("topic", mc.getTopic());
                         /*
                          * There appears to be some incompatibility with JSON serializing Avro models. So,
                          *
