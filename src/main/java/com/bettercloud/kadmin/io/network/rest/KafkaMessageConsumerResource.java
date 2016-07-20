@@ -1,11 +1,10 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
-import com.bettercloud.logger.services.Logger;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
@@ -16,6 +15,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import lombok.Builder;
 import lombok.Data;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -52,7 +52,7 @@ public class KafkaMessageConsumerResource {
     // TODO: move to consumer provider service
 //    @Scheduled(fixedRate = IDLE_CHECK_DELAY)
 //    private void clearMemory() {
-//        LOGGER.log(LogModel.info("Cleaning up connections/memory").build());
+//        LOGGER.info("Cleaning up connections/memory").build());
 //        List<String> keys = handlerMap.keySet().stream()
 //                .filter(k -> handlerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
 //                .collect(Collectors.toList());
@@ -61,7 +61,7 @@ public class KafkaMessageConsumerResource {
 //                    Opt.of(handlerMap.get(k)).ifPresent(handler -> handler.getData().clear());
 //                    Opt.of(kps.lookupConsumer(k)).ifPresent(con -> con.dispose());
 //                    Opt.of(kps.lookupProducer(k)).ifPresent(prod -> prod.dispose());
-//                    LOGGER.log(LogModel.info("Disposing queue {} with timeout {}")
+//                    LOGGER.info("Disposing queue {} with timeout {}")
 //                            .args(k, handlerMap.get(k).getIdleTime())
 //                            .build());
 //                });

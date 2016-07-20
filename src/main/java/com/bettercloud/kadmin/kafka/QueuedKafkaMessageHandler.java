@@ -1,13 +1,12 @@
 package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.MessageHandler;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.google.common.collect.Lists;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -31,9 +30,7 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
 
     @Override
     public void handle(ConsumerRecord<String, Object> record) {
-        LOGGER.log(LogModel.debug("receiving => {}, queued => {}")
-                .args(total.get() + 1, messageQueue.spine.size())
-                .build());
+        LOGGER.debug("receiving => {}, queued => {}",total.get() + 1, messageQueue.spine.size());
         total.incrementAndGet();
         this.messageQueue.add(MessageContainer.builder()
                 .key(record.key())

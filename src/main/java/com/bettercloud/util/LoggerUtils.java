@@ -1,8 +1,8 @@
 package com.bettercloud.util;
 
-import com.bettercloud.logger.services.LogLevel;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by davidesposito on 7/16/16.
@@ -15,9 +15,9 @@ public final class LoggerUtils {
         return LoggerFactory.getLogger(logClass);
     }
 
-    public static <T> Logger get(Class<T> logClass, LogLevel level) {
+    public static <T> Logger get(Class<T> logClass, Level level) {
         Logger logger = get(logClass);
-        logger.setLogLevel(level);
+        ((ch.qos.logback.classic.Logger)logger).setLevel(level);
         return logger;
     }
 }

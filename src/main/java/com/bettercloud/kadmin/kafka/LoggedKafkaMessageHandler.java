@@ -1,10 +1,9 @@
 package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.MessageHandler;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
 
 /**
  * Created by davidesposito on 7/5/16.
@@ -15,8 +14,6 @@ public class LoggedKafkaMessageHandler implements MessageHandler<String, Object>
 
     @Override
     public void handle(ConsumerRecord<String, Object> record) {
-        logger.log(LogModel.info("({}@{}) {}: {}")
-                .args(record.offset(), record.topic(), record.key(), record.value())
-                .build());
+        logger.info("({}@{}) {}: {}", record.offset(), record.topic(), record.key(), record.value());
     }
 }

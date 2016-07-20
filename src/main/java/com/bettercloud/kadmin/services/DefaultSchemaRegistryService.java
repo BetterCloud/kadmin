@@ -4,8 +4,6 @@ import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
 import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.kadmin.io.network.rest.SchemaProxyResource;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +13,7 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -79,7 +78,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
             };
             schemasCache.put(url, proxyResponse(url, c, null));
         } else {
-            LOGGER.log(LogModel.debug("Hit schema cache for: {}").addArg(url).build());
+            LOGGER.debug("Hit schema cache for: {}", url);
         }
         return schemasCache.getIfPresent(url);
     }
@@ -116,7 +115,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
                     .currSchema(currSchema)
                     .build());
         } else {
-            LOGGER.log(LogModel.debug("Hit info cache for: {}").addArg(url).build());
+            LOGGER.debug("Hit info cache for: {}", url);
         }
         return schemaInfoCache.getIfPresent(url);
     }
@@ -131,7 +130,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
         if (schemaVersionCache.getIfPresent(url) == null) {
             schemaVersionCache.put(url, proxyResponse(url, n -> n, null));
         } else {
-            LOGGER.log(LogModel.debug("Hit version cache for: {}").addArg(url).build());
+            LOGGER.debug("Hit version cache for: {}", url);
         }
         return schemaVersionCache.getIfPresent(url);
     }
@@ -143,9 +142,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
             HttpResponse res = client.execute(get);
             int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                LOGGER.log(LogModel.error("Non 200 status: {}")
-                        .addArg(statusCode)
-                        .build());
+                LOGGER.error("Non 200 status: {}", statusCode);
                 throw new SchemaRegistryRestException("Non 200 status: " + statusCode, statusCode);
             }
             ResponseT val = c.convert(MAPPER.readTree(res.getEntity().getContent()));
@@ -154,10 +151,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
             }
             return val;
         } catch (IOException e) {
-            LOGGER.log(LogModel.error("There was an error: {}")
-                    .addArg(e.getMessage())
-                    .error(e)
-                    .build());
+            LOGGER.error("There was an error: {}", e.getMessage());
             throw new SchemaRegistryRestException(e.getMessage(), e, 500);
         }
     }

@@ -68,11 +68,6 @@ dependencies {
 	//lombok
 	compile group: 'org.projectlombok', name: 'lombok', version: lombok_version
 
-	//bettercloud
-    compile (group: 'com.bettercloud', name: 'logger-lib', version: logger_version) {
-        exclude group: 'com.bettercloud', module: 'projectx-pact'
-    }
-
 	//confluent
 	compile group: 'org.springframework.integration', name: 'spring-integration-kafka', version : spring_integration_version
 	compile group: 'org.apache.avro', name: 'avro', version: avro_version
