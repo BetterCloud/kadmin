@@ -75,7 +75,8 @@ function buildRequest() {
             rawSchema: App.producer.$aceSchema.getValue(),
             topic: $('#topic').val()
         },
-        rawMessage: App.producer.$aceMessage.getValue()
+        rawMessage: App.producer.$aceMessage.getValue(),
+        key: $('#message-key').val()
     };
     if (req.meta.kafkaUrl === "") {
         req.meta.kafkaUrl = null;
