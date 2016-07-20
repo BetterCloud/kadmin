@@ -38,7 +38,7 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
         this.handlers = Lists.newArrayList();
 
         config.setKeyDeserializer(StringDeserializer.class.getName());
-        config.setValueDeserializer(KafkaAvroDeserializer.class.getName());
+        config.setValueDeserializer(ErrorTolerantAvroObjectDeserializer.class.getName());
     }
 
     protected void init() {
@@ -52,6 +52,7 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
         properties.put("enable.auto.commit", false);
         properties.put("fetch.max.wait.ms", 1000);
         properties.put("max.partition.fetch.bytes", 32 * 1024);
+        properties.put("auto.offset.reset", "earliest");
 
         properties.put("key.deserializer", config.getKeyDeserializer());
         properties.put("value.deserializer", config.getValueDeserializer());
