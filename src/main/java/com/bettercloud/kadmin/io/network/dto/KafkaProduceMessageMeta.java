@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.api.models;
+package com.bettercloud.kadmin.io.network.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

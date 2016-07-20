@@ -1,6 +1,6 @@
 package com.bettercloud.kadmin.kafka.avro;
 
-import com.bettercloud.kadmin.api.kafka.KafkaConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.MessageHandler;
 import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
 import com.google.common.collect.Lists;
@@ -23,14 +23,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
 
     private KafkaConsumer<String, Object> consumer;
-    private final KafkaConsumerConfig config;
+    private final KadminConsumerConfig config;
     private final String clientId;
     private final String groupId;
     private final AtomicLong lastOffset;
 
     private final List<MessageHandler<String, Object>> handlers;
 
-    public DefaultAvroConsumerGroup(KafkaConsumerConfig config) {
+    public DefaultAvroConsumerGroup(KadminConsumerConfig config) {
         this.config = config;
         this.clientId = UUID.randomUUID().toString();
         this.groupId = UUID.randomUUID().toString();
@@ -60,7 +60,7 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
     }
 
     @Override
-    public KafkaConsumerConfig getConfig() {
+    public KadminConsumerConfig getConfig() {
         return config;
     }
 
@@ -90,7 +90,10 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
 
     @Override
     public void shutdown() {
-        consumer.wakeup();
+        if (consumer != null) {
+            consumer.wakeup();
+            consumer = null;
+        }
     }
 
     @Override

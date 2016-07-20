@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
-import com.bettercloud.kadmin.api.models.SchemaInfo;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.logger.services.Logger;
 import com.bettercloud.util.LoggerUtils;

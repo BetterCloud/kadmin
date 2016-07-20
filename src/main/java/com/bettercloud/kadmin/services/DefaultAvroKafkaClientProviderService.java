@@ -1,9 +1,10 @@
-package com.bettercloud.kadmin.kafka.avro;
+package com.bettercloud.kadmin.services;
 
-import com.bettercloud.kadmin.api.kafka.ConsumerGroup;
-import com.bettercloud.kadmin.api.kafka.KafkaConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
-import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroupProviderService;
+import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
+import com.bettercloud.kadmin.kafka.avro.DefaultAvroConsumerGroup;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.google.common.collect.Maps;
@@ -27,7 +28,7 @@ public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupP
     private final String defaultKafkaHost;
     private final String defaultSchemaRegistryUrl;
 
-    private final LinkedHashMap<String, ConsumerGroup<String, Object>> consumerMap;
+    private final LinkedHashMap<String, KadminConsumerGroup<String, Object>> consumerMap;
 
     @Autowired
     public DefaultAvroKafkaClientProviderService(
@@ -45,7 +46,7 @@ public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupP
     }
 
     @Override
-    public void start(ConsumerGroup<String, Object> consumer) {
+    public void start(KadminConsumerGroup<String, Object> consumer) {
         if (consumer != null && !consumerMap.containsKey(consumer.getClientId())) {
                 consumerMap.put(consumer.getClientId(), consumer);
                 consumerExecutor.submit(consumer);
@@ -53,7 +54,7 @@ public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupP
     }
 
     @Override
-    public AvroConsumerGroup get(KafkaConsumerConfig config, boolean start) {
+    public AvroConsumerGroup get(KadminConsumerConfig config, boolean start) {
         Opt.of(config.getKafkaHost()).notPresent(() -> config.setKafkaHost(defaultKafkaHost));
         Opt.of(config.getSchemaRegistryUrl()).notPresent(() -> config.setSchemaRegistryUrl(defaultSchemaRegistryUrl));
 
@@ -65,12 +66,12 @@ public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupP
     }
 
     @Override
-    public Page<ConsumerGroup<String, Object>> findAll() {
+    public Page<KadminConsumerGroup<String, Object>> findAll() {
         return findAll(-1 ,- 1);
     }
 
     @Override
-    public Page<ConsumerGroup<String, Object>> findAll(int page, int size) {
+    public Page<KadminConsumerGroup<String, Object>> findAll(int page, int size) {
         if (page < 0) {
             page = 0;
         }
@@ -78,20 +79,25 @@ public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupP
             size = 20;
         }
         int skip = page * size;
-        List<ConsumerGroup<String, Object>> consumers = consumerMap.values().stream()
+        List<KadminConsumerGroup<String, Object>> consumers = consumerMap.values().stream()
                 .skip(skip)
                 .limit(size)
                 .collect(Collectors.toList());
-        Page<ConsumerGroup<String, Object>> consumerPage = new Page<>();
+        Page<KadminConsumerGroup<String, Object>> consumerPage = new Page<>();
         consumerPage.setPage(page);
         consumerPage.setSize(size);
-        consumerPage.setTotalElements(consumerMap.size());
+        consumerPage.setTotalElements(count());
         consumerPage.setContent(consumers);
         return consumerPage;
     }
 
     @Override
-    public ConsumerGroup<String, Object> findById(String consumerId) {
+    public KadminConsumerGroup<String, Object> findById(String consumerId) {
         return consumerMap.get(consumerId);
+    }
+
+    @Override
+    public long count() {
+        return consumerMap.size();
     }
 }

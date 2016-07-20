@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.api.services;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
-import com.bettercloud.kadmin.api.models.SchemaInfo;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;

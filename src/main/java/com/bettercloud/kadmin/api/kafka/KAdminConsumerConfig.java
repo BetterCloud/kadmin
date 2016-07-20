@@ -9,7 +9,7 @@ import lombok.NonNull;
  */
 @Data
 @Builder
-public class KafkaConsumerConfig {
+public class KadminConsumerConfig {
 
     @NonNull private final String topic;
     private String kafkaHost;

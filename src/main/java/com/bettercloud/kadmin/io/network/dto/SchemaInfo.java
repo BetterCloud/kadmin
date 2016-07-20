@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.api.models;
+package com.bettercloud.kadmin.io.network.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;

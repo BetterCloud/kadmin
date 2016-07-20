@@ -1,16 +1,12 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import com.bettercloud.kadmin.api.kafka.ConsumerGroup;
-import com.bettercloud.kadmin.api.kafka.KafkaConsumerConfig;
-import com.bettercloud.kadmin.api.kafka.MessageHandler;
-import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroupProviderService;
-import com.bettercloud.kadmin.api.services.KafkaProviderService;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
+import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
-import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,11 +16,9 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import lombok.Builder;
 import lombok.Data;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -89,7 +83,7 @@ public class KafkaMessageConsumerResource {
         if (!consumerMap.containsKey(key)) {
             Integer maxSize = queueSize.filter(s -> s < 100).orElse(50);
             QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
-            ConsumerGroup<String, Object> consumer = consumerProvider.get(KafkaConsumerConfig.builder()
+            KadminConsumerGroup<String, Object> consumer = consumerProvider.get(KadminConsumerConfig.builder()
                             .topic(topic)
                             .kafkaHost(kafkaUrl.orElse(null))
                             .schemaRegistryUrl(schemaUrl.orElse(null))
@@ -183,7 +177,7 @@ public class KafkaMessageConsumerResource {
     @Data
     @Builder
     private static class ConsumerContainer {
-        private ConsumerGroup<String, Object> consumer;
+        private KadminConsumerGroup<String, Object> consumer;
         private QueuedKafkaMessageHandler handler;
     }
 }
