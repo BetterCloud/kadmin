@@ -125,10 +125,10 @@
                 $aceSchema = ace.edit("ace-schema"),
                 $topicsSelect = $('#topic-dd');
 
-            $.get([[${contextPath}]] + "/sent-info-template.html", function (html) {
+            $.get([[${contextPath}]] + "/producer/sent-info-template.html", function (html) {
                 sentInfoTemplate = _.template(html);
             });
-            $.get([[${contextPath}]] + "/sent-error-template.html", function (html) {
+            $.get([[${contextPath}]] + "/producer/sent-error-template.html", function (html) {
                 sentErrorTemplate = _.template(html);
             });
 

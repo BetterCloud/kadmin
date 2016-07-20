@@ -1,0 +1,64 @@
+<div class="panel panel-default" id="form-container">
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label for="kafkahost">Kafka Host</label>
+                <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092" />
+            </div>
+            <div class="form-group col-sm-6">
+                <label for="schemaurl">Kafka Schema Registry Url</label>
+                <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081" />
+                <button class="btn btn-success" id="refresh-topics-btn">Refresh Topics</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="topic">Topic</label>
+            <div class="row">
+                <div class="col-xs-4">
+                    <select id="topic-dd" class="form-control">
+                        <option>Loading topics...</option>
+                    </select>
+                </div>
+                <div class="col-xs-8">
+                    <input type="text" class="form-control" id="topic" />
+                </div>
+            </div>
+        </div>
+        <div class="row text-right">
+            <button class="btn btn-primary" id="start-consumer-btn" >
+                Start Consumer
+            </button>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="refresh-form col-sm-6">
+        <div class="form-group">
+            <select class="form-control" id="refresh-rate">
+                <option value="-1">Manual</option>
+                <option value="10000" selected="selected">10 Seconds</option>
+                <option value="30000">30 Seconds</option>
+                <option value="60000">1 Minute</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <button id="refresh-btn" class="btn btn-success disabled">
+            <span class="glyphicon glyphicon-refresh"></span> Refresh
+        </button>
+        <button id="clear-btn" class="btn btn-warning disabled">
+            <span class="glyphicon glyphicon-trash"></span> Truncate
+        </button>
+        <button id="dispose-btn" class="btn btn-danger disabled">
+            <span class="glyphicon glyphicon-trash"></span> Close
+        </button>
+    </div>
+</div>
+<div class="message-container">
+    <div class="header-row">
+        <h2 id="message-list-title">Messages</h2>
+        <div id="since-row"></div>
+        <div class="text-muted">NOTE: Collapse works weird with auto-refresh intervals. You should set the refresh interval to manual before using the collapse button.</div>
+    </div>
+    <div id="message-list"></div>
+</div>
