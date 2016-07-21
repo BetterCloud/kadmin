@@ -15,5 +15,5 @@ public class KafkaProduceRequestModel {
 
     private String key;
     private JsonNode rawMessage;
-    private KafkaProduceMessageMeta meta;
+    private KafkaProduceMessageMetaModel meta;
 }

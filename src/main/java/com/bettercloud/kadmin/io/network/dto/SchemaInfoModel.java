@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SchemaInfo {
+public class SchemaInfoModel {
     private String name;
     private List<Integer> versions;
     private JsonNode currSchema;

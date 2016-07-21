@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KafkaProduceMessageMeta {
+public class KafkaProduceMessageMetaModel {
 
     private String kafkaUrl;
     private String schemaRegistryUrl;

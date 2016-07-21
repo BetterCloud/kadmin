@@ -4,7 +4,7 @@ import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ConsumerInfoModel;
-import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
+import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;

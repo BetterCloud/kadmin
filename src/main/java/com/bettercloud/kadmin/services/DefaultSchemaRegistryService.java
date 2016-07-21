@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.services;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
-import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.kadmin.io.network.rest.SchemaProxyResource;
 import com.bettercloud.util.LoggerUtils;
@@ -39,7 +39,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     private final HttpClient client;
 
     private final Cache<String, List<String>> schemasCache;
-    private final Cache<String, SchemaInfo> schemaInfoCache;
+    private final Cache<String, SchemaInfoModel> schemaInfoCache;
     private final Cache<String, JsonNode> schemaVersionCache;
 
     @Autowired
@@ -91,7 +91,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     }
 
     @Override
-    public SchemaInfo getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException {
+    public SchemaInfoModel getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException {
         String url = String.format("%s/subjects/%s/versions",
                 oUrl.orElse(this.schemaRegistryUrl),
                 name
@@ -109,7 +109,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
             List<Integer> versions = proxyResponse(url, c, null);
             JsonNode info = getVersion(name, versions.get(versions.size() - 1), oUrl);
             JsonNode currSchema = info;
-            schemaInfoCache.put(url, SchemaInfo.builder()
+            schemaInfoCache.put(url, SchemaInfoModel.builder()
                     .name(name)
                     .versions(versions)
                     .currSchema(currSchema)

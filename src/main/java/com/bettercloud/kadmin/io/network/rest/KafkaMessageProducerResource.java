@@ -5,22 +5,17 @@ import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import com.bettercloud.kadmin.api.services.AvroProducerProviderService;
-import com.bettercloud.kadmin.io.network.dto.KafkaProduceMessageMeta;
-import com.bettercloud.kadmin.io.network.dto.KafkaProduceRequestModel;
-import com.bettercloud.kadmin.io.network.dto.ProducerInfoModel;
-import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
+import com.bettercloud.kadmin.io.network.dto.*;
+import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.avro.AvroTypeException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +24,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +58,8 @@ public class KafkaMessageProducerResource {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<ProducerResponse> publish(@RequestBody KafkaProduceRequestModel requestModel,
-                                                 @RequestParam("count") Optional<Integer> oCount) {
+    public ResponseEntity<ProducerRepsonseModel> publish(@RequestBody KafkaProduceRequestModel requestModel,
+                                                         @RequestParam("count") Optional<Integer> oCount) {
         if (requestModel.getRawMessage().getNodeType().equals(JsonNodeType.STRING)) {
             try {
                 requestModel.setRawMessage(MAPPER.readTree(requestModel.getRawMessage().asText()));
@@ -73,7 +67,7 @@ public class KafkaMessageProducerResource {
                 return ResponseUtil.error(e);
             }
         }
-        KafkaProduceMessageMeta meta = requestModel.getMeta();
+        KafkaProduceMessageMetaModel meta = requestModel.getMeta();
         Object message;
         try {
             message = jtaConverter.convert(requestModel.getRawMessage().toString(), meta.getRawSchema());
@@ -86,7 +80,7 @@ public class KafkaMessageProducerResource {
                 .topic(meta.getTopic())
                 .build());
         boolean sendMessage = message != null && producer != null;
-        ProducerResponse res = ProducerResponse.builder()
+        ProducerRepsonseModel res = ProducerRepsonseModel.builder()
                 .sent(sendMessage)
                 .count(0)
                 .success(false)
@@ -100,7 +94,7 @@ public class KafkaMessageProducerResource {
         return ResponseEntity.ok(res);
     }
 
-    private void updateMetrics(String producerId, ProducerResponse res, int total) {
+    private void updateMetrics(String producerId, ProducerRepsonseModel res, int total) {
         synchronized (metricsMap) {
             if (!metricsMap.containsKey(producerId)) {
                 metricsMap.put(producerId, ProducerMetrics.builder().build());
@@ -113,7 +107,7 @@ public class KafkaMessageProducerResource {
         }
     }
 
-    private <PayloadT> ProducerResponse sendMessage(KadminProducer<String, PayloadT> producer, String key,
+    private <PayloadT> ProducerRepsonseModel sendMessage(KadminProducer<String, PayloadT> producer, String key,
                 PayloadT payload, int count) {
         int success = 0;
         long duration;
@@ -131,7 +125,7 @@ public class KafkaMessageProducerResource {
         LOGGER.trace("/publish Done sending ({}/{}) on {}", success, count, producer.getConfig().getTopic());
         duration = System.currentTimeMillis() - startTime;
         rate = count * 1000.0 / duration;
-        return ProducerResponse.builder()
+        return ProducerRepsonseModel.builder()
                 .count(success)
                 .duration(duration)
                 .rate(rate)
@@ -193,20 +187,8 @@ public class KafkaMessageProducerResource {
 
     @Data
     @Builder
-    public static class ProducerMetrics {
+    private static class ProducerMetrics {
         private final long sentCount;
         private final long errorCount;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProducerResponse {
-        private int count;
-        private long duration;
-        private double rate;
-        private boolean success;
-        private boolean sent;
     }
 }

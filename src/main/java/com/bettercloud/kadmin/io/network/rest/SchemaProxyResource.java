@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
-import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 
 import com.bettercloud.util.LoggerUtils;
@@ -68,8 +68,8 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<SchemaInfo> info(@PathVariable("name") String name,
-                                                  @RequestParam("url") Optional<String> oUrl) {
+    public ResponseEntity<SchemaInfoModel> info(@PathVariable("name") String name,
+                                                @RequestParam("url") Optional<String> oUrl) {
         try {
             return ResponseEntity.ok(schemaRegistryService.getInfo(name, oUrl));
         } catch (SchemaRegistryRestException e) {
