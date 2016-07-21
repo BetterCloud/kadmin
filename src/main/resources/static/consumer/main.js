@@ -44,7 +44,13 @@ function initMain() {
         $('#topic').val(val);
 //                    }
     });
-    refreshTopics();
+    if (!!App.defaultTopic && App.defaultTopic !== '') {
+        console.log(App.defaultTopic);
+        $('#topic').val(App.defaultTopic);
+        refresh();
+    } else {
+        refreshTopics();
+    }
 }
 
 function refreshTopics() {

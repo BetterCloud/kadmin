@@ -26,8 +26,18 @@ function handleConsumers(data) {
         template = App.manager.consumerTemplate;
     table.html('');
     _.each(data.content, function(c) {
+        c.contextPath = App.contextPath;
         c.lastUsedTimeText = c.lastUsedTime < 0 ? 'never' : moment(c.lastUsedTime).fromNow();
         c.lastMessageTimeText = c.lastMessageTime < 0 ? 'never' : moment(c.lastMessageTime).fromNow();
         table.append(template(c));
+        $('#delete-' + c.consumerGroupId + '-btn').click(function() { disposeConsumer(c.topic); });
+    });
+}
+
+function disposeConsumer(topic) {
+    $.ajax({
+        type: "DELETE",
+        url: App.contextPath + "/api/kafka/read/" + topic + "/kill",
+        success: refreshConsumers
     });
 }

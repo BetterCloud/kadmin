@@ -168,6 +168,7 @@ public class KafkaMessageConsumerResource {
             ConsumerContainer container = consumerMap.get(key).getData();
             container.getHandler().clear();
             container.getConsumer().shutdown();
+            consumerMap.remove(key);
             cleared = true;
         }
         return ResponseEntity.ok(cleared);
