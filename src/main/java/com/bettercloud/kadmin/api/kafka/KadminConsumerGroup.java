@@ -3,7 +3,7 @@ package com.bettercloud.kadmin.api.kafka;
 /**
  * Created by davidesposito on 7/19/16.
  */
-public interface KadminConsumerGroup<KeyT, ValueT> extends Runnable, MessageHandlerRegistry<KeyT, ValueT> {
+public interface KadminConsumerGroup extends Runnable, MessageHandlerRegistry {
 
     KadminConsumerConfig getConfig();
 

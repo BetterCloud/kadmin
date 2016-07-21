@@ -24,12 +24,16 @@ public class AppConfiguration {
     public SerializerRegistryService serializerRegistryService() {
         DefaultSerializerRegistryService registry = new DefaultSerializerRegistryService();
 
-        registry.register(sim("String", StringSerializer.class));
-        registry.register(sim("Byte Array", ByteArraySerializer.class));
-        registry.register(sim("Integer", IntegerSerializer.class));
-        registry.register(sim("Long", LongSerializer.class));
+        registry.register(sim(StringSerializer.class));
+        registry.register(sim(ByteArraySerializer.class));
+        registry.register(sim(IntegerSerializer.class));
+        registry.register(sim(LongSerializer.class));
 
         return registry;
+    }
+
+    private SerializerInfoModel sim(Class<?> serializerClass) {
+        return sim(serializerClass.getSimpleName(), serializerClass);
     }
 
     private SerializerInfoModel sim(String name, Class<?> serializerClass) {

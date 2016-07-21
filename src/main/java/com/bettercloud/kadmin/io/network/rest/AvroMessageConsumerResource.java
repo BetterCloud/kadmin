@@ -85,7 +85,7 @@ public class AvroMessageConsumerResource {
         if (!consumerMap.containsKey(key)) {
             Integer maxSize = queueSize.filter(s -> s < 100).orElse(50);
             QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
-            KadminConsumerGroup<String, Object> consumer = consumerProvider.get(KadminConsumerConfig.builder()
+            KadminConsumerGroup consumer = consumerProvider.get(KadminConsumerConfig.builder()
                             .topic(topic)
                             .kafkaHost(kafkaUrl.orElse(null))
                             .schemaRegistryUrl(schemaUrl.orElse(null))
@@ -183,7 +183,7 @@ public class AvroMessageConsumerResource {
         Page<ConsumerInfoModel> consumers = new Page<>();
         List<ConsumerInfoModel> content = consumerMap.values().stream()
                 .map(e -> {
-                    KadminConsumerGroup<String, Object> consumer = e.getData(false).getConsumer();
+                    KadminConsumerGroup consumer = e.getData(false).getConsumer();
                     QueuedKafkaMessageHandler handler = e.getData(false).getHandler();
                     Long lastMessageTime = Opt.of(handler.get(-1L))
                             .filter(list -> !list.isEmpty())
@@ -216,7 +216,7 @@ public class AvroMessageConsumerResource {
     @Data
     @Builder
     private static class ConsumerContainer {
-        private KadminConsumerGroup<String, Object> consumer;
+        private KadminConsumerGroup consumer;
         private QueuedKafkaMessageHandler handler;
     }
 }

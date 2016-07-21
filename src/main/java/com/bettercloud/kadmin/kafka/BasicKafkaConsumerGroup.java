@@ -1,35 +1,30 @@
 package com.bettercloud.kadmin.kafka;
 
-import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
-import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
-import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
-import com.bettercloud.kadmin.api.kafka.MessageHandler;
+import com.bettercloud.kadmin.api.kafka.*;
 import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by davidesposito on 7/20/16.
  */
-public class BasicKafkaConsumerGroup<ValueT> implements KadminConsumerGroup<String, ValueT> {
+public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHandlerRegistry {
 
-    private KafkaConsumer<String, ValueT> consumer;
+    private KafkaConsumer<String, Object> consumer;
     private final KadminConsumerConfig config;
     private final String clientId;
     private final String groupId;
     private final AtomicLong lastOffset;
 
-    private final List<MessageHandler<String, ValueT>> handlers;
+    private final Set<MessageHandler> handlers;
 
     public BasicKafkaConsumerGroup(KadminConsumerConfig config) {
         assert(config != null);
@@ -40,7 +35,7 @@ public class BasicKafkaConsumerGroup<ValueT> implements KadminConsumerGroup<Stri
         this.clientId = UUID.randomUUID().toString();
         this.groupId = UUID.randomUUID().toString();
         this.lastOffset = new AtomicLong(-1);
-        this.handlers = Lists.newArrayList();
+        this.handlers = Sets.newLinkedHashSet();
     }
 
     /**
@@ -118,8 +113,8 @@ public class BasicKafkaConsumerGroup<ValueT> implements KadminConsumerGroup<Stri
             consumer.subscribe(Arrays.asList(config.getTopic()));
 
             while (true) {
-                ConsumerRecords<String, ValueT> records = consumer.poll(0);
-                for (ConsumerRecord<String, ValueT> record : records) {
+                ConsumerRecords<String, Object> records = consumer.poll(0);
+                for (ConsumerRecord<String, Object> record : records) {
                     lastOffset.set(record.offset());
                     synchronized (handlers) {
                         handlers.stream().forEach(h -> h.handle(record));
@@ -139,7 +134,7 @@ public class BasicKafkaConsumerGroup<ValueT> implements KadminConsumerGroup<Stri
     }
 
     @Override
-    public void register(MessageHandler<String, ValueT> handler) {
+    public void register(MessageHandler handler) {
         if (handler != null) {
             synchronized (handlers) {
                 handlers.add(handler);
@@ -148,7 +143,7 @@ public class BasicKafkaConsumerGroup<ValueT> implements KadminConsumerGroup<Stri
     }
 
     @Override
-    public boolean remove(MessageHandler<String, ValueT> handler) {
+    public boolean remove(MessageHandler handler) {
         if (handler != null) {
             synchronized (handlers) {
                 if (handlers.contains(handler)) {

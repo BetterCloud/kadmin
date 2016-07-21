@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 /**
  * Created by davidesposito on 7/1/16.
  */
-public class QueuedKafkaMessageHandler implements MessageHandler<String, Object> {
+public class QueuedKafkaMessageHandler implements MessageHandler {
 
     private static final Logger LOGGER = LoggerUtils.get(QueuedKafkaMessageHandler.class);
 

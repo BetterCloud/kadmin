@@ -7,7 +7,7 @@ import com.bettercloud.util.Page;
 /**
  * Created by davidesposito on 7/19/16.
  */
-public interface KadminConsumerGroupProviderService<KeyT, ValueT> {
+public interface BasicKadminConsumerGroupProviderService {
 
     void start(KadminConsumerGroup consumer);
 

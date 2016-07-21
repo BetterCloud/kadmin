@@ -8,7 +8,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 /**
  * Created by davidesposito on 7/20/16.
  */
-public class DefaultAvroConsumerGroup extends BasicKafkaConsumerGroup<Object> implements AvroConsumerGroup {
+public class DefaultAvroConsumerGroup extends BasicKafkaConsumerGroup implements AvroConsumerGroup {
 
     public DefaultAvroConsumerGroup(KadminConsumerConfig config) {
         super(config);

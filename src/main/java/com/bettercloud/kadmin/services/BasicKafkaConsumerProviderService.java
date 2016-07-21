@@ -1,9 +1,10 @@
 package com.bettercloud.kadmin.services;
 
-import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
 import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
+import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.kafka.avro.DefaultAvroConsumerGroup;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  * Created by davidesposito on 7/19/16.
  */
 @Service
-public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupProviderService {
+public class BasicKafkaConsumerProviderService implements KadminConsumerGroupProviderService<String, Object> {
 
     private final ExecutorService consumerExecutor;
     private final String defaultKafkaHost;
@@ -31,7 +32,7 @@ public class DefaultAvroKafkaClientProviderService implements AvroConsumerGroupP
     private final LinkedHashMap<String, KadminConsumerGroup> consumerMap;
 
     @Autowired
-    public DefaultAvroKafkaClientProviderService(
+    public BasicKafkaConsumerProviderService(
             @Value("${kafka.host:localhost:9092}")
             String defaultKafkaHost,
             @Value("${schema.registry.url:http://localhost:8081}")
