@@ -3,7 +3,6 @@ package com.bettercloud.kadmin.services;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import com.bettercloud.kadmin.api.services.AvroProducerProviderService;
-import com.bettercloud.kadmin.io.network.rest.KafkaMessageConsumerResource;
 import com.bettercloud.kadmin.kafka.avro.DefaultAvroProducer;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;

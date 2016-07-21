@@ -46,6 +46,12 @@ public class KadminUiController {
         return "producer";
     }
 
+    @RequestMapping("/basicproducer")
+    public String basicProducer(Model model) {
+        model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));
+        return "basicproducer";
+    }
+
     @RequestMapping("/manager")
     public String manager(Model model) {
         model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));

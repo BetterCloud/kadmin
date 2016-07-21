@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api")
-public class KafkaMessageProducerResource {
+public class AvroMessageProducerResource {
 
-    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageProducerResource.class, Level.TRACE);
+    private static final Logger LOGGER = LoggerUtils.get(AvroMessageProducerResource.class, Level.TRACE);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final AvroProducerProviderService producerProvider;
@@ -45,8 +45,8 @@ public class KafkaMessageProducerResource {
     private final Map<String, ProducerMetrics> metricsMap;
 
     @Autowired
-    public KafkaMessageProducerResource(AvroProducerProviderService producerProvider,
-                                        JsonToAvroConverter jtaConverter) {
+    public AvroMessageProducerResource(AvroProducerProviderService producerProvider,
+                                       JsonToAvroConverter jtaConverter) {
         this.producerProvider = producerProvider;
         this.jtaConverter = jtaConverter;
         metricsMap = Maps.newHashMap();

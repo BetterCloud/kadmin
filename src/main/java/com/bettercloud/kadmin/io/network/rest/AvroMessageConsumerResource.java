@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api")
-public class KafkaMessageConsumerResource {
+public class AvroMessageConsumerResource {
 
-    private static final Logger LOGGER = LoggerUtils.get(KafkaMessageConsumerResource.class);
+    private static final Logger LOGGER = LoggerUtils.get(AvroMessageConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Joiner keyBuilder = Joiner.on(':');
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
@@ -47,7 +47,7 @@ public class KafkaMessageConsumerResource {
     private final Map<String, TimedWrapper<ConsumerContainer>> consumerMap;
 
     @Autowired
-    public KafkaMessageConsumerResource(AvroConsumerGroupProviderService consumerProvider) {
+    public AvroMessageConsumerResource(AvroConsumerGroupProviderService consumerProvider) {
         this.consumerProvider = consumerProvider;
         consumerMap = Maps.newConcurrentMap();
     }
