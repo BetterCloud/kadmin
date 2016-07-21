@@ -58,6 +58,10 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
         return total.get();
     }
 
+    public long getQueueSize() {
+        return messageQueue.maxSize;
+    }
+
     public void clear() {
         total.set(0L);
         messageQueue.clear();

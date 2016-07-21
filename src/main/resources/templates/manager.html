@@ -4,21 +4,8 @@
         <title>Kadmin @ BetterCloud</title>
         <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
         <style>
-            pre {
-                padding: 5px;
-                margin: 5px;
-            }
-            .string { color: #1A1AA6; }
-            .number { color: rgb(0, 0, 205); }
-            .boolean { color: rgb(88, 92, 246); }
-            .null { color: black; }
-            .key { color: rgb(49, 132, 149); }
-
-            .copy-btn, .collapse-btn {
+            .refresh-button {
                 float: right;
-            }
-            .raw-message {
-                display: none;
             }
         </style>
     </head>
@@ -28,22 +15,22 @@
                 <ul class="nav nav-pills">
                     <li role="presentation"><a th:href="@{/}">Home</a></li>
                     <li role="presentation"><a th:href="@{/producer}">Custom Producer</a></li>
-                    <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>
-                    <li role="presentation"><a th:href="@{/manager}">Manager</a></li>
+                    <li role="presentation"><a th:href="@{/consumer}">Consumer</a></li>
+                    <li role="presentation" class="active"><a th:href="@{/manager}">Manager</a></li>
                 </ul>
             </div>
             <div id="main-content"></div>
         </div>
 
-
         <script th:inline="javascript">
             /*<![CDATA[*/
             var App = {
                 contextPath: [[${contextPath}]],
-                messageTemplateLoaded: false,
+                consumerTemplateLoaded: false,
+                producerTemplateLoaded: false,
                 mainTemplateLoaded: false,
                 pageLoaded: false,
-                consumer: {}
+                manager: {}
             };
 
             /*]]>*/
@@ -52,21 +39,23 @@
         <script type="text/javascript" th:src="@{/js/underscore-min.js}"></script>
         <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/moment.min.js}"></script>
-        <script type="text/javascript" th:src="@{/js/clipboard.min.js}"></script>
-        <script type="text/javascript" th:src="@{/consumer/main.js}"></script>
-        <script type="application/javascript">
-            var App = _.extend(App, {
-            });
+        <script type="text/javascript" th:src="@{/js/ace.min.js}"></script>
+        <script type="text/javascript" th:src="@{/manager/main.js}"></script>
 
-            $.get(App.contextPath + "/consumer/main.html", function (html) {
+        <script>
+            $.get(App.contextPath + "/manager/main.html", function (html) {
                 $('#main-content').html(html);
                 App.mainTemplateLoaded = true;
                 initMain();
             });
-
-            $.get(App.contextPath + "/consumer/message-tile-template.html", function (html) {
-                App.consumer.messageTemplate = _.template(html);
-                App.messageTemplateLoaded = true;
+            $.get(App.contextPath + "/manager/consumer-template.html", function (html) {
+                App.manager.consumerTemplate = _.template(html);
+                App.consumerTemplateLoaded = true;
+                initMain();
+            });
+            $.get(App.contextPath + "/manager/producer-template.html", function (html) {
+                App.manager.producerTemplate = _.template(html);
+                App.producerTemplateLoaded = true;
                 initMain();
             });
 

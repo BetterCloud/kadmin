@@ -1,0 +1,16 @@
+<tr>
+    <td><%= topic %></td>
+    <td><%= lastUsedTimeText %></td>
+    <td><%= lastMessageTimeText %></td>
+    <td><%= consumerGroupId %></td>
+    <td><%= queueSize %></td>
+    <td><%= total %></td>
+    <td>
+        <button class="btn btn-xs btn-info" id="view-<%= consumerGroupId %>-btn">
+            View
+        </button>
+        <button class="btn btn-xs btn-danger" id="delete-<%= consumerGroupId %>-btn">
+            Delete
+        </button>
+    </td>
+</tr>
