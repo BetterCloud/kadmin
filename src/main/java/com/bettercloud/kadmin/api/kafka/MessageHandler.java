@@ -7,5 +7,5 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
  */
 public interface MessageHandler<KeyT, ValueT> {
 
-    void handle(ConsumerRecord<String, Object> record);
+    void handle(ConsumerRecord<KeyT, ValueT> record);
 }

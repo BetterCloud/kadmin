@@ -2,6 +2,7 @@ package com.bettercloud.kadmin.kafka.avro;
 
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import com.bettercloud.kadmin.api.kafka.avro.AvroProducer;
+import com.bettercloud.kadmin.kafka.BasicKafkaProducer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -13,56 +14,15 @@ import java.util.UUID;
 /**
  * Created by davidesposito on 7/20/16.
  */
-public class DefaultAvroProducer implements AvroProducer {
-
-    private final KadminProducerConfig config;
-    private final String id;
-    private KafkaProducer<String, Object> producer;
+public class DefaultAvroProducer extends BasicKafkaProducer<Object> implements AvroProducer {
 
     public DefaultAvroProducer(KadminProducerConfig config) {
-        this.config = config;
-        this.id = UUID.randomUUID().toString();
+        super(config);
+    }
 
+    @Override
+    protected void initConfig(KadminProducerConfig config) {
         config.setKeySerializer(StringSerializer.class.getName());
         config.setValueSerializer(KafkaAvroSerializer.class.getName());
-
-        init();
-    }
-
-    protected void init() {
-        final Properties properties = new Properties();
-        properties.put("acks", "all");
-        properties.put("bootstrap.servers", config.getKafkaHost());
-        properties.put("schema.registry.url", config.getSchemaRegistryUrl());
-        properties.put("key.serializer", config.getKeySerializer());
-        properties.put("value.serializer", config.getValueSerializer());
-
-        this.producer = new KafkaProducer<>(properties);
-    }
-
-    @Override
-    public KadminProducerConfig getConfig() {
-        return config;
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public void send(String key, Object val) {
-        if (this.producer != null) {
-            ProducerRecord<String, Object> pr = new ProducerRecord<>(config.getTopic(), key, val);
-            producer.send(pr);
-        }
-    }
-
-    @Override
-    public void shutdown() {
-        if (producer != null) {
-            producer.close();
-            producer = null;
-        }
     }
 }
