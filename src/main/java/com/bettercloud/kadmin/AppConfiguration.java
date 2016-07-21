@@ -1,14 +1,16 @@
 package com.bettercloud.kadmin;
 
+import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import com.bettercloud.kadmin.api.models.SerializerInfoModel;
+import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
+import com.bettercloud.kadmin.api.services.RegistryService;
 import com.bettercloud.kadmin.api.services.SerializerRegistryService;
 import com.bettercloud.kadmin.kafka.avro.ErrorTolerantAvroObjectDeserializer;
-import com.bettercloud.kadmin.kafka.serializers.DefaultSerializerRegistryService;
+import com.bettercloud.kadmin.services.KafkaDeserializerRegistryService;
+import com.bettercloud.kadmin.services.KafkaSerializerRegistryService;
+import com.bettercloud.kadmin.services.SimpleRegistryService;
 import com.google.common.collect.Maps;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.IntegerSerializer;
-import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.serialization.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,12 +24,25 @@ public class AppConfiguration {
 
     @Bean
     public SerializerRegistryService serializerRegistryService() {
-        DefaultSerializerRegistryService registry = new DefaultSerializerRegistryService();
+        SerializerRegistryService registry = new KafkaSerializerRegistryService();
 
         registry.register(sim(StringSerializer.class));
         registry.register(sim(ByteArraySerializer.class));
         registry.register(sim(IntegerSerializer.class));
         registry.register(sim(LongSerializer.class));
+
+        return registry;
+    }
+
+    @Bean
+    public DeserializerRegistryService deserializerRegistryService() {
+        DeserializerRegistryService registry = new KafkaDeserializerRegistryService();
+
+        registry.register(dim("Avro Object Deserializer", ErrorTolerantAvroObjectDeserializer.class));
+        registry.register(dim(StringDeserializer.class));
+        registry.register(dim(ByteArrayDeserializer.class));
+        registry.register(dim(IntegerDeserializer.class));
+        registry.register(dim(LongDeserializer.class));
 
         return registry;
     }
@@ -42,6 +57,18 @@ public class AppConfiguration {
                 .name(name)
                 .className(serializerClass.getName())
                 .meta(Maps.newHashMap())
+                .build();
+    }
+
+    private DeserializerInfoModel dim(Class<?> deserializerClass) {
+        return dim(deserializerClass.getSimpleName(), deserializerClass);
+    }
+
+    private DeserializerInfoModel dim(String name, Class<?> deserializerClass) {
+        return DeserializerInfoModel.builder()
+                .id(UUID.randomUUID().toString())
+                .name(name)
+                .className(deserializerClass.getName())
                 .build();
     }
 }

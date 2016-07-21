@@ -14,10 +14,9 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SerializerInfoModel implements Model {
+public class DeserializerInfoModel implements Model {
 
     private String id;
     private String name;
     private String className;
-    private Map<String, Object> meta;
 }
