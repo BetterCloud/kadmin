@@ -1,5 +1,4 @@
 function initMain() {
-    console.log(App);
     if (!(App.pageLoaded && App.mainTemplateLoaded && App.consumerTemplateLoaded && App.producerTemplateLoaded)) {
         // not ready yet
         return;
@@ -8,12 +7,16 @@ function initMain() {
         $consumerUpdated: $("#consumer-list-updated"),
         $consumerTotal: $("#consumer-list-total"),
         $consumerTableBody: $("#consumer-table-body"),
+        $producerUpdated: $("#producer-list-updated"),
+        $producerTotal: $("#producer-list-total"),
+        $producerTableBody: $("#producer-table-body"),
     });
 
     $("#refresh-consumers-btn").click(refreshConsumers);
-    // $("#refresh-producers-btn").click(refreshProducers);
+    $("#refresh-producers-btn").click(refreshProducers);
 
     refreshConsumers();
+    refreshProducers();
 }
 
 function refreshConsumers() {
@@ -21,7 +24,6 @@ function refreshConsumers() {
 }
 
 function handleConsumers(data) {
-    console.log(data);
     var table = App.manager.$consumerTableBody,
         template = App.manager.consumerTemplate;
     table.html('');
@@ -39,5 +41,30 @@ function disposeConsumer(topic) {
         type: "DELETE",
         url: App.contextPath + "/api/kafka/read/" + topic + "/kill",
         success: refreshConsumers
+    });
+}
+
+function refreshProducers() {
+    $.get(App.contextPath + "/api/manager/producers", handleProducers);
+}
+
+function handleProducers(data) {
+    console.log(data);
+    var table = App.manager.$producerTableBody,
+        template = App.manager.producerTemplate;
+    table.html('');
+    _.each(data.content, function(p) {
+        p.contextPath = App.contextPath;
+        p.lastUsedTimeText = p.lastUsedTime < 0 ? 'never' : moment(p.lastUsedTime).fromNow();
+        table.append(template(p));
+        $('#delete-' + p.id + '-btn').click(function() { disposeProducer(p.id); });
+    });
+}
+
+function disposeProducer(producerId) {
+    $.ajax({
+        type: "DELETE",
+        url: App.contextPath + "/api/manager/producers/" + producerId,
+        success: refreshProducers
     });
 }

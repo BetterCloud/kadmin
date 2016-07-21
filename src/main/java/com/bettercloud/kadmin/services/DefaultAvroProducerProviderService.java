@@ -100,12 +100,23 @@ public class DefaultAvroProducerProviderService implements AvroProducerProviderS
     }
 
     @Override
-    public KadminProducer<String, Object> findById(String consumerId) {
-        return Opt.of(producerMap.get(consumerId)).map(tw -> tw.getData()).orElse(null);
+    public TimedWrapper<KadminProducer<String, Object>> findById(String consumerId) {
+        return producerMap.get(consumerId);
     }
 
     @Override
     public long count() {
         return producerMap.size();
+    }
+
+    @Override
+    public boolean dispose(String producerId) {
+        TimedWrapper<KadminProducer<String, Object>> twProducer = producerMap.get(producerId);
+        if (twProducer == null) {
+            return false;
+        }
+        twProducer.getData().shutdown();
+        producerMap.remove(producerId);
+        return true;
     }
 }

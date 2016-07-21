@@ -1,12 +1,11 @@
-<div class="panel panel-default">
-    <div class="panel-body">
-        <h5>Sent</h5>
-        <div><%= timeText %></div>
-        <ul>
-            <li>Success: <%= success %></li>
-            <li>Count: <%= count %></li>
-            <li>Duration: <%= duration %>ms</li>
-            <li>Rate: <%= rate %> messages/second</li>
-        </ul>
-    </div>
-</div>
+<tr>
+    <td><%= topic %></td>
+    <td><%= lastUsedTimeText %></td>
+    <td><%= totalMessagesSent %></td>
+    <td><%= totalErrors %></td>
+    <td>
+        <button class="btn btn-xs btn-danger" id="delete-<%= id %>-btn">
+            <span class="glyphicon glyphicon-trash"></span> Dispose
+        </button>
+    </td>
+</tr>
