@@ -55,7 +55,7 @@ function sendMessage() {
     var req = buildRequest();
     $.ajax({
         type: "POST",
-        url: App.contextPath + "/api/kafka/publish?count=" + getCount(),
+        url: App.contextPath + "/api/avro/publish?count=" + getCount(),
         headers: {
             "Content-Type": "application/json",
             Accept: "application/json;charset=UTF-8"

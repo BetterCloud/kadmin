@@ -28,7 +28,7 @@ public class AppConfiguration {
         registry.register(sim("Byte Array", ByteArraySerializer.class));
         registry.register(sim("Integer", IntegerSerializer.class));
         registry.register(sim("Long", LongSerializer.class));
-        
+
         return registry;
     }
 

@@ -6,7 +6,8 @@ function initMain() {
     App.producer = _.extend(App.producer, {
         $results: $('#sent-results-row'),
         $aceMessage: ace.edit("ace-message"),
-        $topicsSelect: $('#topic-dd')
+        $topicsSelect: $('#topic-dd'),
+        $serializerSelect: $('#serializer-dd')
     });
 
     $('#send-message-btn').click(function(e) {
@@ -21,6 +22,8 @@ function initMain() {
 //                    }
     });
     refreshTopics();
+    
+    refreshSerializers();
 
     App.producer.$aceMessage.setTheme("ace/theme/kuroir");
     App.producer.$aceMessage.getSession().setMode("ace/mode/text");
@@ -35,6 +38,18 @@ function handleNewTopics(data) {
     $topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
     _.each(data, function(topicName) {
         $topicsSelect.append("<option>" + topicName + "</option>");
+    });
+}
+
+function refreshSerializers() {
+    $.get(App.contextPath + "/api/manager/serializers", handleSerializers);
+}
+
+function handleSerializers(data) {
+    var $serializerSelect = App.producer.$serializerSelect;
+    $serializerSelect.html('');
+    _.each(data.content, function(info) {
+        $serializerSelect.append("<option value='" + info.className + "'>" + info.name + "</option>");
     });
 }
 
@@ -60,7 +75,8 @@ function buildRequest() {
             schemaRegistryUrl: $('#schemaurl').val(),
             schema: $('#schema').val(),
             rawSchema: App.producer.$aceSchema.getValue(),
-            topic: $('#topic').val()
+            topic: $('#topic').val(),
+            serializerClassName: App.producer.$serializerSelect.val()
         },
         rawMessage: App.producer.$aceMessage.getValue(),
         key: $('#message-key').val()

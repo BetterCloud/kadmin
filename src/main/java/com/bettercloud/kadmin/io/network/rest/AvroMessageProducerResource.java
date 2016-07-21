@@ -53,7 +53,7 @@ public class AvroMessageProducerResource {
     }
 
     @RequestMapping(
-            path = "/kafka/publish",
+            path = "/avro/publish",
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
