@@ -45,8 +45,9 @@ function initMain() {
         $('#topic').val(val);
 //                    }
     });
-    if (!!App.defaultTopic && App.defaultTopic !== '') {
+    if (!!App.defaultTopic && App.des.id && App.des.name) {
         $('#topic').val(App.defaultTopic);
+        $('#deserializer-dd').html('<option value="' + App.des.id + '">' + App.des.name + '</option>');
         refresh();
     } else {
         refreshTopics();
@@ -126,7 +127,8 @@ function initMessageList() {
     $dispose.click(disposeConsumer);
     var $permalink = $("#permalink-btn");
     $permalink.removeClass("disabled");
-    $permalink.attr("data-clipboard-text", window.location.origin + App.contextPath + "/consumer/topic/" + consumerConfig.topic);
+    $permalink.attr("data-clipboard-text", window.location.origin + App.contextPath + "/consumer/topic/" +
+        consumerConfig.topic + "/" + consumerConfig.desClass);
     new Clipboard("#permalink-btn");
 }
 

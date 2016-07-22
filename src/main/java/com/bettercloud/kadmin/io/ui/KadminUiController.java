@@ -38,7 +38,7 @@ public class KadminUiController {
     @RequestMapping("/consumer/topic/{topic}/{deserializerId}")
     public String consumer(Model model,
                            @PathVariable("topic") String topic,
-                           @PathVariable("topic") String deserializerId) {
+                           @PathVariable("deserializerId") String deserializerId) {
         model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));
         DeserializerInfoModel info = deserializerRegistryService.findById(deserializerId);
         if (info != null) {
