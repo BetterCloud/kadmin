@@ -3,9 +3,7 @@ package com.bettercloud.kadmin.io.network.rest;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
-import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
-import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ConsumerInfoModel;
 import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
@@ -41,9 +39,9 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api")
-public class AvroMessageConsumerResource {
+public class KafkaConsumerResource {
 
-    private static final Logger LOGGER = LoggerUtils.get(AvroMessageConsumerResource.class);
+    private static final Logger LOGGER = LoggerUtils.get(KafkaConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Joiner keyBuilder = Joiner.on(':');
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
@@ -54,8 +52,8 @@ public class AvroMessageConsumerResource {
     private final DeserializerRegistryService deserializerRegistryService;
 
     @Autowired
-    public AvroMessageConsumerResource(BasicKafkaConsumerProviderService kafkaConsumerProvider,
-                                       DeserializerRegistryService deserializerRegistryService) {
+    public KafkaConsumerResource(BasicKafkaConsumerProviderService kafkaConsumerProvider,
+                                 DeserializerRegistryService deserializerRegistryService) {
         kafkaConsumerMap = Maps.newConcurrentMap();
         this.kafkaConsumerProvider = kafkaConsumerProvider;
         this.deserializerRegistryService = deserializerRegistryService;
