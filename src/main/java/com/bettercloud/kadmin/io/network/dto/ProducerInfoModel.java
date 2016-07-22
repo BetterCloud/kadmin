@@ -19,4 +19,5 @@ public class ProducerInfoModel {
     private long lastUsedTime;
     private long totalMessagesSent;
     private long totalErrors;
+    private String serializerName;
 }

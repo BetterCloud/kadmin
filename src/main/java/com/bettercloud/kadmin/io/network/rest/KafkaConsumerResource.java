@@ -199,6 +199,8 @@ public class KafkaConsumerResource {
                             .orElse(-1L);
                     return ConsumerInfoModel.builder()
                             .consumerGroupId(consumer.getGroupId())
+                            .deserializerName(consumer.getConfig().getValueDeserializer().getName())
+                            .deserializerId(consumer.getConfig().getValueDeserializer().getId())
                             .lastMessageTime(lastMessageTime)
                             .lastUsedTime(e.getLastUsed())
                             .queueSize(handler.getQueueSize())

@@ -30,19 +30,19 @@ public class AppConfiguration {
     public SerializerRegistryService serializerRegistryService() {
         SerializerRegistryService registry = new KafkaSerializerRegistryService();
 
-        registry.register(sim(StringSerializer.class, s -> s));
-        registry.register(sim(ByteArraySerializer.class, s -> s));
-        registry.register(sim(IntegerSerializer.class, s -> Integer.parseInt(s)));
-        registry.register(sim(LongSerializer.class, s -> Long.parseLong(s)));
+        registry.register(sim("string", StringSerializer.class, s -> s));
+        registry.register(sim("bytes", ByteArraySerializer.class, s -> s));
+        registry.register(sim("int", IntegerSerializer.class, s -> Integer.parseInt(s)));
+        registry.register(sim("long", LongSerializer.class, s -> Long.parseLong(s)));
 
         return registry;
     }
 
-    private SerializerInfoModel sim(Class<?> serializerClass, Function<String, Object> rawPrep) {
-        return sim(serializerClass.getSimpleName(), serializerClass, rawPrep);
+    private SerializerInfoModel sim(String id, Class<?> serializerClass, Function<String, Object> rawPrep) {
+        return sim(id, serializerClass.getSimpleName(), serializerClass, rawPrep);
     }
 
-    private SerializerInfoModel sim(String name, Class<?> serializerClass, Function<String, Object> rawPrep) {
+    private SerializerInfoModel sim(String id, String name, Class<?> serializerClass, Function<String, Object> rawPrep) {
         return SerializerInfoModel.builder()
                 .id(UUID.randomUUID().toString())
                 .name(name)

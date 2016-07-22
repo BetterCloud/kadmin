@@ -178,6 +178,7 @@ public class KafkaProducerResource {
                             .id(p.getId())
                             .topic(p.getConfig().getTopic())
                             .lastUsedTime(basicProducerProvider.findById(p.getId()).getLastUsedTime())
+                            .serializerName(p.getConfig().getValueSerializer().getName())
                             .totalErrors(p.getErrorCount())
                             .totalMessagesSent(p.getSentCount())
                             .build();

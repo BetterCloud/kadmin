@@ -20,4 +20,6 @@ public class ConsumerInfoModel {
     private String consumerGroupId;
     private long queueSize;
     private long total;
+    private String deserializerName;
+    private String deserializerId;
 }
