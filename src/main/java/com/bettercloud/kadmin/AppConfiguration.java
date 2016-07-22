@@ -3,9 +3,11 @@ package com.bettercloud.kadmin;
 import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import com.bettercloud.kadmin.api.models.SerializerInfoModel;
 import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
+import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.api.services.RegistryService;
 import com.bettercloud.kadmin.api.services.SerializerRegistryService;
 import com.bettercloud.kadmin.kafka.avro.ErrorTolerantAvroObjectDeserializer;
+import com.bettercloud.kadmin.services.BasicKafkaConsumerProviderService;
 import com.bettercloud.kadmin.services.KafkaDeserializerRegistryService;
 import com.bettercloud.kadmin.services.KafkaSerializerRegistryService;
 import com.bettercloud.kadmin.services.SimpleRegistryService;
@@ -34,19 +36,6 @@ public class AppConfiguration {
         return registry;
     }
 
-    @Bean
-    public DeserializerRegistryService deserializerRegistryService() {
-        DeserializerRegistryService registry = new KafkaDeserializerRegistryService();
-
-        registry.register(dim("Avro Object Deserializer", ErrorTolerantAvroObjectDeserializer.class));
-        registry.register(dim(StringDeserializer.class));
-        registry.register(dim(ByteArrayDeserializer.class));
-        registry.register(dim(IntegerDeserializer.class));
-        registry.register(dim(LongDeserializer.class));
-
-        return registry;
-    }
-
     private SerializerInfoModel sim(Class<?> serializerClass) {
         return sim(serializerClass.getSimpleName(), serializerClass);
     }
@@ -58,6 +47,19 @@ public class AppConfiguration {
                 .className(serializerClass.getName())
                 .meta(Maps.newHashMap())
                 .build();
+    }
+
+    @Bean
+    public DeserializerRegistryService deserializerRegistryService() {
+        DeserializerRegistryService registry = new KafkaDeserializerRegistryService();
+
+        registry.register(dim("Avro Object Deserializer", ErrorTolerantAvroObjectDeserializer.class));
+        registry.register(dim(StringDeserializer.class));
+        registry.register(dim(ByteArrayDeserializer.class));
+        registry.register(dim(IntegerDeserializer.class));
+        registry.register(dim(LongDeserializer.class));
+
+        return registry;
     }
 
     private DeserializerInfoModel dim(Class<?> deserializerClass) {

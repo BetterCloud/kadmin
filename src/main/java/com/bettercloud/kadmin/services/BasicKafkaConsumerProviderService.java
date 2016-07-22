@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 /**
  * Created by davidesposito on 7/19/16.
  */
-@Service
+@Service(value = "kafkaConsumerGroupProvider")
 public class BasicKafkaConsumerProviderService implements KadminConsumerGroupProviderService<String, Object> {
 
     private final ExecutorService consumerExecutor;

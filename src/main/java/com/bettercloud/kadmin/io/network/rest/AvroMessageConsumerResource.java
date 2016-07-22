@@ -2,16 +2,21 @@ package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
+import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
+import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
+import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ConsumerInfoModel;
 import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
+import com.bettercloud.kadmin.services.BasicKafkaConsumerProviderService;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
@@ -19,6 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -43,24 +49,27 @@ public class AvroMessageConsumerResource {
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
     private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
 
-    private final AvroConsumerGroupProviderService consumerProvider;
-    private final Map<String, TimedWrapper<ConsumerContainer>> consumerMap;
+    private final BasicKafkaConsumerProviderService kafkaConsumerProvider;
+    private final Map<String, TimedWrapper<ConsumerContainer>> kafkaConsumerMap;
+    private final DeserializerRegistryService deserializerRegistryService;
 
     @Autowired
-    public AvroMessageConsumerResource(AvroConsumerGroupProviderService consumerProvider) {
-        this.consumerProvider = consumerProvider;
-        consumerMap = Maps.newConcurrentMap();
+    public AvroMessageConsumerResource(BasicKafkaConsumerProviderService kafkaConsumerProvider,
+                                       DeserializerRegistryService deserializerRegistryService) {
+        kafkaConsumerMap = Maps.newConcurrentMap();
+        this.kafkaConsumerProvider = kafkaConsumerProvider;
+        this.deserializerRegistryService = deserializerRegistryService;
     }
 
     @Scheduled(fixedRate = IDLE_CHECK_DELAY)
     private void clearMemory() {
         LOGGER.info("Cleaning up connections/memory");
-        List<String> keys = consumerMap.keySet().stream()
-                .filter(k -> consumerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
+        List<String> keys = kafkaConsumerMap.keySet().stream()
+                .filter(k -> kafkaConsumerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
                 .collect(Collectors.toList());
         keys.stream()
                 .forEach(k -> {
-                    TimedWrapper<ConsumerContainer> timedWrapper = consumerMap.get(k);
+                    TimedWrapper<ConsumerContainer> timedWrapper = kafkaConsumerMap.get(k);
                     ConsumerContainer container = timedWrapper.getData();
                     LOGGER.debug("Disposing old consumer ({}) with timeout {}", k, timedWrapper.getIdleTime());
 
@@ -75,29 +84,36 @@ public class AvroMessageConsumerResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<Page<JsonNode>> read(@PathVariable("topic") String topic,
+    public ResponseEntity<Page<JsonNode>> readKafka(@PathVariable("topic") String topic,
                                                @RequestParam("since") Optional<Long> oSince,
                                                @RequestParam("window") Optional<Long> oWindow,
                                                @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
                                                @RequestParam("schemaUrl") Optional<String> schemaUrl,
-                                               @RequestParam("size") Optional<Integer> queueSize) {
-        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
-        if (!consumerMap.containsKey(key)) {
+                                               @RequestParam("size") Optional<Integer> queueSize,
+                                               @RequestParam("deserializerId") String deserializerId) {
+        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic, deserializerId);
+        DeserializerInfoModel des = deserializerRegistryService.findById(deserializerId);
+        if (des == null) {
+            return ResponseUtil.error("Invalid deserializer id", HttpStatus.NOT_FOUND);
+        }
+        if (!kafkaConsumerMap.containsKey(key)) {
             Integer maxSize = queueSize.filter(s -> s < 100).orElse(50);
             QueuedKafkaMessageHandler queue = new QueuedKafkaMessageHandler(maxSize);
-            KadminConsumerGroup consumer = consumerProvider.get(KadminConsumerConfig.builder()
+            KadminConsumerGroup consumer = kafkaConsumerProvider.get(KadminConsumerConfig.builder()
                             .topic(topic)
                             .kafkaHost(kafkaUrl.orElse(null))
                             .schemaRegistryUrl(schemaUrl.orElse(null))
+                            .keyDeserializer(StringDeserializer.class.getName())
+                            .valueDeserializer(des.getClassName())
                             .build(),
                     true);
             consumer.register(queue);
-            consumerMap.put(key, TimedWrapper.of(ConsumerContainer.builder()
+            kafkaConsumerMap.put(key, TimedWrapper.of(ConsumerContainer.builder()
                     .consumer(consumer)
                     .handler(queue)
                     .build()));
         }
-        QueuedKafkaMessageHandler handler = consumerMap.get(key).getData().getHandler();
+        QueuedKafkaMessageHandler handler = kafkaConsumerMap.get(key).getData().getHandler();
         Long since = getSince(oSince, oWindow);
         Page<JsonNode> page = null;
         try {
@@ -138,7 +154,7 @@ public class AvroMessageConsumerResource {
     }
 
     @RequestMapping(
-            path = "/kafka/read/{topic}",
+            path = "/avro/read/{topic}",
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -147,15 +163,15 @@ public class AvroMessageConsumerResource {
                                          @RequestParam("schemaUrl") Optional<String> schemaUrl) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         boolean cleared = false;
-        if (consumerMap.containsKey(key) && consumerMap.get(key) != null) {
-            consumerMap.get(key).getData().getHandler().clear();
+        if (kafkaConsumerMap.containsKey(key) && kafkaConsumerMap.get(key) != null) {
+            kafkaConsumerMap.get(key).getData().getHandler().clear();
             cleared = true;
         }
         return ResponseEntity.ok(cleared);
     }
 
     @RequestMapping(
-            path = "/kafka/read/{topic}/kill",
+            path = "/avro/read/{topic}/kill",
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -164,11 +180,11 @@ public class AvroMessageConsumerResource {
                                          @RequestParam("schemaUrl") Optional<String> schemaUrl) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
         boolean cleared = false;
-        if (consumerMap.containsKey(key) && consumerMap.get(key) != null) {
-            ConsumerContainer container = consumerMap.get(key).getData();
+        if (kafkaConsumerMap.containsKey(key) && kafkaConsumerMap.get(key) != null) {
+            ConsumerContainer container = kafkaConsumerMap.get(key).getData();
             container.getHandler().clear();
             container.getConsumer().shutdown();
-            consumerMap.remove(key);
+            kafkaConsumerMap.remove(key);
             cleared = true;
         }
         return ResponseEntity.ok(cleared);
@@ -181,7 +197,7 @@ public class AvroMessageConsumerResource {
     )
     public ResponseEntity<Page<ConsumerInfoModel>> getAllConsumers() {
         Page<ConsumerInfoModel> consumers = new Page<>();
-        List<ConsumerInfoModel> content = consumerMap.values().stream()
+        List<ConsumerInfoModel> content = kafkaConsumerMap.values().stream()
                 .map(e -> {
                     KadminConsumerGroup consumer = e.getData(false).getConsumer();
                     QueuedKafkaMessageHandler handler = e.getData(false).getHandler();

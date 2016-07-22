@@ -18,7 +18,8 @@ function initMain() {
         },
         $messageList: $('#message-list'),
         clipboard: null,
-        $topicsSelect: $('#topic-dd')
+        $topicsSelect: $('#topic-dd'),
+        $desSelect: $('#deserializer-dd')
     });
 
     $('#refresh-rate').change(function(e) {
@@ -49,6 +50,7 @@ function initMain() {
         refresh();
     } else {
         refreshTopics();
+        refreshDeserializers();
     }
 }
 
@@ -60,6 +62,17 @@ function handleNewTopics(data) {
     App.consumer.$topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
     _.each(data, function(topicName) {
         App.consumer.$topicsSelect.append("<option>" + topicName + "</option>");
+    });
+}
+
+function refreshDeserializers() {
+    $.get(App.contextPath + "/api/manager/deserializers", handleNewDeserializers);
+}
+
+function handleNewDeserializers(data) {
+    App.consumer.$desSelect.html('');
+    _.each(data.content, function(des) {
+        App.consumer.$desSelect.append("<option value='" + des.id + "'>" + des.name + "</option>");
     });
 }
 
@@ -76,7 +89,8 @@ function initConfig() {
         topic: $('#topic').val(),
         since: -1,
         autoRefresh: null,
-        refreshRate: App.consumer.$refreshRate.val()
+        refreshRate: App.consumer.$refreshRate.val(),
+        desClass: App.consumer.$desSelect.val()
     };
     if (consumerConfig.kafkaUrl === "") {
         consumerConfig.kafkaUrl = null;
@@ -96,6 +110,7 @@ function disableForm() {
     $("#topic").prop("disabled", true);
     App.consumer.$topicsSelect.prop("disabled", true);
     $("#start-consumer-btn").addClass("disabled");
+    App.consumer.$desSelect.prop("disabled", true);
 }
 
 function initMessageList() {
@@ -161,7 +176,7 @@ function refresh() {
 
 function buildUrl() {
     var consumerConfig = App.consumer.consumerConfig,
-        url = App.contextPath + "/api/kafka/read/" + consumerConfig.topic + "?";
+        url = App.contextPath + "/api/kafka/read/" + consumerConfig.topic + "?deserializerId=" + consumerConfig.desClass + "&";
     if (!!consumerConfig.kafkaUrl) {
         url += "kafkaUrl=" + consumerConfig.kafkaUrl + "&";
     }

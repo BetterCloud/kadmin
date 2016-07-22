@@ -7,6 +7,7 @@ import com.bettercloud.kadmin.api.services.SerializerRegistryService;
 import com.bettercloud.util.Page;
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
  */
 public class SimpleRegistryService<ModelT extends Model> implements RegistryService<ModelT> {
 
-    private final Map<String, ModelT> infoMap = Maps.newConcurrentMap();
+    private final Map<String, ModelT> infoMap = Collections.synchronizedMap(Maps.newLinkedHashMap());
 
     @Override
     public void register(ModelT model) {
