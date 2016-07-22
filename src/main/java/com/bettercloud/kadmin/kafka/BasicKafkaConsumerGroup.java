@@ -1,19 +1,21 @@
 package com.bettercloud.kadmin.kafka;
 
-import com.bettercloud.kadmin.api.kafka.*;
-import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
+import com.bettercloud.kadmin.api.kafka.MessageHandler;
+import com.bettercloud.kadmin.api.kafka.MessageHandlerRegistry;
 import com.bettercloud.util.LoggerUtils;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.mysql.jdbc.log.LogUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -67,7 +69,7 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("auto.offset.reset", "earliest");
 
         properties.put("key.deserializer", config.getKeyDeserializer());
-        properties.put("value.deserializer", config.getValueDeserializer());
+        properties.put("value.deserializer", config.getValueDeserializer().getClassName());
 
         this.consumer = new KafkaConsumer<>(properties);
     }

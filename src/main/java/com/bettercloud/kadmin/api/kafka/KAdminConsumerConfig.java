@@ -1,5 +1,6 @@
 package com.bettercloud.kadmin.api.kafka;
 
+import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
@@ -15,5 +16,5 @@ public class KadminConsumerConfig {
     private String kafkaHost;
     private String schemaRegistryUrl;
     private String keyDeserializer;
-    private String valueDeserializer;
+    private DeserializerInfoModel valueDeserializer;
 }

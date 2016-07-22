@@ -2,12 +2,9 @@ package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
-import com.bettercloud.kadmin.api.kafka.avro.AvroProducer;
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import lombok.Getter;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
 import java.util.UUID;
@@ -56,7 +53,7 @@ public class BasicKafkaProducer<ValueT> implements KadminProducer<String, ValueT
         properties.put("bootstrap.servers", config.getKafkaHost());
         properties.put("schema.registry.url", config.getSchemaRegistryUrl());
         properties.put("key.serializer", config.getKeySerializer());
-        properties.put("value.serializer", config.getValueSerializer());
+        properties.put("value.serializer", config.getValueSerializer().getClassName());
 
         this.producer = new KafkaProducer<>(properties);
     }

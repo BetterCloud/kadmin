@@ -103,7 +103,7 @@ public class KafkaConsumerResource {
                             .kafkaHost(kafkaUrl.orElse(null))
                             .schemaRegistryUrl(schemaUrl.orElse(null))
                             .keyDeserializer(StringDeserializer.class.getName())
-                            .valueDeserializer(des.getClassName())
+                            .valueDeserializer(des)
                             .build(),
                     true);
             consumer.register(queue);

@@ -84,7 +84,7 @@ public class KafkaProducerResource {
                 .schemaRegistryUrl(meta.getSchemaRegistryUrl())
                 .topic(meta.getTopic())
                 .keySerializer(StringSerializer.class.getName())
-                .valueSerializer(ErrorTolerantAvroObjectDeserializer.class.getName())
+                .valueSerializer(serializerRegistryService.findById("avro"))
                 .build());
         boolean sendMessage = message != null && producer != null;
         ProducerRepsonseModel res = ProducerRepsonseModel.builder()
@@ -121,7 +121,7 @@ public class KafkaProducerResource {
                 .schemaRegistryUrl(meta.getSchemaRegistryUrl())
                 .topic(meta.getTopic())
                 .keySerializer(StringSerializer.class.getName())
-                .valueSerializer(ser.getClassName())
+                .valueSerializer(ser)
                 .build());
         Object message = ser.getPrepareRawFunc().apply(requestModel.getRawMessage());
         boolean sendMessage = requestModel.getRawMessage() != null && producer != null;
