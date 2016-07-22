@@ -4,19 +4,26 @@ import ch.qos.logback.classic.Level;
 import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
+import com.bettercloud.kadmin.api.models.SerializerInfoModel;
 import com.bettercloud.kadmin.api.services.AvroProducerProviderService;
+import com.bettercloud.kadmin.api.services.KadminProducerProviderService;
+import com.bettercloud.kadmin.api.services.SerializerRegistryService;
 import com.bettercloud.kadmin.io.network.dto.*;
 import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
+import com.bettercloud.kadmin.kafka.BasicKafkaProducer;
+import com.bettercloud.kadmin.services.BasicKafkaProducerProviderService;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.google.common.collect.Maps;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.avro.AvroTypeException;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,14 +48,20 @@ public class AvroMessageProducerResource {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final AvroProducerProviderService producerProvider;
+    private final BasicKafkaProducerProviderService basicProducerProvider;
     private final JsonToAvroConverter jtaConverter;
+    private final SerializerRegistryService serializerRegistryService;
     private final Map<String, ProducerMetrics> metricsMap;
 
     @Autowired
     public AvroMessageProducerResource(AvroProducerProviderService producerProvider,
-                                       JsonToAvroConverter jtaConverter) {
+                                       BasicKafkaProducerProviderService basicProducerProvider,
+                                       JsonToAvroConverter jtaConverter,
+                                       SerializerRegistryService serializerRegistryService) {
         this.producerProvider = producerProvider;
+        this.basicProducerProvider = basicProducerProvider;
         this.jtaConverter = jtaConverter;
+        this.serializerRegistryService = serializerRegistryService;
         metricsMap = Maps.newHashMap();
     }
 
@@ -58,19 +71,19 @@ public class AvroMessageProducerResource {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<ProducerRepsonseModel> publish(@RequestBody KafkaProduceRequestModel requestModel,
+    public ResponseEntity<ProducerRepsonseModel> publishAvro(@RequestBody KafkaProduceRequestModel requestModel,
                                                          @RequestParam("count") Optional<Integer> oCount) {
-        if (requestModel.getRawMessage().getNodeType().equals(JsonNodeType.STRING)) {
-            try {
-                requestModel.setRawMessage(MAPPER.readTree(requestModel.getRawMessage().asText()));
-            } catch (IOException e) {
-                return ResponseUtil.error(e);
-            }
+        Opt<JsonNode> rawMessage;
+        try {
+            rawMessage = Opt.of(MAPPER.readTree(requestModel.getRawMessage()));
+            rawMessage.notPresent(() -> { throw new RuntimeException("Could not parse raw message"); });
+        } catch (Exception e) {
+            return ResponseUtil.error(e);
         }
         KafkaProduceMessageMetaModel meta = requestModel.getMeta();
         Object message;
         try {
-            message = jtaConverter.convert(requestModel.getRawMessage().toString(), meta.getRawSchema());
+            message = jtaConverter.convert(rawMessage.get().toString(), meta.getRawSchema());
         } catch (AvroTypeException e) {
             return ResponseUtil.error(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -80,6 +93,45 @@ public class AvroMessageProducerResource {
                 .topic(meta.getTopic())
                 .build());
         boolean sendMessage = message != null && producer != null;
+        ProducerRepsonseModel res = ProducerRepsonseModel.builder()
+                .sent(sendMessage)
+                .count(0)
+                .success(false)
+                .duration(-1)
+                .rate(-1)
+                .build();
+        if (sendMessage) {
+            res = sendMessage(producer, requestModel.getKey(), message, oCount.orElse(1));
+            updateMetrics(producer.getId(), res, oCount.orElse(1));
+        }
+        return ResponseEntity.ok(res);
+    }
+
+    @RequestMapping(
+            path = "/kafka/publish",
+            method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ProducerRepsonseModel> publish(@RequestBody KafkaProduceRequestModel requestModel,
+                                                         @RequestParam("count") Optional<Integer> oCount) {
+        if (requestModel.getMeta().getSerializerId() == null) {
+            return ResponseUtil.error("Missing serializer id", HttpStatus.BAD_REQUEST);
+        }
+        SerializerInfoModel ser = serializerRegistryService.findById(requestModel.getMeta().getSerializerId());
+        if (ser == null) {
+            return ResponseUtil.error("Invalid serializer id", HttpStatus.BAD_REQUEST);
+        }
+        KafkaProduceMessageMetaModel meta = requestModel.getMeta();
+        KadminProducer<String, Object> producer = basicProducerProvider.get(KadminProducerConfig.builder()
+                .kafkaHost(meta.getKafkaUrl())
+                .schemaRegistryUrl(meta.getSchemaRegistryUrl())
+                .topic(meta.getTopic())
+                .keySerializer(StringSerializer.class.getName())
+                .valueSerializer(ser.getClassName())
+                .build());
+        Object message = ser.getPrepareRawFunc().apply(requestModel.getRawMessage());
+        boolean sendMessage = requestModel.getRawMessage() != null && producer != null;
         ProducerRepsonseModel res = ProducerRepsonseModel.builder()
                 .sent(sendMessage)
                 .count(0)

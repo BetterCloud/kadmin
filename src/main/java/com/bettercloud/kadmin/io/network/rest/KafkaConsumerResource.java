@@ -4,6 +4,7 @@ import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
+import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ConsumerInfoModel;
 import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
@@ -47,7 +48,7 @@ public class KafkaConsumerResource {
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
     private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
 
-    private final BasicKafkaConsumerProviderService kafkaConsumerProvider;
+    private final KadminConsumerGroupProviderService<String, Object> kafkaConsumerProvider;
     private final Map<String, TimedWrapper<ConsumerContainer>> kafkaConsumerMap;
     private final DeserializerRegistryService deserializerRegistryService;
 
@@ -123,17 +124,7 @@ public class KafkaConsumerResource {
                         node.put("writeTime", mc.getWriteTime());
                         node.put("offset", mc.getOffset());
                         node.put("topic", mc.getTopic());
-                        /*
-                         * There appears to be some incompatibility with JSON serializing Avro models. So,
-                         *
-                         * disgusting hack start...
-                         */
-                        JsonNode message = null;
-                        try {
-                            message = mapper.readTree(mc.getMessage().toString());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
+                        JsonNode message = des.getPrepareOutputFunc().apply(mc.getMessage());
                         node.replace("message", message);
                         // disgusting hack end
                         return node;
@@ -146,6 +137,7 @@ public class KafkaConsumerResource {
             page.setTotalElements(handler.total());
             page.setContent(messages);
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseUtil.error(e);
         }
         return ResponseEntity.ok(page);

@@ -49,7 +49,7 @@ function handleSerializers(data) {
     var $serializerSelect = App.producer.$serializerSelect;
     $serializerSelect.html('');
     _.each(data.content, function(info) {
-        $serializerSelect.append("<option value='" + info.className + "'>" + info.name + "</option>");
+        $serializerSelect.append("<option value='" + info.id + "'>" + info.name + "</option>");
     });
 }
 
@@ -72,11 +72,8 @@ function buildRequest() {
     var req = {
         meta: {
             kafkaUrl: $('#kafkahost').val(),
-            schemaRegistryUrl: $('#schemaurl').val(),
-            schema: $('#schema').val(),
-            rawSchema: App.producer.$aceSchema.getValue(),
             topic: $('#topic').val(),
-            serializerClassName: App.producer.$serializerSelect.val()
+            serializerId: App.producer.$serializerSelect.val()
         },
         rawMessage: App.producer.$aceMessage.getValue(),
         key: $('#message-key').val()

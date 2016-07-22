@@ -3,7 +3,6 @@ package com.bettercloud.kadmin.services;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
-import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.kafka.avro.DefaultAvroConsumerGroup;
 import com.bettercloud.util.Opt;

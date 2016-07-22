@@ -14,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class KafkaProduceRequestModel {
 
     private String key;
-    private JsonNode rawMessage;
+    private String rawMessage;
     private KafkaProduceMessageMetaModel meta;
 }

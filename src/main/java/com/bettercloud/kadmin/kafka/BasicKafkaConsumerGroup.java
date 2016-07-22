@@ -2,13 +2,16 @@ package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.*;
 import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
+import com.bettercloud.util.LoggerUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.mysql.jdbc.log.LogUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,6 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by davidesposito on 7/20/16.
  */
 public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHandlerRegistry {
+
+    private static final Logger LOGGER = LoggerUtils.get(BasicKafkaConsumerGroup.class);
 
     private KafkaConsumer<String, Object> consumer;
     private final KadminConsumerConfig config;
@@ -46,6 +51,8 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
 
     protected void init() {
         initConfig(config);
+
+        LOGGER.info("Initializing Consumer: {}", config);
 
         final Properties properties = new Properties();
         properties.put("bootstrap.servers", config.getKafkaHost());
