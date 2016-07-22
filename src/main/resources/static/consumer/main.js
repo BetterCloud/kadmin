@@ -200,8 +200,11 @@ function handleResults(data) {
         ele.writeTimeText = moment(ele.writeTime).format('LTS');
         ele.messageText = "null";
         if (!!ele.message) {
-            ele.rawMessage = JSON.stringify(ele.message, null, 2);
+            ele.rawMessage = JSON.stringify(ele.message, null, 2).replace(/([^\\])\\n/g, "$1\n");
             ele.messageText = syntaxHighlight(ele.rawMessage);
+        } else {
+            ele.rawMessage = "null";
+            ele.messageText = "null";
         }
         ele.timestamp = "_" + count++;
         html = App.consumer.messageTemplate(ele);

@@ -5,12 +5,13 @@ import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import com.bettercloud.kadmin.api.models.SerializerInfoModel;
-import com.bettercloud.kadmin.api.services.AvroProducerProviderService;
-import com.bettercloud.kadmin.api.services.KadminProducerProviderService;
 import com.bettercloud.kadmin.api.services.SerializerRegistryService;
-import com.bettercloud.kadmin.io.network.dto.*;
+import com.bettercloud.kadmin.io.network.dto.KafkaProduceMessageMetaModel;
+import com.bettercloud.kadmin.io.network.dto.KafkaProduceRequestModel;
+import com.bettercloud.kadmin.io.network.dto.ProducerInfoModel;
+import com.bettercloud.kadmin.io.network.dto.ProducerRepsonseModel;
 import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
-import com.bettercloud.kadmin.kafka.BasicKafkaProducer;
+import com.bettercloud.kadmin.kafka.avro.ErrorTolerantAvroObjectDeserializer;
 import com.bettercloud.kadmin.services.BasicKafkaProducerProviderService;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
@@ -18,8 +19,6 @@ import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.google.common.collect.Maps;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.avro.AvroTypeException;
@@ -31,9 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,27 +39,22 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api")
-public class AvroMessageProducerResource {
+public class KafkaProducerResource {
 
-    private static final Logger LOGGER = LoggerUtils.get(AvroMessageProducerResource.class, Level.TRACE);
+    private static final Logger LOGGER = LoggerUtils.get(KafkaProducerResource.class, Level.TRACE);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private final AvroProducerProviderService producerProvider;
     private final BasicKafkaProducerProviderService basicProducerProvider;
     private final JsonToAvroConverter jtaConverter;
     private final SerializerRegistryService serializerRegistryService;
-    private final Map<String, ProducerMetrics> metricsMap;
 
     @Autowired
-    public AvroMessageProducerResource(AvroProducerProviderService producerProvider,
-                                       BasicKafkaProducerProviderService basicProducerProvider,
-                                       JsonToAvroConverter jtaConverter,
-                                       SerializerRegistryService serializerRegistryService) {
-        this.producerProvider = producerProvider;
+    public KafkaProducerResource(BasicKafkaProducerProviderService basicProducerProvider,
+                                 JsonToAvroConverter jtaConverter,
+                                 SerializerRegistryService serializerRegistryService) {
         this.basicProducerProvider = basicProducerProvider;
         this.jtaConverter = jtaConverter;
         this.serializerRegistryService = serializerRegistryService;
-        metricsMap = Maps.newHashMap();
     }
 
     @RequestMapping(
@@ -87,10 +79,12 @@ public class AvroMessageProducerResource {
         } catch (AvroTypeException e) {
             return ResponseUtil.error(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        KadminProducer<String, Object> producer = producerProvider.get(KadminProducerConfig.builder()
+        KadminProducer<String, Object> producer = basicProducerProvider.get(KadminProducerConfig.builder()
                 .kafkaHost(meta.getKafkaUrl())
                 .schemaRegistryUrl(meta.getSchemaRegistryUrl())
                 .topic(meta.getTopic())
+                .keySerializer(StringSerializer.class.getName())
+                .valueSerializer(ErrorTolerantAvroObjectDeserializer.class.getName())
                 .build());
         boolean sendMessage = message != null && producer != null;
         ProducerRepsonseModel res = ProducerRepsonseModel.builder()
@@ -102,7 +96,6 @@ public class AvroMessageProducerResource {
                 .build();
         if (sendMessage) {
             res = sendMessage(producer, requestModel.getKey(), message, oCount.orElse(1));
-            updateMetrics(producer.getId(), res, oCount.orElse(1));
         }
         return ResponseEntity.ok(res);
     }
@@ -141,22 +134,8 @@ public class AvroMessageProducerResource {
                 .build();
         if (sendMessage) {
             res = sendMessage(producer, requestModel.getKey(), message, oCount.orElse(1));
-            updateMetrics(producer.getId(), res, oCount.orElse(1));
         }
         return ResponseEntity.ok(res);
-    }
-
-    private void updateMetrics(String producerId, ProducerRepsonseModel res, int total) {
-        synchronized (metricsMap) {
-            if (!metricsMap.containsKey(producerId)) {
-                metricsMap.put(producerId, ProducerMetrics.builder().build());
-            }
-            ProducerMetrics curr = metricsMap.get(producerId);
-            metricsMap.put(producerId, ProducerMetrics.builder()
-                    .errorCount(curr.getErrorCount() + total - res.getCount())
-                    .sentCount(curr.getSentCount() + res.getCount())
-                    .build());
-        }
     }
 
     private <PayloadT> ProducerRepsonseModel sendMessage(KadminProducer<String, PayloadT> producer, String key,
@@ -193,22 +172,21 @@ public class AvroMessageProducerResource {
     )
     public ResponseEntity<Page<ProducerInfoModel>> producers() {
         Page<ProducerInfoModel> page = new Page<>();
-        List<ProducerInfoModel> content = producerProvider.findAll().getContent().stream()
+        List<ProducerInfoModel> content = basicProducerProvider.findAll().getContent().stream()
                 .map(p -> {
-                    ProducerMetrics metrics = metricsMap.get(p.getId());
                     return ProducerInfoModel.builder()
                             .id(p.getId())
                             .topic(p.getConfig().getTopic())
-                            .lastUsedTime(producerProvider.findById(p.getId()).getLastUsed())
-                            .totalErrors(metrics.getErrorCount())
-                            .totalMessagesSent(metrics.getSentCount())
+                            .lastUsedTime(basicProducerProvider.findById(p.getId()).getLastUsedTime())
+                            .totalErrors(p.getErrorCount())
+                            .totalMessagesSent(p.getSentCount())
                             .build();
                 })
                 .collect(Collectors.toList());
         page.setContent(content);
         page.setPage(0);
         page.setSize(content.size());
-        page.setTotalElements(producerProvider.count());
+        page.setTotalElements(basicProducerProvider.count());
         return ResponseEntity.ok(page);
     }
 
@@ -218,22 +196,20 @@ public class AvroMessageProducerResource {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<ProducerInfoModel> killProducer(@PathVariable("id") String producerId) {
-        Opt<TimedWrapper<KadminProducer<String, Object>>> twProducer = Opt.of(producerProvider.findById(producerId));
-        if (!twProducer.isPresent()) {
+        Opt<KadminProducer<String, Object>> producer = Opt.of(basicProducerProvider.findById(producerId));
+        if (!producer.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        KadminProducer<String, Object> p = twProducer.get().getData();
-        ProducerMetrics metrics = metricsMap.get(producerId);
+        KadminProducer<String, Object> p = producer.get();
 
-        producerProvider.dispose(producerId);
-        metricsMap.remove(producerId);
+        basicProducerProvider.dispose(producerId);
 
         return ResponseEntity.ok(ProducerInfoModel.builder()
                 .id(producerId)
                 .topic(p.getConfig().getTopic())
-                .lastUsedTime(twProducer.get().getLastUsed())
-                .totalErrors(metrics.getErrorCount())
-                .totalMessagesSent(metrics.getSentCount())
+                .lastUsedTime(producer.get().getLastUsedTime())
+                .totalErrors(p.getErrorCount())
+                .totalMessagesSent(p.getSentCount())
                 .build());
     }
 

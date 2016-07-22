@@ -2,9 +2,8 @@ package com.bettercloud.kadmin.services;
 
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
-import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
 import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
-import com.bettercloud.kadmin.kafka.avro.DefaultAvroConsumerGroup;
+import com.bettercloud.kadmin.kafka.BasicKafkaConsumerGroup;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.google.common.collect.Maps;
@@ -54,11 +53,11 @@ public class BasicKafkaConsumerProviderService implements KadminConsumerGroupPro
     }
 
     @Override
-    public AvroConsumerGroup get(KadminConsumerConfig config, boolean start) {
+    public BasicKafkaConsumerGroup get(KadminConsumerConfig config, boolean start) {
         Opt.of(config.getKafkaHost()).notPresent(() -> config.setKafkaHost(defaultKafkaHost));
         Opt.of(config.getSchemaRegistryUrl()).notPresent(() -> config.setSchemaRegistryUrl(defaultSchemaRegistryUrl));
 
-        DefaultAvroConsumerGroup defaultAvroConsumerGroup = new DefaultAvroConsumerGroup(config);
+        BasicKafkaConsumerGroup defaultAvroConsumerGroup = new BasicKafkaConsumerGroup(config);
         if (start) {
             this.start(defaultAvroConsumerGroup);
         }

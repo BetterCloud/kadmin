@@ -3,11 +3,10 @@ package com.bettercloud.kadmin.services;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import com.bettercloud.kadmin.api.services.KadminProducerProviderService;
-import com.bettercloud.kadmin.kafka.avro.DefaultAvroProducer;
+import com.bettercloud.kadmin.kafka.BasicKafkaProducer;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
-import com.bettercloud.util.TimedWrapper;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +31,7 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
     private final String defaultKafkaHost;
     private final String defaultSchemaRegistryUrl;
 
-    private final LinkedHashMap<String, TimedWrapper<KadminProducer<String, Object>>> producerMap;
+    private final LinkedHashMap<String, KadminProducer<String, Object>> producerMap;
 
     @Autowired
     public BasicKafkaProducerProviderService(
@@ -49,14 +48,15 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
     @Scheduled(fixedRate = IDLE_CHECK_DELAY)
     private void clearMemory() {
         LOGGER.info("Cleaning up producers connections");
+        long currTime = System.currentTimeMillis();
         List<String> keys = producerMap.keySet().stream()
-                .filter(k -> producerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
+                .filter(k -> currTime - producerMap.get(k).getLastUsedTime() > IDLE_THRESHOLD)
                 .collect(Collectors.toList());
         keys.stream()
                 .forEach(k -> {
-                    TimedWrapper<KadminProducer<String, Object>> timedWrapper = producerMap.get(k);
-                    LOGGER.debug("Disposing old consumer ({}) with timeout {}", k, timedWrapper.getIdleTime());
-                    timedWrapper.getData().shutdown();
+                    KadminProducer<String, Object> p = producerMap.get(k);
+                    LOGGER.debug("Disposing old consumer ({}) with timeout {}", k, System.currentTimeMillis() - p.getLastUsedTime());
+                    p.shutdown();
                 });
         System.gc();
     }
@@ -66,8 +66,8 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
         Opt.of(config.getKafkaHost()).notPresent(() -> config.setKafkaHost(defaultKafkaHost));
         Opt.of(config.getSchemaRegistryUrl()).notPresent(() -> config.setSchemaRegistryUrl(defaultSchemaRegistryUrl));
 
-        DefaultAvroProducer producer = new DefaultAvroProducer(config);
-        producerMap.put(producer.getId(), TimedWrapper.of(producer));
+        BasicKafkaProducer<Object> producer = new BasicKafkaProducer<>(config);
+        producerMap.put(producer.getId(), producer);
         return producer;
     }
 
@@ -88,7 +88,6 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
         List<KadminProducer<String, Object>> consumers = producerMap.values().stream()
                 .skip(skip)
                 .limit(size)
-                .map(tw -> tw.getData())
                 .collect(Collectors.toList());
         Page<KadminProducer<String, Object>> consumerPage = new Page<>();
         consumerPage.setPage(page);
@@ -99,7 +98,7 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
     }
 
     @Override
-    public TimedWrapper<KadminProducer<String, Object>> findById(String consumerId) {
+    public KadminProducer<String, Object> findById(String consumerId) {
         return producerMap.get(consumerId);
     }
 
@@ -110,11 +109,11 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
 
     @Override
     public boolean dispose(String producerId) {
-        TimedWrapper<KadminProducer<String, Object>> twProducer = producerMap.get(producerId);
-        if (twProducer == null) {
+        KadminProducer<String, Object> p = producerMap.get(producerId);
+        if (p == null) {
             return false;
         }
-        twProducer.getData().shutdown();
+        p.shutdown();
         producerMap.remove(producerId);
         return true;
     }

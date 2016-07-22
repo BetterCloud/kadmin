@@ -3,14 +3,10 @@ package com.bettercloud.kadmin;
 import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import com.bettercloud.kadmin.api.models.SerializerInfoModel;
 import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
-import com.bettercloud.kadmin.api.services.KadminConsumerGroupProviderService;
-import com.bettercloud.kadmin.api.services.RegistryService;
 import com.bettercloud.kadmin.api.services.SerializerRegistryService;
 import com.bettercloud.kadmin.kafka.avro.ErrorTolerantAvroObjectDeserializer;
-import com.bettercloud.kadmin.services.BasicKafkaConsumerProviderService;
 import com.bettercloud.kadmin.services.KafkaDeserializerRegistryService;
 import com.bettercloud.kadmin.services.KafkaSerializerRegistryService;
-import com.bettercloud.kadmin.services.SimpleRegistryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
@@ -75,7 +71,11 @@ public class AppConfiguration {
 
     private JsonNode toNode(String s) {
         try {
-            return mapper.readTree(s);
+            return mapper.readTree(s.replace("\n", "\\n")
+                    .replace((char)0 + "", "")
+                    .replace((char)1 + "", "")
+                    .replace((char)10 + "", "")
+                    .replace((char)20 + "", ""));
         } catch (IOException e) {
             e.printStackTrace();
         }
