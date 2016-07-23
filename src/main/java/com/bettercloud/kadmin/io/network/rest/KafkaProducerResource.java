@@ -19,6 +19,8 @@ import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.avro.AvroTypeException;
@@ -30,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,8 +46,16 @@ public class KafkaProducerResource {
 
     private static final Logger LOGGER = LoggerUtils.get(KafkaProducerResource.class, Level.TRACE);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final SerializerInfoModel AVRO_SER_INFO = SerializerInfoModel.builder()
+            .name("AvroObject")
+            .id("avro")
+            .className(KafkaAvroSerializer.class.getName())
+            .meta(Maps.newHashMap())
+            .prepareRawFunc((s) -> s)
+            .build();
 
     private final BasicKafkaProducerProviderService basicProducerProvider;
+
     private final JsonToAvroConverter jtaConverter;
     private final SerializerRegistryService serializerRegistryService;
 
@@ -84,7 +95,7 @@ public class KafkaProducerResource {
                 .schemaRegistryUrl(meta.getSchemaRegistryUrl())
                 .topic(meta.getTopic())
                 .keySerializer(StringSerializer.class.getName())
-                .valueSerializer(serializerRegistryService.findById("avro"))
+                .valueSerializer(AVRO_SER_INFO)
                 .build());
         boolean sendMessage = message != null && producer != null;
         ProducerRepsonseModel res = ProducerRepsonseModel.builder()

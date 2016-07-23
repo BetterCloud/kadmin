@@ -32,14 +32,14 @@ function handleConsumers(data) {
         c.lastUsedTimeText = c.lastUsedTime < 0 ? 'never' : moment(c.lastUsedTime).fromNow();
         c.lastMessageTimeText = c.lastMessageTime < 0 ? 'never' : moment(c.lastMessageTime).fromNow();
         table.append(template(c));
-        $('#delete-' + c.consumerGroupId + '-btn').click(function() { disposeConsumer(c.topic); });
+        $('#delete-' + c.consumerGroupId + '-btn').click(function() { disposeConsumer(c.consumerGroupId); });
     });
 }
 
-function disposeConsumer(topic) {
+function disposeConsumer(consumerId) {
     $.ajax({
         type: "DELETE",
-        url: App.contextPath + "/api/kafka/read/" + topic + "/kill",
+        url: App.contextPath + "/api/manager/consumers/" + consumerId,
         success: refreshConsumers
     });
 }

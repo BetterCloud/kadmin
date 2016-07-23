@@ -12,10 +12,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -40,9 +37,9 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
 
         this.config = config;
         this.clientId = UUID.randomUUID().toString();
-        this.groupId = UUID.randomUUID().toString();
+        this.groupId = this.clientId;
         this.lastOffset = new AtomicLong(-1);
-        this.handlers = Sets.newLinkedHashSet();
+        this.handlers = Collections.synchronizedSet(Sets.newLinkedHashSet());
     }
 
     /**
@@ -145,22 +142,20 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
     @Override
     public void register(MessageHandler handler) {
         if (handler != null) {
-            synchronized (handlers) {
-                handlers.add(handler);
-            }
+            handlers.add(handler);
         }
     }
 
     @Override
     public boolean remove(MessageHandler handler) {
         if (handler != null) {
-            synchronized (handlers) {
-                if (handlers.contains(handler)) {
-                    handlers.remove(handler);
-                    return true;
-                }
-            }
+            return handlers.remove(handler);
         }
         return false;
+    }
+
+    @Override
+    public Collection<MessageHandler> getHandlers() {
+        return Collections.unmodifiableSet(Sets.newLinkedHashSet(handlers));
     }
 }

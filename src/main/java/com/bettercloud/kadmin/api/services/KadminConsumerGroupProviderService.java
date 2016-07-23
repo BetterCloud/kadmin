@@ -7,7 +7,7 @@ import com.bettercloud.util.Page;
 /**
  * Created by davidesposito on 7/19/16.
  */
-public interface KadminConsumerGroupProviderService<KeyT, ValueT> {
+public interface KadminConsumerGroupProviderService {
 
     void start(KadminConsumerGroup consumer);
 
@@ -25,4 +25,6 @@ public interface KadminConsumerGroupProviderService<KeyT, ValueT> {
     KadminConsumerGroup findById(String consumerId);
 
     long count();
+
+    void dispose(String Id);
 }

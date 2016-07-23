@@ -138,10 +138,9 @@ function truncateList() {
             return;
         }
     }
-    var url = buildUrl();
     $.ajax({
         type: "DELETE",
-        url: url,
+        url: App.contextPath + "/api/manager/consumers/" + App.consumer.consumerConfig.id + "/truncate",
         success: refresh
     });
 }
@@ -152,11 +151,12 @@ function disposeConsumer() {
             return;
         }
     }
-    var url = buildUrl();
     $.ajax({
         type: "DELETE",
-        url: url + "/kill",
-        success: refresh
+        url: App.contextPath + "/api/manager/consumers/" + App.consumer.consumerConfig.id,
+        success: function() {
+            window.location.href = App.contextPath;
+        }
     });
 }
 
@@ -188,9 +188,11 @@ function buildUrl() {
     return url;
 }
 
-function handleResults(data) {
+function handleResults(res) {
     var count = 0,
-        consumerConfig = App.consumer.consumerConfig;
+        consumerConfig = App.consumer.consumerConfig,
+        data = res.page;
+    App.consumer.consumerConfig.id = res.consumerId;
     if (!!App.consumer.clipboard) {
         App.consumer.clipboard.destroy();
     }
