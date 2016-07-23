@@ -29,7 +29,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -144,28 +143,11 @@ public class KafkaConsumerResource {
     }
 
     @RequestMapping(
-            path = "/avro/read/{topic}",
+            path = "/kafka/{consumerId}/kill",
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<Boolean> clear(@PathVariable("topic") String topic,
-                                         @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
-                                         @RequestParam("schemaUrl") Optional<String> schemaUrl) {
-        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
-        boolean cleared = false;
-        if (kafkaConsumerMap.containsKey(key) && kafkaConsumerMap.get(key) != null) {
-            kafkaConsumerMap.get(key).getData().getHandler().clear();
-            cleared = true;
-        }
-        return ResponseEntity.ok(cleared);
-    }
-
-    @RequestMapping(
-            path = "/avro/read/{topic}/kill",
-            method = RequestMethod.DELETE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<Boolean> kill(@PathVariable("topic") String topic,
+    public ResponseEntity<Boolean> kill(@PathVariable("consumerId") String id,
                                          @RequestParam("kafkaUrl") Optional<String> kafkaUrl,
                                          @RequestParam("schemaUrl") Optional<String> schemaUrl) {
         String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic);
