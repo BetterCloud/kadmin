@@ -118,7 +118,7 @@ function initMessageList() {
     $('#message-list-title').html("Messages - " + consumerConfig.topic);
     var $refresh = $("#refresh-btn");
     $refresh.removeClass("disabled");
-    $refresh.click(refresh);
+    $refresh.click(function() { refresh(true); });
     var $clear = $("#clear-btn");
     $clear.removeClass("disabled");
     $clear.click(truncateList);
@@ -160,7 +160,7 @@ function disposeConsumer() {
     });
 }
 
-function refresh() {
+function refresh(manualRefresh) {
     var consumerConfig = App.consumer.consumerConfig;
     if (!consumerConfig.started) {
         if (!initConfig()) {
@@ -171,7 +171,7 @@ function refresh() {
     consumerConfig.since = new Date().getTime();
     $.get(url, handleResults);
     $("#since-row").html("Updated: " + moment(consumerConfig.since).format('LTS'));
-    if (consumerConfig.refreshRate > 0) {
+    if (consumerConfig.refreshRate > 0 && !manualRefresh) {
         consumerConfig.refreshHandle = setTimeout(refresh, consumerConfig.refreshRate);
     }
 }
