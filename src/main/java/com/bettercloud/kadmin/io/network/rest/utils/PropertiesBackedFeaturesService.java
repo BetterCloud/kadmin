@@ -32,7 +32,7 @@ public class PropertiesBackedFeaturesService implements FeaturesService {
 
     @Override
     public String getCustomUrl(String url) {
-        return Optional.of(url)
+        return Optional.ofNullable(url)
                 .filter(u -> customUrlsEnabled())
                 .orElse(null);
     }
