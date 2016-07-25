@@ -6,6 +6,7 @@ import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
 import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.util.LoggerUtils;
+import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
 import com.bettercloud.util.TimedWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -37,8 +39,8 @@ public class KafkaMessageConsumerResource {
     private static final Logger LOGGER = LoggerUtils.get(KafkaMessageConsumerResource.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Joiner keyBuilder = Joiner.on(':');
-//    private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
-//    private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
+    private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
+    private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
 
     private final AvroConsumerGroupProviderService consumerProvider;
     private final Map<String, TimedWrapper<ConsumerContainer>> consumerMap;
@@ -49,24 +51,23 @@ public class KafkaMessageConsumerResource {
         consumerMap = Maps.newConcurrentMap();
     }
 
-    // TODO: move to consumer provider service
-//    @Scheduled(fixedRate = IDLE_CHECK_DELAY)
-//    private void clearMemory() {
-//        LOGGER.info("Cleaning up connections/memory").build());
-//        List<String> keys = handlerMap.keySet().stream()
-//                .filter(k -> handlerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
-//                .collect(Collectors.toList());
-//        keys.stream()
-//                .forEach(k -> {
-//                    Opt.of(handlerMap.get(k)).ifPresent(handler -> handler.getData().clear());
-//                    Opt.of(kps.lookupConsumer(k)).ifPresent(con -> con.dispose());
-//                    Opt.of(kps.lookupProducer(k)).ifPresent(prod -> prod.dispose());
-//                    LOGGER.info("Disposing queue {} with timeout {}")
-//                            .args(k, handlerMap.get(k).getIdleTime())
-//                            .build());
-//                });
-//        System.gc();
-//    }
+    @Scheduled(fixedRate = IDLE_CHECK_DELAY)
+    private void clearMemory() {
+        LOGGER.info("Cleaning up connections/memory");
+        List<String> keys = consumerMap.keySet().stream()
+                .filter(k -> consumerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
+                .collect(Collectors.toList());
+        keys.stream()
+                .forEach(k -> {
+                    TimedWrapper<ConsumerContainer> timedWrapper = consumerMap.get(k);
+                    ConsumerContainer container = timedWrapper.getData();
+                    LOGGER.debug("Disposing old consumer ({}) with timeout {}", k, timedWrapper.getIdleTime());
+
+                    container.getConsumer().shutdown();
+                    container.getHandler().clear();
+                });
+        System.gc();
+    }
 
     @RequestMapping(
             path = "/{topic}",
@@ -101,6 +102,8 @@ public class KafkaMessageConsumerResource {
                         ObjectNode node = mapper.createObjectNode();
                         node.put("key", mc.getKey());
                         node.put("writeTime", mc.getWriteTime());
+                        node.put("offset", mc.getOffset());
+                        node.put("topic", mc.getTopic());
                         /*
                          * There appears to be some incompatibility with JSON serializing Avro models. So,
                          *

@@ -31,261 +31,48 @@
                     <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>
                 </ul>
             </div>
-            <div class="panel panel-default" id="form-container">
-                <div class="panel-body">
-                    <div class="form-group">
-                        <label for="topic">Topic</label>
-                        <div class="row">
-                            <div class="col-xs-4">
-                                <select id="topic-dd" class="form-control">
-                                    <option>Loading topics...</option>
-                                </select>
-                            </div>
-                            <div class="col-xs-8">
-                                <input type="text" class="form-control" id="topic" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row text-right">
-                        <button class="btn btn-primary" id="start-consumer-btn" >
-                            Start Consumer
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="refresh-form col-sm-6">
-                    <div class="form-group">
-                        <select class="form-control" id="refresh-rate">
-                            <option value="-1">Manual</option>
-                            <option value="1000">1 Second</option>
-                            <option value="5000">5 Seconds</option>
-                            <option value="10000" selected="selected">10 Seconds</option>
-                            <option value="30000">30 Seconds</option>
-                            <option value="60000">1 Minute</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <button id="refresh-btn" class="btn btn-success disabled">
-                        <span class="glyphicon glyphicon-refresh"></span> Refresh
-                    </button>
-                    <button id="clear-btn" class="btn btn-warning disabled">
-                        <span class="glyphicon glyphicon-trash"></span> Truncate
-                    </button>
-                    <button id="dispose-btn" class="btn btn-danger disabled">
-                        <span class="glyphicon glyphicon-trash"></span> Close
-                    </button>
-                </div>
-            </div>
-            <div class="message-container">
-                <div class="header-row">
-                    <h2 id="message-list-title">Messages</h2>
-                    <div id="since-row"></div>
-                    <div class="text-muted">NOTE: Collapse works weird with auto-refresh intervals. You should set the refresh interval to manual before using the collapse button.</div>
-                </div>
-                <div id="message-list"></div>
-            </div>
+            <div id="main-content"></div>
         </div>
 
+
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            var App = {
+                contextPath: [[${contextPath}]],
+                messageTemplateLoaded: false,
+                mainTemplateLoaded: false,
+                pageLoaded: false,
+                consumer: {}
+            };
+
+            /*]]>*/
+        </script>
         <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/underscore-min.js}"></script>
         <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/moment.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/clipboard.min.js}"></script>
-        <script th:inline="javascript">
-            /*<![CDATA[*/
-            var count = 0,
-                $refreshRate = $('#refresh-rate'),
-                consumerConfig = {
-                    started: false,
-                    topic: null,
-                    since: null,
-                    refreshHandle: null,
-                    refreshRate: $refreshRate.val()
-                },
-                messageTemplate = _.template(""),
-                $messageList = $('#message-list'),
-                clipboard = null,
-                $topicsSelect = $('#topic-dd');
-
-            $.get([[${contextPath}]] + "/message-tile-template.html", function (html) {
-                messageTemplate = _.template(html);
+        <script type="text/javascript" th:src="@{/consumer/main.js}"></script>
+        <script type="application/javascript">
+            var App = _.extend(App, {
             });
 
-            function refreshTopics() {
-                $.get([[${contextPath}]] + "/api/topics", handleNewTopics);
-            }
+            $.get(App.contextPath + "/consumer/main.html", function (html) {
+                $('#main-content').html(html);
+                App.mainTemplateLoaded = true;
+                initMain();
+            });
 
-            function handleNewTopics(data) {
-                $topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
-                _.each(data, function(topicName) {
-                    $topicsSelect.append("<option>" + topicName + "</option>");
-                });
-            }
-            // call immediately
-            refreshTopics();
-
-            function initConfig() {
-                let topic = $('#topic').val();
-                if (!topic || topic === "") {
-                    alert("Topic is required. Aborting creating consumer.");
-                    return false;
-                }
-                consumerConfig = {
-                    started: true,
-                    topic: $('#topic').val(),
-                    since: -1,
-                    autoRefresh: null,
-                    refreshRate: $refreshRate.val()
-                };
-                disableForm();
-                initMessageList();
-                return true;
-            }
-
-            function disableForm() {
-                $("#topic").prop("disabled", true);
-                $topicsSelect.prop("disabled", true);
-                $("#start-consumer-btn").addClass("disabled");
-            }
-
-            function initMessageList() {
-                $('#message-list-title').html("Messages - " + consumerConfig.topic);
-                var $refresh = $("#refresh-btn");
-                $refresh.removeClass("disabled");
-                $refresh.click(refresh);
-                var $clear = $("#clear-btn");
-                $clear.removeClass("disabled");
-                $clear.click(truncateList);
-                var $dispose = $("#dispose-btn");
-                $dispose.removeClass("disabled");
-                $dispose.click(disposeConsumer);
-            }
-
-            function truncateList() {
-                if (!consumerConfig.started) {
-                    if (!initConfig()) {
-                        return;
-                    }
-                }
-                let url = buildUrl();
-                $.ajax({
-                    type: "DELETE",
-                    url: url,
-                    success: refresh
-                });
-            }
-
-            function disposeConsumer() {
-                if (!consumerConfig.started) {
-                    if (!initConfig()) {
-                        return;
-                    }
-                }
-                let url = buildUrl();
-                $.ajax({
-                    type: "DELETE",
-                    url: url + "/kill",
-                    success: refresh
-                });
-            }
-
-            function refresh() {
-                if (!consumerConfig.started) {
-                    if (!initConfig()) {
-                        return;
-                    }
-                }
-                let url = buildUrl();
-                consumerConfig.since = new Date().getTime();
-                $.get(url, handleResults);
-                $("#since-row").html("Updated: " + moment(consumerConfig.since).format('LTS'));
-                if (consumerConfig.refreshRate > 0) {
-                    consumerConfig.refreshHandle = setTimeout(refresh, consumerConfig.refreshRate);
-                }
-            }
-
-            function buildUrl() {
-                let url = [[${contextPath}]] + "/api/kafka/read/" + consumerConfig.topic + "?";
-                return url;
-            }
-
-            function handleResults(data) {
-                let count = 0;
-                if (!!clipboard) {
-                    clipboard.destroy();
-                }
-                $messageList.html('');
-                document.title = "(" + data.totalElements + ") " + consumerConfig.topic;
-                _.each(data.content, function(ele) {
-                    let html = "";
-                    ele.uuid = uniqueId();
-                    ele.writeTimeText = moment(ele.writeTime).format('LTS');
-                    ele.messageText = "null";
-                    if (!!ele.message) {
-                        ele.rawMessage = JSON.stringify(ele.message, null, 2);
-                        ele.messageText = syntaxHighlight(ele.rawMessage);
-                    }
-                    ele.timestamp = "_" + count++;
-                    html = messageTemplate(ele);
-                    $messageList.prepend(html);
-                });
-                clipboard = new Clipboard('.copy-btn');
-            }
-
-            function uniqueId() {
-                return 'xxxxxxxx'.replace(/[xy]/g, function(c) {
-                    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-                    return v.toString(16);
-                });
-            }
-
-            function syntaxHighlight(json) {
-                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                    var cls = 'number';
-                    if (/^"/.test(match)) {
-                        if (/:$/.test(match)) {
-                            cls = 'key';
-                        } else {
-                            cls = 'string';
-                        }
-                    } else if (/true|false/.test(match)) {
-                        cls = 'boolean';
-                    } else if (/null/.test(match)) {
-                        cls = 'null';
-                    }
-                    return '<span class="' + cls + '">' + match + '</span>';
-                });
-            }
-
+            $.get(App.contextPath + "/consumer/message-tile-template.html", function (html) {
+                App.consumer.messageTemplate = _.template(html);
+                App.messageTemplateLoaded = true;
+                initMain();
+            });
 
             $(document).ready(function() {
-                $('#refresh-rate').change(function(e) {
-                    consumerConfig.refreshRate = $refreshRate.val();
-                    if (!!consumerConfig.refreshHandle) {
-                        clearTimeout(consumerConfig.refreshHandle);
-                    }
-                    if (consumerConfig.refreshRate > 0 && consumerConfig.started) {
-                        refresh();
-                    }
-                    console.log("Refresh Rate: " + consumerConfig.refreshRate);
-                });
-                $('#start-consumer-btn').click(function(e) {
-                    e.preventDefault();
-                    refresh();
-                });
-                $('#refresh-topics-btn').click(refreshTopics);
-                $topicsSelect.change(function() {
-                    let val = $topicsSelect.val();
-                    // TODO: regex check
-//                    if (val.matches(/[\w-]+/)) {
-                        $('#topic').val(val);
-//                    }
-                });
+                App.pageLoaded = true;
+                initMain();
             });
-            /*]]>*/
         </script>
     </body>
 </html>

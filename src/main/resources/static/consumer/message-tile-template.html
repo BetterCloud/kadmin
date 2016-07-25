@@ -9,8 +9,14 @@
         <div class="key-row">
             Key: "<%= key %>"
         </div>
-        <div class="time-row">
+        <div class="time-row text-muted">
             @<%= writeTimeText %>
+        </div>
+        <div class="time-row text-muted">
+            offset: <%= offset %>
+        </div>
+        <div class="time-row text-muted">
+            topic: <%= topic %>
         </div>
         <div id="<%= uuid %>" class="collapse in">
             <pre><%= messageText %></pre>
