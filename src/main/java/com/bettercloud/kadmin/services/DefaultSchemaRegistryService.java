@@ -1,27 +1,28 @@
 package com.bettercloud.kadmin.services;
 
-import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
-import com.bettercloud.kadmin.api.models.SchemaInfo;
+import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
+import com.bettercloud.kadmin.api.services.FeaturesService;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.kadmin.io.network.rest.SchemaProxyResource;
-import com.bettercloud.logger.services.Logger;
-import com.bettercloud.logger.services.model.LogModel;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -37,73 +38,105 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     private final String schemaRegistryUrl;
 
     private final HttpClient client;
+    private final FeaturesService featuresService;
+
+    private final Cache<String, List<String>> schemasCache;
+    private final Cache<String, SchemaInfoModel> schemaInfoCache;
+    private final Cache<String, JsonNode> schemaVersionCache;
 
     @Autowired
     public DefaultSchemaRegistryService(HttpClient defaultClient,
                 @Value("${schema.registry.url:http://localhost:8081}")
-                String schemaRegistryUrl) {
+                String schemaRegistryUrl,
+                FeaturesService featuresService) {
         this.client = defaultClient;
         this.schemaRegistryUrl = schemaRegistryUrl;
+        this.featuresService = featuresService;
+        schemasCache = defaultCache();
+        schemaInfoCache = defaultCache();
+        schemaVersionCache = defaultCache();
+    }
+
+    private <ValueT> Cache<String, ValueT> defaultCache() {
+        return CacheBuilder.newBuilder()
+                .expireAfterAccess(30, TimeUnit.SECONDS)
+                .expireAfterWrite(90, TimeUnit.SECONDS)
+                .build();
     }
 
     @Override
-    public List<String> findAll(Optional<String> oUrl) throws SchemaRegistryRestException {
-        String url = String.format("%s/subjects",
-                oUrl.orElse(this.schemaRegistryUrl)
+    public List<String> findAll(String url) throws SchemaRegistryRestException {
+       String  tempUrl = String.format("%s/subjects",
+                Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl)
         );
-        NodeConverter<List<String>> c = (node) -> {
-            if (node.isArray()) {
-                ArrayNode arr = (ArrayNode) node;
-                return StreamSupport.stream(arr.spliterator(), false)
-                        .map(n -> n.asText())
-                        .sorted()
-                        .collect(Collectors.toList());
-            }
-            return null;
-        };
-        return proxyResponse(url, c, null);
+        if (schemasCache.getIfPresent(tempUrl) == null) {
+            NodeConverter<List<String>> c = (node) -> {
+                if (node.isArray()) {
+                    ArrayNode arr = (ArrayNode) node;
+                    return StreamSupport.stream(arr.spliterator(), false)
+                            .map(n -> n.asText())
+                            .sorted()
+                            .collect(Collectors.toList());
+                }
+                return null;
+            };
+            schemasCache.put(tempUrl, proxyResponse(tempUrl, c, null));
+        } else {
+            LOGGER.debug("Hit schema cache for: {}", tempUrl);
+        }
+        return schemasCache.getIfPresent(tempUrl);
     }
 
     @Override
-    public List<String> guessAllTopics(Optional<String> oUrl) throws SchemaRegistryRestException {
-        return findAll(oUrl).stream()
+    public List<String> guessAllTopics(String url) throws SchemaRegistryRestException {
+        return findAll(url).stream()
                 .map(schemaName -> schemaName.replaceAll("-value", ""))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public SchemaInfo getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException {
-        String url = String.format("%s/subjects/%s/versions",
-                oUrl.orElse(this.schemaRegistryUrl),
+    public SchemaInfoModel getInfo(String name, String url) throws SchemaRegistryRestException {
+        String tempUrl = String.format("%s/subjects/%s/versions",
+                Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl),
                 name
         );
-        NodeConverter<List<Integer>> c = (node) -> {
-            if (node.isArray()) {
-                ArrayNode arr = (ArrayNode) node;
-                return StreamSupport.stream(arr.spliterator(), false)
-                        .map(n -> n.asInt())
-                        .collect(Collectors.toList());
-            }
-            return null;
-        };
-        List<Integer> versions = proxyResponse(url, c, null);
-        JsonNode info = getVersion(name, versions.get(versions.size() - 1), oUrl);
-        JsonNode currSchema = info;
-        return SchemaInfo.builder()
-                .name(name)
-                .versions(versions)
-                .currSchema(currSchema)
-                .build();
+        if (schemaInfoCache.getIfPresent(tempUrl) == null) {
+            NodeConverter<List<Integer>> c = (node) -> {
+                if (node.isArray()) {
+                    ArrayNode arr = (ArrayNode) node;
+                    return StreamSupport.stream(arr.spliterator(), false)
+                            .map(n -> n.asInt())
+                            .collect(Collectors.toList());
+                }
+                return null;
+            };
+            List<Integer> versions = proxyResponse(tempUrl, c, null);
+            JsonNode info = getVersion(name, versions.get(versions.size() - 1), url);
+            JsonNode currSchema = info;
+            schemaInfoCache.put(tempUrl, SchemaInfoModel.builder()
+                    .name(name)
+                    .versions(versions)
+                    .currSchema(currSchema)
+                    .build());
+        } else {
+            LOGGER.debug("Hit info cache for: {}", tempUrl);
+        }
+        return schemaInfoCache.getIfPresent(tempUrl);
     }
 
     @Override
-    public JsonNode getVersion(String name, int version, Optional<String> oUrl) throws SchemaRegistryRestException {
-        String url = String.format("%s/subjects/%s/versions/%d",
-                oUrl.orElse(this.schemaRegistryUrl),
+    public JsonNode getVersion(String name, int version, String url) throws SchemaRegistryRestException {
+        url = String.format("%s/subjects/%s/versions/%d",
+                Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl),
                 name,
                 version
         );
-        return proxyResponse(url, n -> n, null);
+        if (schemaVersionCache.getIfPresent(url) == null) {
+            schemaVersionCache.put(url, proxyResponse(url, n -> n, null));
+        } else {
+            LOGGER.debug("Hit version cache for: {}", url);
+        }
+        return schemaVersionCache.getIfPresent(url);
     }
 
     private <ResponseT> ResponseT proxyResponse(String url, NodeConverter<ResponseT> c, ResponseT defaultVal)
@@ -113,9 +146,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
             HttpResponse res = client.execute(get);
             int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                LOGGER.log(LogModel.error("Non 200 status: {}")
-                        .addArg(statusCode)
-                        .build());
+                LOGGER.error("Non 200 status: {}", statusCode);
                 throw new SchemaRegistryRestException("Non 200 status: " + statusCode, statusCode);
             }
             ResponseT val = c.convert(MAPPER.readTree(res.getEntity().getContent()));
@@ -124,10 +155,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
             }
             return val;
         } catch (IOException e) {
-            LOGGER.log(LogModel.error("There was an error: {}")
-                    .addArg(e.getMessage())
-                    .error(e)
-                    .build());
+            LOGGER.error("There was an error: {}", e.getMessage());
             throw new SchemaRegistryRestException(e.getMessage(), e, 500);
         }
     }

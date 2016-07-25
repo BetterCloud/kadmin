@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.io.network.dto;
+package com.bettercloud.kadmin.io.network.rest.utils;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -4,53 +4,41 @@
         <title>Kadmin @ BetterCloud</title>
         <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
         <style>
-            pre {
-                padding: 5px;
-                margin: 5px;
+            #ace-message, #ace-schema {
+                width: 100%;
+                height: 30em;
+                border: 1px solid #cccccc;
             }
-            .string { color: #1A1AA6; }
-            .number { color: rgb(0, 0, 205); }
-            .boolean { color: rgb(88, 92, 246); }
-            .null { color: black; }
-            .key { color: rgb(49, 132, 149); }
 
-            .copy-btn, .collapse-btn {
-                float: right;
-            }
-            .raw-message {
-                display: none;
+            .send-and-results-row {
+                margin-bottom: 4em;
             }
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="container" th:if="${producerEnabled}">
             <div>
                 <ul class="nav nav-pills">
                     <li role="presentation"><a th:href="@{/}">Home</a></li>
-                    <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/basicproducer}">Basic Producer</a></li>
-                    <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/producer}">Avro Producer</a></li>
-                    <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>
+                    <li role="presentation" class="active"><a th:href="@{/basicproducer}">Basic Producer</a></li>
+                    <li role="presentation"><a th:href="@{/producer}">Avro Producer</a></li>
+                    <li role="presentation"><a th:href="@{/consumer}">Consumer</a></li>
                     <li role="presentation"><a th:href="@{/manager}">Manager</a></li>
                 </ul>
             </div>
             <div id="main-content"></div>
         </div>
 
-
         <script th:inline="javascript">
             /*<![CDATA[*/
             var App = {
                 customUrls: [[${customKafkaUrlEnabled}]],
-                defaultTopic: [[${defaultTopicName}]],
-                des: {
-                    id: [[${deserializerId}]],
-                    name: [[${deserializerName}]]
-                },
                 contextPath: [[${contextPath}]],
-                messageTemplateLoaded: false,
+                infoTemplateLoaded: false,
+                errorTemplateLoaded: false,
                 mainTemplateLoaded: false,
                 pageLoaded: false,
-                consumer: {}
+                producer: {}
             };
 
             /*]]>*/
@@ -59,13 +47,11 @@
         <script type="text/javascript" th:src="@{/js/underscore-min.js}"></script>
         <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
         <script type="text/javascript" th:src="@{/js/moment.min.js}"></script>
-        <script type="text/javascript" th:src="@{/js/clipboard.min.js}"></script>
-        <script type="text/javascript" th:src="@{/consumer/main.js}"></script>
-        <script type="application/javascript">
-            var App = _.extend(App, {
-            });
+        <script type="text/javascript" th:src="@{/js/ace.min.js}"></script>
+        <script type="text/javascript" th:src="@{/basicproducer/main.js}"></script>
 
-            $.get(App.contextPath + "/consumer/main.html", function (html) {
+        <script>
+            $.get(App.contextPath + "/basicproducer/main.html", function (html) {
                 $('#main-content').html(html);
                 App.mainTemplateLoaded = true;
                 if (!!App.customUrls) {
@@ -73,10 +59,14 @@
                 }
                 initMain();
             });
-
-            $.get(App.contextPath + "/consumer/message-tile-template.html", function (html) {
-                App.consumer.messageTemplate = _.template(html);
-                App.messageTemplateLoaded = true;
+            $.get(App.contextPath + "/basicproducer/sent-info-template.html", function (html) {
+                App.producer.sentInfoTemplate = _.template(html);
+                App.infoTemplateLoaded = true;
+                initMain();
+            });
+            $.get(App.contextPath + "/basicproducer/sent-error-template.html", function (html) {
+                App.producer.sentErrorTemplate = _.template(html);
+                App.errorTemplateLoaded = true;
                 initMain();
             });
 

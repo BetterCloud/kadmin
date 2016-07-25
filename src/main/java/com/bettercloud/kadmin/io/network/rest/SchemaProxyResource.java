@@ -1,12 +1,12 @@
 package com.bettercloud.kadmin.io.network.rest;
 
-import com.bettercloud.kadmin.api.kafka.SchemaRegistryRestException;
-import com.bettercloud.kadmin.api.models.SchemaInfo;
+import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
-import com.bettercloud.logger.services.Logger;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,9 +37,9 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<List<String>> schemas() {
+    public ResponseEntity<List<String>> schemas(@RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.findAll(Optional.empty()));
+            return ResponseEntity.ok(schemaRegistryService.findAll(oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
@@ -52,9 +52,9 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<List<String>> topics() {
+    public ResponseEntity<List<String>> topics(@RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.guessAllTopics(Optional.empty()));
+            return ResponseEntity.ok(schemaRegistryService.guessAllTopics(oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
@@ -67,9 +67,10 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<SchemaInfo> info(@PathVariable("name") String name) {
+    public ResponseEntity<SchemaInfoModel> info(@PathVariable("name") String name,
+                                                @RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.getInfo(name, Optional.empty()));
+            return ResponseEntity.ok(schemaRegistryService.getInfo(name, oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
@@ -86,7 +87,7 @@ public class SchemaProxyResource {
                                                   @PathVariable("version") Integer version,
                                                   @RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.getVersion(name, version, oUrl));
+            return ResponseEntity.ok(schemaRegistryService.getVersion(name, version, oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())

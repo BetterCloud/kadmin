@@ -1,6 +1,5 @@
-package com.bettercloud.kadmin.io.network.rest;
+package com.bettercloud.kadmin.io.network.dto;
 
-import com.bettercloud.kadmin.api.models.KafkaProduceMessageMeta;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class KafkaProduceRequestModel {
 
-    private JsonNode rawMessage;
-    private KafkaProduceMessageMeta meta;
+    private String key;
+    private String rawMessage;
+    private KafkaProduceMessageMetaModel meta;
 }

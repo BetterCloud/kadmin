@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.api.models;
+package com.bettercloud.kadmin.io.network.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SchemaInfo {
+public class SchemaInfoModel {
     private String name;
     private List<Integer> versions;
     private JsonNode currSchema;

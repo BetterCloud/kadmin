@@ -1,4 +1,4 @@
-package com.bettercloud.kadmin.api.models;
+package com.bettercloud.kadmin.io.network.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,9 +12,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KafkaProduceMessageMeta {
+public class KafkaProduceMessageMetaModel {
 
     private String schema;
     private String rawSchema;
     private String topic;
+    private String serializerId;
+    private String kafkaUrl;
+    private String schemaRegistryUrl;
 }

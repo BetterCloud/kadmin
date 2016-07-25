@@ -1,0 +1,85 @@
+<div class="panel panel-default hidden" id="custom-url-form-row">
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label for="kafkahost">Kafka Host</label>
+                <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092" />
+            </div>
+            <div class="form-group col-sm-6">
+                <label for="schemaurl">Kafka Schema Registry Url</label>
+                <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081" />
+                <div>
+                    <button class="btn btn-success" id="refresh-schemas-btn">
+                        Refresh Schemas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label for="topic">Topic</label>
+                <!--<input type="text" class="form-control" id="topic" />-->
+                <div class="row">
+                    <div class="col-xs-4">
+                        <select id="topic-dd" class="form-control">
+                            <option>Loading topics...</option>
+                        </select>
+                    </div>
+                    <div class="col-xs-8">
+                        <input type="text" class="form-control" id="topic" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-group col-sm-6">
+                <label for="count">Count (number to send)</label>
+                <input type="text" class="form-control" id="count" value="1" />
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="select-row row">
+            <div class="col-sm-3">
+                <div class="form-group">
+                    <label for="schema">Schema</label>
+                    <select class="form-control" id="schema">
+
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schema-version">Schema Version</label>
+                    <select class="form-control" id="schema-version">
+
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-9">
+                <label for="ace-schema">Raw Schema</label>
+                <div id="ace-schema"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="form-group">
+    <label for="message-key">Message Key</label>
+    <input type="text" id="message-key" class="form-control" />
+</div>
+<div class="form-group">
+    <label for="ace-message">JSON Message</label>
+    <div id="ace-message"></div>
+</div>
+<div class="row send-and-results-row">
+    <div class="col-xs-10">
+        <div id="sent-results-row"></div>
+    </div>
+    <div class="col-xs-2 text-center">
+        <button class="btn btn-primary" id="send-message-btn">
+            Send
+        </button>
+    </div>
+</div>
