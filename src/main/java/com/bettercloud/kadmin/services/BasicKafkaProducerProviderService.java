@@ -2,13 +2,11 @@ package com.bettercloud.kadmin.services;
 
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
-import com.bettercloud.kadmin.api.services.AvroProducerProviderService;
-import com.bettercloud.kadmin.io.network.rest.KafkaMessageConsumerResource;
-import com.bettercloud.kadmin.kafka.avro.DefaultAvroProducer;
+import com.bettercloud.kadmin.api.services.KadminProducerProviderService;
+import com.bettercloud.kadmin.kafka.BasicKafkaProducer;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.bettercloud.util.Page;
-import com.bettercloud.util.TimedWrapper;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,19 +22,19 @@ import java.util.stream.Collectors;
  * Created by davidesposito on 7/20/16.
  */
 @Service
-public class DefaultAvroProducerProviderService implements AvroProducerProviderService {
+public class BasicKafkaProducerProviderService implements KadminProducerProviderService<String, Object> {
 
-    private static final Logger LOGGER = LoggerUtils.get(DefaultAvroProducerProviderService.class);
+    private static final Logger LOGGER = LoggerUtils.get(BasicKafkaProducerProviderService.class);
     private static final long IDLE_THRESHOLD = 15L * 60 * 1000; // 15 minutes
     private static final long IDLE_CHECK_DELAY = 60L * 60 * 1000; // 60 minutes
 
     private final String defaultKafkaHost;
     private final String defaultSchemaRegistryUrl;
 
-    private final LinkedHashMap<String, TimedWrapper<KadminProducer<String, Object>>> producerMap;
+    private final LinkedHashMap<String, KadminProducer<String, Object>> producerMap;
 
     @Autowired
-    public DefaultAvroProducerProviderService(
+    public BasicKafkaProducerProviderService(
             @Value("${kafka.host:localhost:9092}")
                     String defaultKafkaHost,
             @Value("${schema.registry.url:http://localhost:8081}")
@@ -50,14 +48,15 @@ public class DefaultAvroProducerProviderService implements AvroProducerProviderS
     @Scheduled(fixedRate = IDLE_CHECK_DELAY)
     private void clearMemory() {
         LOGGER.info("Cleaning up producers connections");
+        long currTime = System.currentTimeMillis();
         List<String> keys = producerMap.keySet().stream()
-                .filter(k -> producerMap.get(k).getIdleTime() > IDLE_THRESHOLD)
+                .filter(k -> currTime - producerMap.get(k).getLastUsedTime() > IDLE_THRESHOLD)
                 .collect(Collectors.toList());
         keys.stream()
                 .forEach(k -> {
-                    TimedWrapper<KadminProducer<String, Object>> timedWrapper = producerMap.get(k);
-                    LOGGER.debug("Disposing old consumer ({}) with timeout {}", k, timedWrapper.getIdleTime());
-                    timedWrapper.getData().shutdown();
+                    KadminProducer<String, Object> p = producerMap.get(k);
+                    LOGGER.debug("Disposing old consumer ({}) with timeout {}", k, System.currentTimeMillis() - p.getLastUsedTime());
+                    p.shutdown();
                 });
         System.gc();
     }
@@ -67,8 +66,8 @@ public class DefaultAvroProducerProviderService implements AvroProducerProviderS
         Opt.of(config.getKafkaHost()).notPresent(() -> config.setKafkaHost(defaultKafkaHost));
         Opt.of(config.getSchemaRegistryUrl()).notPresent(() -> config.setSchemaRegistryUrl(defaultSchemaRegistryUrl));
 
-        DefaultAvroProducer producer = new DefaultAvroProducer(config);
-        producerMap.put(producer.getId(), TimedWrapper.of(producer));
+        BasicKafkaProducer<Object> producer = new BasicKafkaProducer<>(config);
+        producerMap.put(producer.getId(), producer);
         return producer;
     }
 
@@ -89,7 +88,6 @@ public class DefaultAvroProducerProviderService implements AvroProducerProviderS
         List<KadminProducer<String, Object>> consumers = producerMap.values().stream()
                 .skip(skip)
                 .limit(size)
-                .map(tw -> tw.getData())
                 .collect(Collectors.toList());
         Page<KadminProducer<String, Object>> consumerPage = new Page<>();
         consumerPage.setPage(page);
@@ -100,7 +98,7 @@ public class DefaultAvroProducerProviderService implements AvroProducerProviderS
     }
 
     @Override
-    public TimedWrapper<KadminProducer<String, Object>> findById(String consumerId) {
+    public KadminProducer<String, Object> findById(String consumerId) {
         return producerMap.get(consumerId);
     }
 
@@ -111,11 +109,11 @@ public class DefaultAvroProducerProviderService implements AvroProducerProviderS
 
     @Override
     public boolean dispose(String producerId) {
-        TimedWrapper<KadminProducer<String, Object>> twProducer = producerMap.get(producerId);
-        if (twProducer == null) {
+        KadminProducer<String, Object> p = producerMap.get(producerId);
+        if (p == null) {
             return false;
         }
-        twProducer.getData().shutdown();
+        p.shutdown();
         producerMap.remove(producerId);
         return true;
     }

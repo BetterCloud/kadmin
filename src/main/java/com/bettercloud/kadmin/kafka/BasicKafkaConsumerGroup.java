@@ -1,26 +1,26 @@
-package com.bettercloud.kadmin.kafka.avro;
+package com.bettercloud.kadmin.kafka;
 
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
+import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.kafka.MessageHandler;
-import com.bettercloud.kadmin.api.kafka.avro.AvroConsumerGroup;
-import com.google.common.collect.Lists;
-import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import com.bettercloud.kadmin.api.kafka.MessageHandlerRegistry;
+import com.bettercloud.util.LoggerUtils;
+import com.google.common.collect.Sets;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by davidesposito on 7/20/16.
  */
-public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
+public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHandlerRegistry {
+
+    private static final Logger LOGGER = LoggerUtils.get(BasicKafkaConsumerGroup.class);
 
     private KafkaConsumer<String, Object> consumer;
     private final KadminConsumerConfig config;
@@ -28,20 +28,31 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
     private final String groupId;
     private final AtomicLong lastOffset;
 
-    private final List<MessageHandler<String, Object>> handlers;
+    private final Set<MessageHandler> handlers;
 
-    public DefaultAvroConsumerGroup(KadminConsumerConfig config) {
+    public BasicKafkaConsumerGroup(KadminConsumerConfig config) {
+        assert(config != null);
+        assert(config.getKeyDeserializer() != null);
+        assert(config.getValueDeserializer() != null);
+
         this.config = config;
         this.clientId = UUID.randomUUID().toString();
-        this.groupId = UUID.randomUUID().toString();
+        this.groupId = this.clientId;
         this.lastOffset = new AtomicLong(-1);
-        this.handlers = Lists.newArrayList();
-
-        config.setKeyDeserializer(StringDeserializer.class.getName());
-        config.setValueDeserializer(ErrorTolerantAvroObjectDeserializer.class.getName());
+        this.handlers = Collections.synchronizedSet(Sets.newLinkedHashSet());
     }
 
+    /**
+     * Gets called before init(). Set any default configs here
+     * @param config
+     */
+    protected void initConfig(KadminConsumerConfig config) { }
+
     protected void init() {
+        initConfig(config);
+
+        LOGGER.info("Initializing Consumer: {}", config);
+
         final Properties properties = new Properties();
         properties.put("bootstrap.servers", config.getKafkaHost());
         properties.put("schema.registry.url", config.getSchemaRegistryUrl());
@@ -55,7 +66,7 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
         properties.put("auto.offset.reset", "earliest");
 
         properties.put("key.deserializer", config.getKeyDeserializer());
-        properties.put("value.deserializer", config.getValueDeserializer());
+        properties.put("value.deserializer", config.getValueDeserializer().getClassName());
 
         this.consumer = new KafkaConsumer<>(properties);
     }
@@ -129,24 +140,22 @@ public class DefaultAvroConsumerGroup implements AvroConsumerGroup {
     }
 
     @Override
-    public void register(MessageHandler<String, Object> handler) {
+    public void register(MessageHandler handler) {
         if (handler != null) {
-            synchronized (handlers) {
-                handlers.add(handler);
-            }
+            handlers.add(handler);
         }
     }
 
     @Override
-    public boolean remove(MessageHandler<String, Object> handler) {
+    public boolean remove(MessageHandler handler) {
         if (handler != null) {
-            synchronized (handlers) {
-                if (handlers.contains(handler)) {
-                    handlers.remove(handler);
-                    return true;
-                }
-            }
+            return handlers.remove(handler);
         }
         return false;
+    }
+
+    @Override
+    public Collection<MessageHandler> getHandlers() {
+        return Collections.unmodifiableSet(Sets.newLinkedHashSet(handlers));
     }
 }

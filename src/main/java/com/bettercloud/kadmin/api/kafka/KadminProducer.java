@@ -5,6 +5,12 @@ package com.bettercloud.kadmin.api.kafka;
  */
 public interface KadminProducer<KeyT, ValueT> {
 
+    long getSentCount();
+
+    long getErrorCount();
+
+    long getLastUsedTime();
+
     KadminProducerConfig getConfig();
 
     String getId();

@@ -17,4 +17,7 @@ public class KafkaProduceMessageMetaModel {
     private String schema;
     private String rawSchema;
     private String topic;
+    private String serializerId;
+    private String kafkaUrl;
+    private String schemaRegistryUrl;
 }

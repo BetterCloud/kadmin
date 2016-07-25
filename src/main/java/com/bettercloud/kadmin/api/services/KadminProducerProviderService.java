@@ -21,7 +21,7 @@ public interface KadminProducerProviderService<KeyT, ValueT> {
 
     Page<KadminProducer<KeyT, ValueT>> findAll(int page, int size);
 
-    TimedWrapper<KadminProducer<KeyT, ValueT>> findById(String producerId);
+    KadminProducer<KeyT, ValueT> findById(String producerId);
 
     long count();
 

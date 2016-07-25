@@ -18,7 +18,8 @@ function initMain() {
         },
         $messageList: $('#message-list'),
         clipboard: null,
-        $topicsSelect: $('#topic-dd')
+        $topicsSelect: $('#topic-dd'),
+        $desSelect: $('#deserializer-dd')
     });
 
     $('#refresh-rate').change(function(e) {
@@ -44,11 +45,13 @@ function initMain() {
         $('#topic').val(val);
 //                    }
     });
-    if (!!App.defaultTopic && App.defaultTopic !== '') {
+    if (!!App.defaultTopic && App.des.id && App.des.name) {
         $('#topic').val(App.defaultTopic);
+        $('#deserializer-dd').html('<option value="' + App.des.id + '">' + App.des.name + '</option>');
         refresh();
     } else {
         refreshTopics();
+        refreshDeserializers();
     }
 }
 
@@ -60,6 +63,17 @@ function handleNewTopics(data) {
     App.consumer.$topicsSelect.html("<option>Select an existing topic or enter a new one</option>");
     _.each(data, function(topicName) {
         App.consumer.$topicsSelect.append("<option>" + topicName + "</option>");
+    });
+}
+
+function refreshDeserializers() {
+    $.get(App.contextPath + "/api/manager/deserializers", handleNewDeserializers);
+}
+
+function handleNewDeserializers(data) {
+    App.consumer.$desSelect.html('');
+    _.each(data.content, function(des) {
+        App.consumer.$desSelect.append("<option value='" + des.id + "'>" + des.name + "</option>");
     });
 }
 
@@ -76,7 +90,8 @@ function initConfig() {
         topic: $('#topic').val(),
         since: -1,
         autoRefresh: null,
-        refreshRate: App.consumer.$refreshRate.val()
+        refreshRate: App.consumer.$refreshRate.val(),
+        desClass: App.consumer.$desSelect.val()
     };
     if (consumerConfig.kafkaUrl === "") {
         consumerConfig.kafkaUrl = null;
@@ -96,13 +111,14 @@ function disableForm() {
     $("#topic").prop("disabled", true);
     App.consumer.$topicsSelect.prop("disabled", true);
     $("#start-consumer-btn").addClass("disabled");
+    App.consumer.$desSelect.prop("disabled", true);
 }
 
 function initMessageList() {
     $('#message-list-title').html("Messages - " + consumerConfig.topic);
     var $refresh = $("#refresh-btn");
     $refresh.removeClass("disabled");
-    $refresh.click(refresh);
+    $refresh.click(function() { refresh(true); });
     var $clear = $("#clear-btn");
     $clear.removeClass("disabled");
     $clear.click(truncateList);
@@ -111,7 +127,8 @@ function initMessageList() {
     $dispose.click(disposeConsumer);
     var $permalink = $("#permalink-btn");
     $permalink.removeClass("disabled");
-    $permalink.attr("data-clipboard-text", window.location.origin + App.contextPath + "/consumer/topic/" + consumerConfig.topic);
+    $permalink.attr("data-clipboard-text", window.location.origin + App.contextPath + "/consumer/topic/" +
+        consumerConfig.topic + "/" + consumerConfig.desClass);
     new Clipboard("#permalink-btn");
 }
 
@@ -121,10 +138,9 @@ function truncateList() {
             return;
         }
     }
-    var url = buildUrl();
     $.ajax({
         type: "DELETE",
-        url: url,
+        url: App.contextPath + "/api/manager/consumers/" + App.consumer.consumerConfig.id + "/truncate",
         success: refresh
     });
 }
@@ -135,15 +151,16 @@ function disposeConsumer() {
             return;
         }
     }
-    var url = buildUrl();
     $.ajax({
         type: "DELETE",
-        url: url + "/kill",
-        success: refresh
+        url: App.contextPath + "/api/manager/consumers/" + App.consumer.consumerConfig.id,
+        success: function() {
+            window.location.href = App.contextPath;
+        }
     });
 }
 
-function refresh() {
+function refresh(manualRefresh) {
     var consumerConfig = App.consumer.consumerConfig;
     if (!consumerConfig.started) {
         if (!initConfig()) {
@@ -154,14 +171,14 @@ function refresh() {
     consumerConfig.since = new Date().getTime();
     $.get(url, handleResults);
     $("#since-row").html("Updated: " + moment(consumerConfig.since).format('LTS'));
-    if (consumerConfig.refreshRate > 0) {
+    if (consumerConfig.refreshRate > 0 && !manualRefresh) {
         consumerConfig.refreshHandle = setTimeout(refresh, consumerConfig.refreshRate);
     }
 }
 
 function buildUrl() {
     var consumerConfig = App.consumer.consumerConfig,
-        url = App.contextPath + "/api/kafka/read/" + consumerConfig.topic + "?";
+        url = App.contextPath + "/api/kafka/read/" + consumerConfig.topic + "?deserializerId=" + consumerConfig.desClass + "&";
     if (!!consumerConfig.kafkaUrl) {
         url += "kafkaUrl=" + consumerConfig.kafkaUrl + "&";
     }
@@ -171,9 +188,11 @@ function buildUrl() {
     return url;
 }
 
-function handleResults(data) {
+function handleResults(res) {
     var count = 0,
-        consumerConfig = App.consumer.consumerConfig;
+        consumerConfig = App.consumer.consumerConfig,
+        data = res.page;
+    App.consumer.consumerConfig.id = res.consumerId;
     if (!!App.consumer.clipboard) {
         App.consumer.clipboard.destroy();
     }
@@ -185,8 +204,11 @@ function handleResults(data) {
         ele.writeTimeText = moment(ele.writeTime).format('LTS');
         ele.messageText = "null";
         if (!!ele.message) {
-            ele.rawMessage = JSON.stringify(ele.message, null, 2);
+            ele.rawMessage = JSON.stringify(ele.message, null, 2).replace(/([^\\])\\n/g, "$1\n");
             ele.messageText = syntaxHighlight(ele.rawMessage);
+        } else {
+            ele.rawMessage = "null";
+            ele.messageText = "null";
         }
         ele.timestamp = "_" + count++;
         html = App.consumer.messageTemplate(ele);

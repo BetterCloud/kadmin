@@ -12,19 +12,29 @@
             </div>
         </div>
         <div class="form-group">
-            <label for="topic">Topic</label>
             <div class="row">
-                <div class="col-xs-4">
-                    <select id="topic-dd" class="form-control">
-                        <option>Loading topics...</option>
-                    </select>
+                <div class="col-sm-6">
+                    <label for="topic">Topic</label>
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <select id="topic-dd" class="form-control">
+                                <option>Loading topics...</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-6">
+                            <input type="text" class="form-control" id="topic" />
+                        </div>
+                    </div>
                 </div>
-                <div class="col-xs-8">
-                    <input type="text" class="form-control" id="topic" />
+                <div class="col-sm-6">
+                    <label for="deserializer-dd">Deserializer</label>
+                    <select id="deserializer-dd" class="form-control">
+                        <option>Loading Supported Deserializers...</option>
+                    </select>
                 </div>
             </div>
         </div>
-        <div class="row text-right">
+        <div class="text-right">
             <button class="btn btn-primary" id="start-consumer-btn" >
                 Start Consumer
             </button>

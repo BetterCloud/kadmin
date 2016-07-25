@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 /**
  * Created by davidesposito on 7/5/16.
  */
-public class LoggedKafkaMessageHandler implements MessageHandler<String, Object> {
+public class LoggedKafkaMessageHandler implements MessageHandler {
 
     private static final Logger logger = LoggerUtils.get(LoggedKafkaMessageHandler.class);
 

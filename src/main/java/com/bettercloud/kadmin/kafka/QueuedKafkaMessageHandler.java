@@ -5,6 +5,7 @@ import com.bettercloud.util.LoggerUtils;
 import com.google.common.collect.Lists;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 
@@ -17,12 +18,14 @@ import java.util.stream.Stream;
 /**
  * Created by davidesposito on 7/1/16.
  */
-public class QueuedKafkaMessageHandler implements MessageHandler<String, Object> {
+public class QueuedKafkaMessageHandler implements MessageHandler {
 
     private static final Logger LOGGER = LoggerUtils.get(QueuedKafkaMessageHandler.class);
 
     private final FixedSizeList<MessageContainer> messageQueue;
     private final AtomicLong total = new AtomicLong(0L);
+    @Getter private long lastReadTime;
+    @Getter private long lastMessageTime;
 
     public QueuedKafkaMessageHandler(int maxSize) {
         messageQueue = new FixedSizeList<>(maxSize);
@@ -32,17 +35,20 @@ public class QueuedKafkaMessageHandler implements MessageHandler<String, Object>
     public void handle(ConsumerRecord<String, Object> record) {
         LOGGER.debug("receiving => {}, queued => {}",total.get() + 1, messageQueue.spine.size());
         total.incrementAndGet();
+        long currTime = System.currentTimeMillis();
+        lastMessageTime = currTime;
         this.messageQueue.add(MessageContainer.builder()
                 .key(record.key())
                 .message(record.value())
                 .offset(record.offset())
                 .partition(record.partition())
                 .topic(record.topic())
-                .writeTime(System.currentTimeMillis())
+                .writeTime(currTime)
                 .build());
     }
 
     public List<Object> get(Long since) {
+        lastReadTime = System.currentTimeMillis();
         return messageQueue.stream()
                 .filter(c -> isValidDate(since, c.getWriteTime()))
                 .collect(Collectors.toList());
