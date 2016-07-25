@@ -1,6 +1,7 @@
 package com.bettercloud.kadmin.services;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
+import com.bettercloud.kadmin.api.services.FeaturesService;
 import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
 import com.bettercloud.kadmin.io.network.rest.SchemaProxyResource;
@@ -37,6 +38,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     private final String schemaRegistryUrl;
 
     private final HttpClient client;
+    private final FeaturesService featuresService;
 
     private final Cache<String, List<String>> schemasCache;
     private final Cache<String, SchemaInfoModel> schemaInfoCache;
@@ -45,9 +47,11 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     @Autowired
     public DefaultSchemaRegistryService(HttpClient defaultClient,
                 @Value("${schema.registry.url:http://localhost:8081}")
-                String schemaRegistryUrl) {
+                String schemaRegistryUrl,
+                FeaturesService featuresService) {
         this.client = defaultClient;
         this.schemaRegistryUrl = schemaRegistryUrl;
+        this.featuresService = featuresService;
         schemasCache = defaultCache();
         schemaInfoCache = defaultCache();
         schemaVersionCache = defaultCache();
@@ -61,9 +65,9 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     }
 
     @Override
-    public List<String> findAll(Optional<String> oUrl) throws SchemaRegistryRestException {
-        String url = String.format("%s/subjects",
-                oUrl.orElse(this.schemaRegistryUrl)
+    public List<String> findAll(String url) throws SchemaRegistryRestException {
+        url = String.format("%s/subjects",
+                Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl)
         );
         if (schemasCache.getIfPresent(url) == null) {
             NodeConverter<List<String>> c = (node) -> {
@@ -84,16 +88,16 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     }
 
     @Override
-    public List<String> guessAllTopics(Optional<String> oUrl) throws SchemaRegistryRestException {
+    public List<String> guessAllTopics(String oUrl) throws SchemaRegistryRestException {
         return findAll(oUrl).stream()
                 .map(schemaName -> schemaName.replaceAll("-value", ""))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public SchemaInfoModel getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException {
-        String url = String.format("%s/subjects/%s/versions",
-                oUrl.orElse(this.schemaRegistryUrl),
+    public SchemaInfoModel getInfo(String name, String url) throws SchemaRegistryRestException {
+        url = String.format("%s/subjects/%s/versions",
+                Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl),
                 name
         );
         if (schemaInfoCache.getIfPresent(url) == null) {
@@ -107,7 +111,7 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
                 return null;
             };
             List<Integer> versions = proxyResponse(url, c, null);
-            JsonNode info = getVersion(name, versions.get(versions.size() - 1), oUrl);
+            JsonNode info = getVersion(name, versions.get(versions.size() - 1), url);
             JsonNode currSchema = info;
             schemaInfoCache.put(url, SchemaInfoModel.builder()
                     .name(name)
@@ -121,9 +125,9 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
     }
 
     @Override
-    public JsonNode getVersion(String name, int version, Optional<String> oUrl) throws SchemaRegistryRestException {
-        String url = String.format("%s/subjects/%s/versions/%d",
-                oUrl.orElse(this.schemaRegistryUrl),
+    public JsonNode getVersion(String name, int version, String url) throws SchemaRegistryRestException {
+        url = String.format("%s/subjects/%s/versions/%d",
+                Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl),
                 name,
                 version
         );

@@ -40,7 +40,7 @@ public class SchemaProxyResource {
     )
     public ResponseEntity<List<String>> schemas(@RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.findAll(oUrl));
+            return ResponseEntity.ok(schemaRegistryService.findAll(oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
@@ -55,7 +55,7 @@ public class SchemaProxyResource {
     )
     public ResponseEntity<List<String>> topics(@RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.guessAllTopics(oUrl));
+            return ResponseEntity.ok(schemaRegistryService.guessAllTopics(oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
@@ -71,7 +71,7 @@ public class SchemaProxyResource {
     public ResponseEntity<SchemaInfoModel> info(@PathVariable("name") String name,
                                                 @RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.getInfo(name, oUrl));
+            return ResponseEntity.ok(schemaRegistryService.getInfo(name, oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
@@ -88,7 +88,7 @@ public class SchemaProxyResource {
                                                   @PathVariable("version") Integer version,
                                                   @RequestParam("url") Optional<String> oUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.getVersion(name, version, oUrl));
+            return ResponseEntity.ok(schemaRegistryService.getVersion(name, version, oUrl.orElse(null)));
         } catch (SchemaRegistryRestException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .header("error-message", e.getMessage())
