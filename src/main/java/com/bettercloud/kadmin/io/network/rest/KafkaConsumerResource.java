@@ -6,6 +6,7 @@ import com.bettercloud.kadmin.api.kafka.KadminConsumerGroupContainer;
 import com.bettercloud.kadmin.api.models.DeserializerInfoModel;
 import com.bettercloud.kadmin.api.services.BundledKadminConsumerGroupProviderService;
 import com.bettercloud.kadmin.api.services.DeserializerRegistryService;
+import com.bettercloud.kadmin.api.services.FeaturesService;
 import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.util.Page;
@@ -17,6 +18,7 @@ import lombok.Builder;
 import lombok.Data;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,12 +40,16 @@ public class KafkaConsumerResource {
 
     private final BundledKadminConsumerGroupProviderService kafkaConsumerProvider;
     private final DeserializerRegistryService deserializerRegistryService;
+    private final FeaturesService featuresService;
 
     @Autowired
     public KafkaConsumerResource(BundledKadminConsumerGroupProviderService kafkaConsumerProvider,
-                                 DeserializerRegistryService deserializerRegistryService) {
+                                 DeserializerRegistryService deserializerRegistryService,
+                                 FeaturesService featuresService) {
         this.kafkaConsumerProvider = kafkaConsumerProvider;
         this.deserializerRegistryService = deserializerRegistryService;
+        this.featuresService = featuresService;
+
     }
 
     @RequestMapping(
@@ -58,15 +64,14 @@ public class KafkaConsumerResource {
                                                      @RequestParam("schemaUrl") Optional<String> schemaUrl,
                                                      @RequestParam("size") Optional<Integer> queueSize,
                                                      @RequestParam("deserializerId") String deserializerId) {
-        String key = keyBuilder.join(kafkaUrl.orElse("default"), schemaUrl.orElse("default"), topic, deserializerId);
         DeserializerInfoModel des = deserializerRegistryService.findById(deserializerId);
         if (des == null) {
             return ResponseUtil.error("Invalid deserializer id", HttpStatus.NOT_FOUND);
         }
         KadminConsumerConfig config = KadminConsumerConfig.builder()
                 .topic(topic)
-                .kafkaHost(kafkaUrl.orElse(null))
-                .schemaRegistryUrl(schemaUrl.orElse(null))
+                .kafkaHost(featuresService.getCustomUrl(kafkaUrl.orElse(null)))
+                .schemaRegistryUrl(featuresService.getCustomUrl(schemaUrl.orElse(null)))
                 .keyDeserializer(StringDeserializer.class.getName())
                 .valueDeserializer(des)
                 .build();

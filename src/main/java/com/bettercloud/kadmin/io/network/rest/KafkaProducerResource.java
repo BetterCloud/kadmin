@@ -5,6 +5,7 @@ import com.bettercloud.kadmin.api.kafka.JsonToAvroConverter;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import com.bettercloud.kadmin.api.models.SerializerInfoModel;
+import com.bettercloud.kadmin.api.services.FeaturesService;
 import com.bettercloud.kadmin.api.services.SerializerRegistryService;
 import com.bettercloud.kadmin.io.network.dto.KafkaProduceMessageMetaModel;
 import com.bettercloud.kadmin.io.network.dto.KafkaProduceRequestModel;
@@ -58,14 +59,17 @@ public class KafkaProducerResource {
 
     private final JsonToAvroConverter jtaConverter;
     private final SerializerRegistryService serializerRegistryService;
+    private final FeaturesService featuresService;
 
     @Autowired
     public KafkaProducerResource(BasicKafkaProducerProviderService basicProducerProvider,
                                  JsonToAvroConverter jtaConverter,
-                                 SerializerRegistryService serializerRegistryService) {
+                                 SerializerRegistryService serializerRegistryService,
+                                 FeaturesService featuresService) {
         this.basicProducerProvider = basicProducerProvider;
         this.jtaConverter = jtaConverter;
         this.serializerRegistryService = serializerRegistryService;
+        this.featuresService = featuresService;
     }
 
     @RequestMapping(
@@ -76,6 +80,11 @@ public class KafkaProducerResource {
     )
     public ResponseEntity<ProducerRepsonseModel> publishAvro(@RequestBody KafkaProduceRequestModel requestModel,
                                                          @RequestParam("count") Optional<Integer> oCount) {
+        if (!featuresService.producersEnabeled()) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+                    .header("error-message", "The producer feature is not enabled.")
+                    .body(null);
+        }
         Opt<JsonNode> rawMessage;
         try {
             rawMessage = Opt.of(MAPPER.readTree(requestModel.getRawMessage()));
@@ -119,6 +128,11 @@ public class KafkaProducerResource {
     )
     public ResponseEntity<ProducerRepsonseModel> publish(@RequestBody KafkaProduceRequestModel requestModel,
                                                          @RequestParam("count") Optional<Integer> oCount) {
+        if (!featuresService.producersEnabeled()) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+                    .header("error-message", "The producer feature is not enabled.")
+                    .body(null);
+        }
         if (requestModel.getMeta().getSerializerId() == null) {
             return ResponseUtil.error("Missing serializer id", HttpStatus.BAD_REQUEST);
         }

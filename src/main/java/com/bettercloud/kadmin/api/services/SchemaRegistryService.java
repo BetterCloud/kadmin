@@ -12,11 +12,11 @@ import java.util.Optional;
  */
 public interface SchemaRegistryService {
 
-    List<String> findAll(Optional<String> oUrl) throws SchemaRegistryRestException;
+    List<String> findAll(String oUrl) throws SchemaRegistryRestException;
 
-    List<String> guessAllTopics(Optional<String> oUrl) throws SchemaRegistryRestException;
+    List<String> guessAllTopics(String oUrl) throws SchemaRegistryRestException;
 
-    SchemaInfoModel getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException;
+    SchemaInfoModel getInfo(String name, String oUrl) throws SchemaRegistryRestException;
 
-    JsonNode getVersion(String name, int version, Optional<String> oUrl) throws SchemaRegistryRestException;
+    JsonNode getVersion(String name, int version, String oUrl) throws SchemaRegistryRestException;
 }

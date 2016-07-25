@@ -16,7 +16,7 @@
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="container" th:if="${producerEnabled}">
             <div>
                 <ul class="nav nav-pills">
                     <li role="presentation"><a th:href="@{/}">Home</a></li>
@@ -32,6 +32,7 @@
         <script th:inline="javascript">
             /*<![CDATA[*/
             var App = {
+                customUrls: [[${customKafkaUrlEnabled}]],
                 contextPath: [[${contextPath}]],
                 infoTemplateLoaded: false,
                 errorTemplateLoaded: false,
@@ -53,6 +54,9 @@
             $.get(App.contextPath + "/basicproducer/main.html", function (html) {
                 $('#main-content').html(html);
                 App.mainTemplateLoaded = true;
+                if (!!App.customUrls) {
+                    $("#custom-url-form-row").removeClass("hidden");
+                }
                 initMain();
             });
             $.get(App.contextPath + "/basicproducer/sent-info-template.html", function (html) {

@@ -27,8 +27,8 @@
             <div>
                 <ul class="nav nav-pills">
                     <li role="presentation"><a th:href="@{/}">Home</a></li>
-                    <li role="presentation"><a th:href="@{/basicproducer}">Basic Producer</a></li>
-                    <li role="presentation"><a th:href="@{/producer}">Avro Producer</a></li>
+                    <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/basicproducer}">Basic Producer</a></li>
+                    <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/producer}">Avro Producer</a></li>
                     <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>
                     <li role="presentation"><a th:href="@{/manager}">Manager</a></li>
                 </ul>
@@ -40,6 +40,7 @@
         <script th:inline="javascript">
             /*<![CDATA[*/
             var App = {
+                customUrls: [[${customKafkaUrlEnabled}]],
                 defaultTopic: [[${defaultTopicName}]],
                 des: {
                     id: [[${deserializerId}]],
@@ -67,6 +68,9 @@
             $.get(App.contextPath + "/consumer/main.html", function (html) {
                 $('#main-content').html(html);
                 App.mainTemplateLoaded = true;
+                if (!!App.customUrls) {
+                    $("#custom-url-form-row").removeClass("hidden");
+                }
                 initMain();
             });
 
