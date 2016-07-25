@@ -66,10 +66,10 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
 
     @Override
     public List<String> findAll(String url) throws SchemaRegistryRestException {
-        url = String.format("%s/subjects",
+       String  tempUrl = String.format("%s/subjects",
                 Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl)
         );
-        if (schemasCache.getIfPresent(url) == null) {
+        if (schemasCache.getIfPresent(tempUrl) == null) {
             NodeConverter<List<String>> c = (node) -> {
                 if (node.isArray()) {
                     ArrayNode arr = (ArrayNode) node;
@@ -80,27 +80,27 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
                 }
                 return null;
             };
-            schemasCache.put(url, proxyResponse(url, c, null));
+            schemasCache.put(tempUrl, proxyResponse(tempUrl, c, null));
         } else {
-            LOGGER.debug("Hit schema cache for: {}", url);
+            LOGGER.debug("Hit schema cache for: {}", tempUrl);
         }
-        return schemasCache.getIfPresent(url);
+        return schemasCache.getIfPresent(tempUrl);
     }
 
     @Override
-    public List<String> guessAllTopics(String oUrl) throws SchemaRegistryRestException {
-        return findAll(oUrl).stream()
+    public List<String> guessAllTopics(String url) throws SchemaRegistryRestException {
+        return findAll(url).stream()
                 .map(schemaName -> schemaName.replaceAll("-value", ""))
                 .collect(Collectors.toList());
     }
 
     @Override
     public SchemaInfoModel getInfo(String name, String url) throws SchemaRegistryRestException {
-        url = String.format("%s/subjects/%s/versions",
+        String tempUrl = String.format("%s/subjects/%s/versions",
                 Optional.ofNullable(featuresService.getCustomUrl(url)).orElse(this.schemaRegistryUrl),
                 name
         );
-        if (schemaInfoCache.getIfPresent(url) == null) {
+        if (schemaInfoCache.getIfPresent(tempUrl) == null) {
             NodeConverter<List<Integer>> c = (node) -> {
                 if (node.isArray()) {
                     ArrayNode arr = (ArrayNode) node;
@@ -110,18 +110,18 @@ public class DefaultSchemaRegistryService implements SchemaRegistryService {
                 }
                 return null;
             };
-            List<Integer> versions = proxyResponse(url, c, null);
+            List<Integer> versions = proxyResponse(tempUrl, c, null);
             JsonNode info = getVersion(name, versions.get(versions.size() - 1), url);
             JsonNode currSchema = info;
-            schemaInfoCache.put(url, SchemaInfoModel.builder()
+            schemaInfoCache.put(tempUrl, SchemaInfoModel.builder()
                     .name(name)
                     .versions(versions)
                     .currSchema(currSchema)
                     .build());
         } else {
-            LOGGER.debug("Hit info cache for: {}", url);
+            LOGGER.debug("Hit info cache for: {}", tempUrl);
         }
-        return schemaInfoCache.getIfPresent(url);
+        return schemaInfoCache.getIfPresent(tempUrl);
     }
 
     @Override
