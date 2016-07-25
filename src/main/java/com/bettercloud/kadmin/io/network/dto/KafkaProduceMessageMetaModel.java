@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.io.network.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,11 +9,12 @@ import lombok.NoArgsConstructor;
  * Created by davidesposito on 7/1/16.
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KafkaProduceRequestModel {
+public class KafkaProduceMessageMetaModel {
 
-    private String key;
-    private JsonNode rawMessage;
-    private KafkaProduceMessageMetaModel meta;
+    private String schema;
+    private String rawSchema;
+    private String topic;
 }

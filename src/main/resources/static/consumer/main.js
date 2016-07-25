@@ -44,7 +44,12 @@ function initMain() {
         $('#topic').val(val);
 //                    }
     });
-    refreshTopics();
+    if (!!App.defaultTopic && App.defaultTopic !== '') {
+        $('#topic').val(App.defaultTopic);
+        refresh();
+    } else {
+        refreshTopics();
+    }
 }
 
 function refreshTopics() {
@@ -104,6 +109,10 @@ function initMessageList() {
     var $dispose = $("#dispose-btn");
     $dispose.removeClass("disabled");
     $dispose.click(disposeConsumer);
+    var $permalink = $("#permalink-btn");
+    $permalink.removeClass("disabled");
+    $permalink.attr("data-clipboard-text", window.location.origin + App.contextPath + "/consumer/topic/" + consumerConfig.topic);
+    new Clipboard("#permalink-btn");
 }
 
 function truncateList() {

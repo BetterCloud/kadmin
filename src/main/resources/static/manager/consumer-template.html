@@ -1,0 +1,16 @@
+<tr>
+    <td><%= topic %></td>
+    <td><%= lastUsedTimeText %></td>
+    <td><%= lastMessageTimeText %></td>
+    <td><%= consumerGroupId %></td>
+    <td><%= queueSize %></td>
+    <td><%= total %></td>
+    <td>
+        <a href="<%= contextPath %>/consumer/topic/<%= topic %>" class="btn btn-xs btn-info">
+            View
+        </a>
+        <button class="btn btn-xs btn-danger" id="delete-<%= consumerGroupId %>-btn">
+            <span class="glyphicon glyphicon-trash"></span> Dispose
+        </button>
+    </td>
+</tr>

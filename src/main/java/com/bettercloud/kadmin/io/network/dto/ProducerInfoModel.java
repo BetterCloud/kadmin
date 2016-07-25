@@ -6,15 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Created by davidesposito on 7/1/16.
+ * Created by davidesposito on 7/20/16.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KafkaProduceMessageMeta {
+public class ProducerInfoModel {
 
-    private String schema;
-    private String rawSchema;
+    private String id;
     private String topic;
+    private long lastUsedTime;
+    private long totalMessagesSent;
+    private long totalErrors;
 }

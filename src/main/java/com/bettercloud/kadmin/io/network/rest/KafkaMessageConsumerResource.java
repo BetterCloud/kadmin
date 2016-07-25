@@ -3,7 +3,8 @@ package com.bettercloud.kadmin.io.network.rest;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerConfig;
 import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.services.AvroConsumerGroupProviderService;
-import com.bettercloud.kadmin.io.network.dto.ResponseUtil;
+import com.bettercloud.kadmin.io.network.dto.ConsumerInfoModel;
+import com.bettercloud.kadmin.io.network.rest.utils.ResponseUtil;
 import com.bettercloud.kadmin.kafka.QueuedKafkaMessageHandler;
 import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
  * Created by davidesposito on 7/5/16.
  */
 @RestController
-@RequestMapping("/api/kafka/read")
+@RequestMapping("/api")
 public class KafkaMessageConsumerResource {
 
     private static final Logger LOGGER = LoggerUtils.get(KafkaMessageConsumerResource.class);
@@ -70,7 +71,7 @@ public class KafkaMessageConsumerResource {
     }
 
     @RequestMapping(
-            path = "/{topic}",
+            path = "/kafka/read/{topic}",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -133,7 +134,7 @@ public class KafkaMessageConsumerResource {
     }
 
     @RequestMapping(
-            path = "/{topic}",
+            path = "/kafka/read/{topic}",
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -150,7 +151,7 @@ public class KafkaMessageConsumerResource {
     }
 
     @RequestMapping(
-            path = "/{topic}/kill",
+            path = "/kafka/read/{topic}/kill",
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -163,9 +164,44 @@ public class KafkaMessageConsumerResource {
             ConsumerContainer container = consumerMap.get(key).getData();
             container.getHandler().clear();
             container.getConsumer().shutdown();
+            consumerMap.remove(key);
             cleared = true;
         }
         return ResponseEntity.ok(cleared);
+    }
+
+    @RequestMapping(
+            path = "/manager/consumers",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<Page<ConsumerInfoModel>> getAllConsumers() {
+        Page<ConsumerInfoModel> consumers = new Page<>();
+        List<ConsumerInfoModel> content = consumerMap.values().stream()
+                .map(e -> {
+                    KadminConsumerGroup<String, Object> consumer = e.getData(false).getConsumer();
+                    QueuedKafkaMessageHandler handler = e.getData(false).getHandler();
+                    Long lastMessageTime = Opt.of(handler.get(-1L))
+                            .filter(list -> !list.isEmpty())
+                            .map(list -> list.get(0))
+                            .map(m -> (QueuedKafkaMessageHandler.MessageContainer) m)
+                            .map(mc -> mc.getWriteTime())
+                            .orElse(-1L);
+                    return ConsumerInfoModel.builder()
+                            .consumerGroupId(consumer.getGroupId())
+                            .lastMessageTime(lastMessageTime)
+                            .lastUsedTime(e.getLastUsed())
+                            .queueSize(handler.getQueueSize())
+                            .topic(consumer.getConfig().getTopic())
+                            .total(handler.total())
+                            .build();
+                })
+                .collect(Collectors.toList());
+        consumers.setContent(content);
+        consumers.setPage(0);
+        consumers.setTotalElements(content.size());
+        consumers.setTotalElements(content.size());
+        return ResponseEntity.ok(consumers);
     }
 
     protected long getSince(Optional<Long> oSince, Optional<Long> oWindow) {

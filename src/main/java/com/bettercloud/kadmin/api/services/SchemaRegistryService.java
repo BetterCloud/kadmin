@@ -1,7 +1,7 @@
 package com.bettercloud.kadmin.api.services;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
-import com.bettercloud.kadmin.io.network.dto.SchemaInfo;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public interface SchemaRegistryService {
 
     List<String> guessAllTopics(Optional<String> oUrl) throws SchemaRegistryRestException;
 
-    SchemaInfo getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException;
+    SchemaInfoModel getInfo(String name, Optional<String> oUrl) throws SchemaRegistryRestException;
 
     JsonNode getVersion(String name, int version, Optional<String> oUrl) throws SchemaRegistryRestException;
 }

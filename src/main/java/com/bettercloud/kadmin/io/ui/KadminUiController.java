@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -27,6 +28,15 @@ public class KadminUiController {
     @RequestMapping("/consumer")
     public String consumer(Model model) {
         model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));
+        model.addAttribute("defaultTopicName", "");
+        return "consumer";
+    }
+
+    @RequestMapping("/consumer/topic/{topic}")
+    public String consumer(Model model,
+                @PathVariable("topic") String topic) {
+        model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));
+        model.addAttribute("defaultTopicName", topic);
         return "consumer";
     }
 
@@ -34,5 +44,11 @@ public class KadminUiController {
     public String producer(Model model) {
         model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));
         return "producer";
+    }
+
+    @RequestMapping("/manager")
+    public String manager(Model model) {
+        model.addAttribute("contextPath", env.getProperty("server.contextPath", ""));
+        return "manager";
     }
 }

@@ -29,6 +29,7 @@
                     <li role="presentation"><a th:href="@{/}">Home</a></li>
                     <li role="presentation"><a th:href="@{/producer}">Custom Producer</a></li>
                     <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>
+                    <li role="presentation"><a th:href="@{/manager}">Manager</a></li>
                 </ul>
             </div>
             <div id="main-content"></div>
@@ -38,6 +39,7 @@
         <script th:inline="javascript">
             /*<![CDATA[*/
             var App = {
+                defaultTopic: [[${defaultTopicName}]],
                 contextPath: [[${contextPath}]],
                 messageTemplateLoaded: false,
                 mainTemplateLoaded: false,
