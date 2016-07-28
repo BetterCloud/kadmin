@@ -9,6 +9,8 @@ import com.google.common.collect.Sets;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.RangeAssignor;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 
@@ -60,10 +62,29 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("client.id", getClientId());
         properties.put("group.id", getGroupId());
 
+        properties.put("session.timeout.ms", 30000);
+        properties.put("heartbeat.interval.ms", 3000);
+        properties.put("partition.assignment.strategy", RangeAssignor.class.getName());
+        properties.put("metadata.max.age.ms", 5 * 60 * 1000);
         properties.put("enable.auto.commit", false);
-        properties.put("fetch.max.wait.ms", 1000);
-        properties.put("max.partition.fetch.bytes", 32 * 1024);
-        properties.put("auto.offset.reset", "earliest");
+        properties.put("auto.commit.interval.ms", 5000);
+        properties.put("max.partition.fetch.bytes", 1 * 1024 * 1024);
+        properties.put("send.buffer.bytes", 128 * 1024);
+        properties.put("receive.buffer.bytes", 32 * 1024);
+        properties.put("fetch.min.bytes", 1);
+        properties.put("fetch.max.wait.ms", 500);
+        properties.put("reconnect.backoff.ms", 50L);
+        properties.put("retry.backoff.ms", 100L);
+        properties.put("auto.offset.reset", "latest");
+        properties.put("check.crcs", true);
+        properties.put("metrics.sample.window.ms", 30000);
+        properties.put("metrics.num.samples", 2);
+        properties.put("metric.reporters", "");
+        properties.put("request.timeout.ms", 40 * 1000);
+        properties.put("connections.max.idle.ms", 9 * 60 * 1000);
+        properties.put("security.protocol", "PLAINTEXT");
+
+        properties.put("specific.avro.reader", true);
 
         properties.put("key.deserializer", config.getKeyDeserializer());
         properties.put("value.deserializer", config.getValueDeserializer().getClassName());
