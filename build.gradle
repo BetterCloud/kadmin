@@ -50,6 +50,9 @@ repositories {
 dependencies {
 	compile group: 'com.google.guava', name: 'guava', version: guava_version
 
+	compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+
+
 	compile group: 'mysql', name: 'mysql-connector-java', version: mysql_connector_version
 
 	//Spring Boot

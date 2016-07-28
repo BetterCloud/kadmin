@@ -11,9 +11,5 @@ public interface KadminConsumerGroup extends Runnable, MessageHandlerRegistry {
 
     String getGroupId();
 
-    long getOffset();
-
-    void setOffset(long newOffset);
-
     void shutdown();
 }
