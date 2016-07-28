@@ -146,8 +146,6 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
                     synchronized (handlers) {
                         handlers.stream().forEach(h -> h.handle(record));
                     }
-                    final TopicPartition currentTopicPartition = new TopicPartition(record.topic(), record.partition());
-                    consumer.seek(currentTopicPartition, record.offset() + 1);
                 }
                 try {
                     Thread.sleep(500); // TODO: configure
