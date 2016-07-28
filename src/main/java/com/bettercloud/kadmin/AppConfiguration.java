@@ -25,6 +25,15 @@ import java.util.function.Function;
 public class AppConfiguration {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String JSON_REPLACE;
+
+    static {
+        String temp = "[";
+        for (int i=0;i<=20;i++) {
+            temp += (char)i;
+        }
+        JSON_REPLACE = temp + "]";
+    }
 
     @Bean
     public SerializerRegistryService serializerRegistryService() {
@@ -72,10 +81,7 @@ public class AppConfiguration {
     private JsonNode toNode(String s) {
         try {
             return mapper.readTree(s.replace("\n", "\\n")
-                    .replace((char)0 + "", "")
-                    .replace((char)1 + "", "")
-                    .replace((char)10 + "", "")
-                    .replace((char)20 + "", ""));
+                    .replaceAll(JSON_REPLACE, ""));
         } catch (IOException e) {
             e.printStackTrace();
         }

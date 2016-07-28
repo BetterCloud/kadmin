@@ -40,10 +40,8 @@ public class BasicKafkaConsumerProviderService implements KadminConsumerGroupPro
             @Value("${kafka.host:localhost:9092}")
             String defaultKafkaHost,
             @Value("${schema.registry.url:http://localhost:8081}")
-            String defaultSchemaRegistryUrl,
-            @Value("${kafka.consumer.threadpool.size:5}")
-            int consumerThreadPoolSize) {
-        this.consumerExecutor = Executors.newFixedThreadPool(consumerThreadPoolSize);
+            String defaultSchemaRegistryUrl) {
+        this.consumerExecutor = Executors.newCachedThreadPool();
         this.defaultKafkaHost = defaultKafkaHost;
         this.defaultSchemaRegistryUrl = defaultSchemaRegistryUrl;
 

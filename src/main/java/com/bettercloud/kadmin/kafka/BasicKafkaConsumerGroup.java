@@ -75,7 +75,7 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("fetch.max.wait.ms", 500);
         properties.put("reconnect.backoff.ms", 50L);
         properties.put("retry.backoff.ms", 100L);
-        properties.put("auto.offset.reset", "earliest");
+        properties.put("auto.offset.reset", "latest");
         properties.put("check.crcs", true);
         properties.put("metrics.sample.window.ms", 30000);
         properties.put("metrics.num.samples", 2);
