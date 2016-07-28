@@ -18,6 +18,6 @@ public class ErrorTolerantAvroObjectDeserializer extends KafkaAvroDeserializer {
         } catch (SerializationException e) {
             LOGGER.warn("There was an error deserializing avro payload: {}", e.getMessage());
         }
-        return null;
+        return "!!!there was an error!!!";
     }
 }
