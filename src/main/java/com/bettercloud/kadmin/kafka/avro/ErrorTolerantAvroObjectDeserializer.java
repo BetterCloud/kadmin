@@ -13,11 +13,14 @@ public class ErrorTolerantAvroObjectDeserializer extends KafkaAvroDeserializer {
     private static final Logger LOGGER = LoggerUtils.get(ErrorTolerantAvroObjectDeserializer.class);
 
     protected Object deserialize(byte[] payload) throws SerializationException {
+        String error = "!!!there was an error!!!";
         try {
             return super.deserialize(payload);
         } catch (SerializationException e) {
-            LOGGER.warn("There was an error deserializing avro payload: {}", e.getMessage());
+            LOGGER.warn("There was an error deserializing avro payload: {}, caused by: {}", e.getMessage(), e.getCause());
+            error += " : " + e.getMessage();
         }
-        return "!!!there was an error!!!";
+        // I don't think returning an error actually works...
+        return error;
     }
 }
