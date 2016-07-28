@@ -25,9 +25,12 @@ import java.util.function.Function;
 public class AppConfiguration {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+
     private static final String JSON_REPLACE;
+    private static final String JSON_REPLACE_VAL = (char)191 + "";
 
     static {
+        // http://stackoverflow.com/a/3020108
         String temp = "[";
         for (int i=0;i<=20;i++) {
             temp += (char)i;
@@ -81,7 +84,7 @@ public class AppConfiguration {
     private JsonNode toNode(String s) {
         try {
             return mapper.readTree(s.replace("\n", "\\n")
-                    .replaceAll(JSON_REPLACE, ""));
+                    .replaceAll(JSON_REPLACE, JSON_REPLACE_VAL));
         } catch (IOException e) {
             e.printStackTrace();
         }
