@@ -84,8 +84,6 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("connections.max.idle.ms", 9 * 60 * 1000);
         properties.put("security.protocol", "PLAINTEXT");
 
-        properties.put("specific.avro.reader", true);
-
         properties.put("key.deserializer", config.getKeyDeserializer());
         properties.put("value.deserializer", config.getValueDeserializer().getClassName());
 
