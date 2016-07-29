@@ -15,6 +15,7 @@ import org.apache.kafka.clients.consumer.RangeAssignor;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
+import org.springframework.core.env.Environment;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,10 +31,11 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
     private final KadminConsumerConfig config;
     private final String clientId;
     private final String groupId;
+    private final Environment env;
 
     private final Set<MessageHandler> handlers;
 
-    public BasicKafkaConsumerGroup(KadminConsumerConfig config) {
+    public BasicKafkaConsumerGroup(KadminConsumerConfig config, Environment env) {
         assert(config != null);
         assert(config.getKeyDeserializer() != null);
         assert(config.getValueDeserializer() != null);
@@ -41,6 +43,7 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         this.config = config;
         this.clientId = UUID.randomUUID().toString();
         this.groupId = this.clientId;
+        this.env = env;
         this.handlers = Collections.synchronizedSet(Sets.newLinkedHashSet());
     }
 
@@ -62,27 +65,27 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("client.id", getClientId());
         properties.put("group.id", getGroupId());
 
-        properties.put("session.timeout.ms", 30000);
-        properties.put("heartbeat.interval.ms", 3000);
-        properties.put("partition.assignment.strategy", RangeAssignor.class.getName());
-        properties.put("metadata.max.age.ms", 5 * 60 * 1000);
-        properties.put("enable.auto.commit", false);
-        properties.put("auto.commit.interval.ms", 5000);
-        properties.put("max.partition.fetch.bytes", 1 * 1024 * 1024);
-        properties.put("send.buffer.bytes", 128 * 1024);
-        properties.put("receive.buffer.bytes", 32 * 1024);
-        properties.put("fetch.min.bytes", 1);
-        properties.put("fetch.max.wait.ms", 500);
-        properties.put("reconnect.backoff.ms", 50L);
-        properties.put("retry.backoff.ms", 100L);
-        properties.put("auto.offset.reset", "latest");
-        properties.put("check.crcs", true);
-        properties.put("metrics.sample.window.ms", 30000);
-        properties.put("metrics.num.samples", 2);
-        properties.put("metric.reporters", "");
-        properties.put("request.timeout.ms", 40 * 1000);
-        properties.put("connections.max.idle.ms", 9 * 60 * 1000);
-        properties.put("security.protocol", "PLAINTEXT");
+        properties.put("session.timeout.ms", env.getProperty("session.timeout.ms", Integer.class, 30000));
+        properties.put("heartbeat.interval.ms", env.getProperty("heartbeat.interval.ms", Integer.class, 3000));
+        properties.put("partition.assignment.strategy", env.getProperty("partition.assignment.strategy", RangeAssignor.class.getName()));
+        properties.put("metadata.max.age.ms", env.getProperty("metadata.max.age.ms", Integer.class, 5 * 60 * 1000));
+        properties.put("enable.auto.commit", env.getProperty("enable.auto.commit", Boolean.class, false));
+        properties.put("auto.commit.interval.ms", env.getProperty("auto.commit.interval.ms", Integer.class, 5000));
+        properties.put("max.partition.fetch.bytes", env.getProperty("max.partition.fetch.bytes", Integer.class, 1 * 1024 * 1024));
+        properties.put("send.buffer.bytes", env.getProperty("send.buffer.bytes", Integer.class, 128 * 1024));
+        properties.put("receive.buffer.bytes", env.getProperty("receive.buffer.bytes", Integer.class, 32 * 1024));
+        properties.put("fetch.min.bytes", env.getProperty("fetch.min.bytes", Integer.class, 1));
+        properties.put("fetch.max.wait.ms", env.getProperty("fetch.max.wait.ms", Integer.class, 500));
+        properties.put("reconnect.backoff.ms", env.getProperty("reconnect.backoff.ms", Long.class, 50L));
+        properties.put("retry.backoff.ms", env.getProperty("retry.backoff.ms", Long.class, 100L));
+        properties.put("auto.offset.reset", env.getProperty("auto.offset.reset", "latest"));
+        properties.put("check.crcs", env.getProperty("check.crcs", Boolean.class, true));
+        properties.put("metrics.sample.window.ms", env.getProperty("metrics.sample.window.ms", Integer.class, 30000));
+        properties.put("metrics.num.samples", env.getProperty("metrics.num.samples", Integer.class, 2));
+        properties.put("metric.reporters", env.getProperty("metric.reporters", ""));
+        properties.put("request.timeout.ms", env.getProperty("request.timeout.ms", Integer.class, 40 * 1000));
+        properties.put("connections.max.idle.ms", env.getProperty("connections.max.idle.ms", Integer.class, 9 * 60 * 1000));
+        properties.put("security.protocol", env.getProperty("security.protocol", "PLAINTEXT"));
 
         properties.put("key.deserializer", config.getKeyDeserializer());
         properties.put("value.deserializer", config.getValueDeserializer().getClassName());
