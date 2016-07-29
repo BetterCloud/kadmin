@@ -10,6 +10,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -31,6 +32,7 @@ public class BasicKafkaConsumerProviderService implements KadminConsumerGroupPro
     private final ExecutorService consumerExecutor;
     private final String defaultKafkaHost;
     private final String defaultSchemaRegistryUrl;
+    private final Environment env;
 
     private final LinkedHashMap<String, KadminConsumerGroup> consumerMap;
     private final Map<String, String> correlationMap;
@@ -40,10 +42,12 @@ public class BasicKafkaConsumerProviderService implements KadminConsumerGroupPro
             @Value("${kafka.host:localhost:9092}")
             String defaultKafkaHost,
             @Value("${schema.registry.url:http://localhost:8081}")
-            String defaultSchemaRegistryUrl) {
+            String defaultSchemaRegistryUrl,
+            Environment env) {
         this.consumerExecutor = Executors.newCachedThreadPool();
         this.defaultKafkaHost = defaultKafkaHost;
         this.defaultSchemaRegistryUrl = defaultSchemaRegistryUrl;
+        this.env = env;
 
         this.consumerMap = Maps.newLinkedHashMap();
         this.correlationMap = Maps.newConcurrentMap();
@@ -69,7 +73,7 @@ public class BasicKafkaConsumerProviderService implements KadminConsumerGroupPro
         Opt.of(config.getKafkaHost()).notPresent(() -> config.setKafkaHost(defaultKafkaHost));
         Opt.of(config.getSchemaRegistryUrl()).notPresent(() -> config.setSchemaRegistryUrl(defaultSchemaRegistryUrl));
 
-        KadminConsumerGroup consumerGroup = new BasicKafkaConsumerGroup(config);
+        KadminConsumerGroup consumerGroup = new BasicKafkaConsumerGroup(config, env);
         String key = getConfigKey(consumerGroup.getConfig());
         if (!correlationMap.containsKey(key)) {
             correlationMap.put(key, consumerGroup.getClientId());
