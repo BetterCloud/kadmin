@@ -5,6 +5,23 @@
         <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
         <link th:href="@{/favicon.ico}" rel="icon" />
         <style>
+            body {
+                background-color: #dddddd;
+            }
+            .container {
+                background-color: #ffffff;
+                margin-top: 1em;
+                margin-bottom: 4em;
+                padding-top: 1em;
+                padding-bottom: 1em;
+                min-height: 800px;
+            }
+            .header-row {
+                margin-bottom: 2em;
+            }
+            #message-list {
+                min-height: 400px;
+            }
             pre {
                 padding: 5px;
                 margin: 5px;
@@ -25,9 +42,9 @@
     </head>
     <body>
         <div class="container">
-            <div>
+            <div class="header-row">
                 <ul class="nav nav-pills">
-                    <li role="presentation"><a th:href="@{/}">Home</a></li>
+                    <li role="presentation"><a th:href="@{/}" style="padding: 0 15px;"><img th:src="@{/logo.png}" style="height: 3em;" /></a></li>
                     <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/basicproducer}">Basic Producer</a></li>
                     <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/producer}">Avro Producer</a></li>
                     <li role="presentation" class="active"><a th:href="@{/consumer}">Consumer</a></li>

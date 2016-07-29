@@ -5,7 +5,9 @@ import com.bettercloud.kadmin.api.kafka.KadminConsumerGroup;
 import com.bettercloud.kadmin.api.kafka.MessageHandler;
 import com.bettercloud.kadmin.api.kafka.MessageHandlerRegistry;
 import com.bettercloud.util.LoggerUtils;
+import com.bettercloud.util.Opt;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -28,7 +30,6 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
     private final KadminConsumerConfig config;
     private final String clientId;
     private final String groupId;
-    private final AtomicLong lastOffset;
 
     private final Set<MessageHandler> handlers;
 
@@ -40,7 +41,6 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         this.config = config;
         this.clientId = UUID.randomUUID().toString();
         this.groupId = this.clientId;
-        this.lastOffset = new AtomicLong(-1);
         this.handlers = Collections.synchronizedSet(Sets.newLinkedHashSet());
     }
 
@@ -90,6 +90,32 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("value.deserializer", config.getValueDeserializer().getClassName());
 
         this.consumer = new KafkaConsumer<>(properties);
+
+        consumer.subscribe(Arrays.asList(config.getTopic()));
+
+        poll(1000);
+
+        setInitialOffset();
+    }
+
+    private void setInitialOffset() {
+        Set<TopicPartition> topicPartitions = consumer.assignment();
+        int perPartitionRewind = 100 / topicPartitions.size();
+        topicPartitions.stream()
+                .map(tp -> {
+                    System.out.println(tp);
+                    return Pair.of(tp, consumer.committed(tp));
+                })
+                .forEach(pair -> {
+                    TopicPartition tp = pair.getLeft();
+                    Opt.of(pair.getRight())
+                            .map(meta -> meta.offset())
+                            .map(offset -> Math.max(0, offset - perPartitionRewind))
+                            .ifPresent(newOffset -> LOGGER.info("Seeing {} to {} (per partiion rewind {})",
+                                    tp.toString(), newOffset, perPartitionRewind))
+                            .ifPresent(newOffset -> consumer.seek(tp, newOffset))
+                            .notPresent(() -> LOGGER.error("Could not calculate new offset for {}", tp.toString()));
+                });
     }
 
     @Override
@@ -108,25 +134,25 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
     }
 
     @Override
-    public long getOffset() {
-        return lastOffset.get();
-    }
-
-    @Override
-    public void setOffset(long newOffset) {
-        if (consumer != null) {
-            // TODO: for real
-            // consumer.seek(partition, newOffset);
-            lastOffset.set(newOffset);
-        }
-    }
-
-    @Override
     public void shutdown() {
         if (consumer != null) {
             consumer.wakeup();
             consumer = null;
         }
+    }
+
+    private void poll() {
+        poll(0L);
+    }
+
+    private void poll(long pollTime) {
+        ConsumerRecords<String, Object> records = consumer.poll(pollTime);
+        for (ConsumerRecord<String, Object> record : records) {
+            synchronized (handlers) {
+                handlers.stream().forEach(h -> h.handle(record));
+            }
+        }
+        consumer.commitSync();
     }
 
     @Override
@@ -137,16 +163,8 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
             init();
         }
         try {
-            consumer.subscribe(Arrays.asList(config.getTopic()));
-
             while (true) {
-                ConsumerRecords<String, Object> records = consumer.poll(0);
-                for (ConsumerRecord<String, Object> record : records) {
-                    lastOffset.set(record.offset());
-                    synchronized (handlers) {
-                        handlers.stream().forEach(h -> h.handle(record));
-                    }
-                }
+                poll();
                 try {
                     Thread.sleep(500); // TODO: configure
                 } catch (InterruptedException e) {

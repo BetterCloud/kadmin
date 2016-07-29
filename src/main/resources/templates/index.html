@@ -4,17 +4,37 @@
         <title>Kadmin @ BetterCloud</title>
         <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet" />
         <link th:href="@{/favicon.ico}" rel="icon" />
+        <style>
+            body {
+                background-color: #dddddd;
+            }
+            .container {
+                background-color: #ffffff;
+                margin-top: 1em;
+                margin-bottom: 4em;
+                padding-top: 1em;
+                padding-bottom: 1em;
+                min-height: 800px;
+            }
+            .header-row {
+                margin-bottom: 2em;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
-            <div>
+            <div class="header-row">
                 <ul class="nav nav-pills">
-                    <li role="presentation" class="active"><a th:href="@{/}">Home</a></li>
+                    <li role="presentation"><a th:href="@{/}" style="padding: 0 15px;"><img th:src="@{/logo.png}" style="height: 3em;" /></a></li>
                     <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/basicproducer}">Basic Producer</a></li>
                     <li role="presentation" th:if="${producerEnabled}"><a th:href="@{/producer}">Avro Producer</a></li>
                     <li role="presentation"><a th:href="@{/consumer}">Consumer</a></li>
                     <li role="presentation"><a th:href="@{/manager}">Manager</a></li>
                 </ul>
+            </div>
+            <div class="text-center" style="margin-top: 6em;">
+                <img th:src="@{/logo.png}" />
+                <h1>kadmin by BetterCloud</h1>
             </div>
         </div>
     </body>
