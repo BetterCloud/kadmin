@@ -4,7 +4,6 @@ buildscript {
 	}
 	repositories {
 		mavenCentral()
-		maven { url 'http://dev.bettercloud.com/nexus/content/repositories/releases/' }
 		maven { url 'http://packages.confluent.io/maven/' }
 		maven { url "https://plugins.gradle.org/m2/" }
 		jcenter()
@@ -13,7 +12,6 @@ buildscript {
 		classpath "io.spring.gradle:dependency-management-plugin:0.5.2.RELEASE"
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.2.RELEASE")
 		classpath("org.springframework:springloaded:1.2.3.RELEASE")
-		classpath("com.bettercloud:docker-plugin:${docker_plugin_version}")
 	}
 }
 
@@ -22,7 +20,6 @@ apply plugin: 'idea'
 apply plugin: 'spring-boot'
 apply plugin: 'java'
 apply plugin: 'war'
-apply plugin: 'com.bettercloud.docker-plugin'
 apply plugin: "io.spring.dependency-management"
 
 jar {
@@ -42,7 +39,6 @@ repositories {
 	jcenter()
 	mavenCentral()
 	mavenLocal()
-	maven { url 'http://dev.bettercloud.com/nexus/content/repositories/releases/' }
 	maven { url 'http://packages.confluent.io/maven/' }
 }
 
@@ -94,8 +90,4 @@ configurations {
     unitTestCompile.extendsFrom testCompile
     unitTestRuntime.extendsFrom testRuntime
     all*.exclude module : 'slf4j-log4j12'
-}
-
-bcdocker {
-	imageName="shared-kafka-admin-micro"
 }
