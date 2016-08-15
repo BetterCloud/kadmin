@@ -1,11 +1,7 @@
 package com.bettercloud.kadmin;
 
-import ch.qos.logback.classic.Level;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.kafka.clients.NetworkClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -30,7 +26,7 @@ public class Application {
 	@Bean
 	public CommandLineRunner logConfigurationRunner() {
 		return (args) -> {
-			Logger kafkaClientLogger = LoggerFactory.getLogger(NetworkClient.class);
+//			Logger kafkaClientLogger = LoggerFactory.getLogger(NetworkClient.class);
 //			((ch.qos.logback.classic.Logger)kafkaClientLogger).setLevel(Level.OFF);
 		};
 	}

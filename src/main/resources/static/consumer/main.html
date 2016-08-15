@@ -6,9 +6,11 @@
                 <input type="text" class="form-control" id="kafkahost" placeholder="localhost:9092" />
             </div>
             <div class="form-group col-sm-6">
+                <button class="btn btn-success btn-xs" id="refresh-topics-btn" style="float: right;">
+                  <span class="glyphicon glyphicon-refresh"></span>  Refresh Topics
+                </button>
                 <label for="schemaurl">Kafka Schema Registry Url</label>
                 <input type="text" class="form-control" id="schemaurl" placeholder="http://localhost:8081" />
-                <button class="btn btn-success" id="refresh-topics-btn">Refresh Topics</button>
             </div>
         </div>
         <div class="form-group">
@@ -43,7 +45,8 @@
 </div>
 <div class="row">
     <div class="refresh-form col-sm-6">
-        <div class="form-group">
+        <div class="form-inline">
+            <label for="refresh-rate">Refresh Interval</label>
             <select class="form-control" id="refresh-rate">
                 <option value="-1">Manual</option>
                 <option value="10000" selected="selected">10 Seconds</option>
@@ -54,13 +57,13 @@
     </div>
     <div class="col-sm-6">
         <button id="refresh-btn" class="btn btn-success disabled">
-            <span class="glyphicon glyphicon-refresh"></span> Refresh
+            <span class="glyphicon glyphicon-refresh"></span> Manual Refresh
         </button>
         <button id="clear-btn" class="btn btn-warning disabled">
             <span class="glyphicon glyphicon-trash"></span> Truncate
         </button>
         <button id="dispose-btn" class="btn btn-danger disabled">
-            <span class="glyphicon glyphicon-trash"></span> Close
+            <span class="glyphicon glyphicon-trash"></span> Dispose
         </button>
         <button id="permalink-btn" class="btn btn-default disabled">
             <span class="glyphicon glyphicon-copy"></span> Copy Permalink

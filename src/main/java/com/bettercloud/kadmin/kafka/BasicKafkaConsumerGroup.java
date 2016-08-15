@@ -41,7 +41,7 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         assert(config.getValueDeserializer() != null);
 
         this.config = config;
-        this.clientId = UUID.randomUUID().toString();
+        this.clientId = "kadmin-" + UUID.randomUUID().toString();
         this.groupId = this.clientId;
         this.env = env;
         this.handlers = Collections.synchronizedSet(Sets.newLinkedHashSet());
