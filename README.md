@@ -29,23 +29,35 @@ Producers behave the same as command line tools. Not that depending on your kafk
 
 # Installing and Running
 
-Kadmin requires Java 8.
+Kadmin uses Kafka 0.9.&#42; and Confluent 3.&#42;. Follow the [confluent quickstart guide](http://docs.confluent.io/3.0.0/quickstart.html) to get your local environment setup.
+
+Kadmin requires Java 1.8+.
 
 ## Configuring
-1. Set the desired port in `src/main/resources/application.properties` e.g. `server.port=9090` (defaults to `8080`)
-2. Set the desired url path context in `src/main/resources/application.properties` e.g. `server.contextPath=/kadmin` (defaults to `/kadmin`)
 
+See the [Configuration](#Configuration) section for a full list of configurations, descriptions, and default values.
 
 ## Run From Source
 1. run `./gradlew bootRun` or use your cli/ide to execute `com.bettercloud.kadmin.Application#main`
 2. Access the application using http://localhost:8080/kadmin/ or the provide the correct port and path context.
 
 ## Building and Running From An Executable JAR
-1. run `./gradlew clean build`
-2. You can find the executable jar in `build/libs` e.g. `build/libs/shared-kafka-admin-micro-0.1.0.jar`
-3. You can run the jar using `java -jar shared-kafka-admin-micro-0.1.0.jar --spring.profiles.active=desired,Spring,profiles`
-4. Access the application using http://localhost:8080/kadmin/ or the provide the correct port and path context.
+0. run `./gradlew clean build`
+0. You can find the executable jar in `build/libs` e.g. `build/libs/shared-kafka-admin-micro-0.1.0.jar`
+0. If you used `<base>/application.properties` then copy that file to the same directory as the executable jar.
+0. You can run the jar using `java -jar shared-kafka-admin-micro-0.1.0.jar --spring.profiles.active=desired,Spring,profiles`
+0. Access the application using http://localhost:8080/kadmin/ providing the correct port and path context.
 
+**Example**
+```
+cd <base>
+mkdir dist
+./gradlew clean build
+cp build/libs/shared-kafka-admin-micro-*.jar dist/
+cp application.properties dist/
+cd dist
+java -jar shared-kafka-admin-micro-*.jar --spring.profiles.active=kadmin,local
+```
 
 # Usage
 
@@ -118,11 +130,20 @@ Also, allows for clean disposal of producers.
 
 # Configuration
 
-The consumer has reasonable defaults, but these can be overridden using configurations from http://kafka.apache.org/documentation.html#newconsumerconfigs.
+## Config locations
 
+- `<base>/application.properties` => External configuration (preferred)
+- `<base>/src/resources/application.properties` => Class path configuration (built into executable)
+
+## Kafka Consumers and Producers
+
+The consumer and producer has reasonable defaults, but these can be overridden using configurations from http://kafka.apache.org/documentation.html#newconsumerconfigs.
+
+## Kadmin Configs
 Config | Description | Default | Possible Values
 --- | --- | --- | ---
-server.contextPath | The following config sets the spring context path. You will access the application at http://<host-and-port>/<context> e.g. http://localhost:8080/kadmin | `null` |  Any value url path element e.g. `/kadmin`
+server.contextPath | The following config sets the spring context path. You will access the application at http://<host-and-port>/<context> e.g. http://localhost:8080/kadmin | `null` |  Any valid url path element e.g. `/kadmin`
+server.port | The port that the tomcat service will listen on. | `8080` |  Any valid port
 ff.producer.enabled | Toggles read only mode i.e. Kafka producers are disabled. You can use the following Spring profile or the raw config. | `false` | `true`, `false`
 ff.customKafkaUrl.enabled | Allows custom urls to be used for Kafka and Service Registry for each producer and consumer. | `false` | `true`, `false`
 kafka.host | If `ff.customKafkaUrl.enabled` is disabled then you need to configure the default endpoints using the following configs. `kafka.host` is a comma separated list of kafka brokers. | `localhost:9092` | Valid hosts separated by commas.
