@@ -19,6 +19,7 @@ Similar to the command line tools Kadmin can spin up consumers and producers on
 the fly.
 
 ### Consumers
+
 Consumers keep a queue of the latest `n` (default 100) messages from a topic. When a consumer spins up, it starts with the `auto.offset.reset=latest` configuration. After an
 initialization poll, the consumer will seek to `max(po - n / pc, 0)` for each partition where
 `po` is the offset for that partition and `pc` is the total number of partitions.
@@ -90,6 +91,8 @@ java -jar shared-kafka-admin-micro-*.jar --spring.profiles.active=kadmin,local
 2. Select the deserializer
 3. Click "Start Consumer"
 
+![Consumer](/images/consumer.png?raw=true "Consumer")
+
 ### Viewing the Consumer
 
 Once the consumer has been started, you have the following options.
@@ -100,6 +103,8 @@ Once the consumer has been started, you have the following options.
 * Close - Disposes of the Kafka Consumer, clearing all memory and releasing the connection to the kafka cluster.
 * Permalink - This is a deeplink to a consumer with the same topic and deserializer.
 * Page Title - contains the total number of messages consumed. This can be helpful when multiple consumers are open in multiple tabs.
+
+![Consumer Tab](/images/consumerTab.png?raw=true "Consumer Tab")
 
 ### Viewing the Messages
 
@@ -121,6 +126,8 @@ Once the consumer has been started, you have the following options.
 0. Click "Send"
 0. Check the results and stats at the bottom of the page for success and production rate.
 
+![Basic Producer](/images/basicProducer.png?raw=true "Basic Producer")
+
 ### Avro
 
 0. Depending on the configuration, specify the kafka/schema registry urls.
@@ -132,6 +139,8 @@ Once the consumer has been started, you have the following options.
 0. Click "Send"
 0. Check the results and stats at the bottom of the page for success and production rate.
 
+![Avro Producer](/images/avroProducer.png?raw=true "Avro Producer")
+
 ## Manager
 
 Allows management of active connections to brokers. Displays information about
@@ -141,6 +150,8 @@ topics currently being consumed. Provides actions for each active consumer
 * Dispose of consumer, releasing all memory and network resources.
 
 Also, allows for clean disposal of producers.
+
+![Manager](/images/manager.png?raw=true "Avro Producer")
 
 # Configuration
 
