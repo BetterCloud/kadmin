@@ -37,6 +37,19 @@ Kadmin requires Java 1.8+.
 
 See the [Configuration](#Configuration) section for a full list of configurations, descriptions, and default values.
 
+## Running From Executable
+0. You can find a prebuilt executable jar in the `/dist` directory.
+0. You can run the jar using `java -jar shared-kafka-admin-micro-0.1.0.jar --spring.profiles.active=desired,Spring,profiles`
+0. Access the application using http://localhost:8080/kadmin/ providing the correct port and path context.
+
+**Example**
+```
+cd <base>
+cd dist
+cp ../application.properties .
+java -jar shared-kafka-admin-micro-*.jar --spring.profiles.active=kadmin,local
+```
+
 ## Run From Source
 1. run `./gradlew bootRun` or use your cli/ide to execute `com.bettercloud.kadmin.Application#main`
 2. Access the application using http://localhost:8080/kadmin/ or the provide the correct port and path context.
@@ -51,6 +64,7 @@ See the [Configuration](#Configuration) section for a full list of configuration
 **Example**
 ```
 cd <base>
+rm -rf dist
 mkdir dist
 ./gradlew clean build
 cp build/libs/shared-kafka-admin-micro-*.jar dist/
