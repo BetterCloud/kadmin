@@ -14,10 +14,17 @@
                 margin-bottom: 4em;
                 padding-top: 1em;
                 padding-bottom: 1em;
-                min-height: 800px;
+            }
+            .container .content {
+                min-height: 60vh;
             }
             .header-row {
                 margin-bottom: 2em;
+            }
+            .footer {
+                padding: 1em;
+                border-top: 1px solid lightgray;
+                margin-top: 1em;
             }
         </style>
     </head>
@@ -32,9 +39,15 @@
                     <li role="presentation"><a th:href="@{/manager}">Manager</a></li>
                 </ul>
             </div>
-            <div class="text-center" style="margin-top: 6em;">
-                <img th:src="@{/logo.png}" />
-                <h1>kadmin by BetterCloud</h1>
+            <div class="content">
+                <div class="text-center" style="margin-top: 6em;">
+                    <img th:src="@{/logo.png}" />
+                    <h1>kadmin by BetterCloud</h1>
+                </div>
+            </div>
+            <div class="footer">
+                Kadmin 0.9.0 - BetterCloud 2016
+                (<a href="mailto:david.esposito@bettercloud.com">david.esposito@bettercloud.com</a>)
             </div>
         </div>
     </body>

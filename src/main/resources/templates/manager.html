@@ -14,13 +14,20 @@
                 margin-bottom: 4em;
                 padding-top: 1em;
                 padding-bottom: 1em;
-                min-height: 800px;
+            }
+            #main-content {
+                min-height: 60vh;
             }
             .header-row {
                 margin-bottom: 2em;
             }
             .refresh-button {
                 float: right;
+            }
+            .footer {
+                padding: 1em;
+                border-top: 1px solid lightgray;
+                margin-top: 1em;
             }
         </style>
     </head>
@@ -36,6 +43,10 @@
                 </ul>
             </div>
             <div id="main-content"></div>
+            <div class="footer">
+                Kadmin 0.9.0 - BetterCloud 2016
+                (<a href="mailto:david.esposito@bettercloud.com">david.esposito@bettercloud.com</a>)
+            </div>
         </div>
 
         <script th:inline="javascript">

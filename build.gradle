@@ -27,12 +27,12 @@ apply plugin: "io.spring.dependency-management"
 
 jar {
 	baseName = 'shared-kafka-admin-micro'
-	version = '0.1.0'
+	version = '0.9.0'
 }
 
 war {
 	baseName = 'shared-kafka-admin-micro'
-	version =  '0.1.0'
+	version =  '0.9.0'
 }
 
 sourceCompatibility = 1.8
@@ -48,36 +48,28 @@ repositories {
 
 
 dependencies {
-	compile group: 'com.google.guava', name: 'guava', version: guava_version
-
-	compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
-
-
-	compile group: 'mysql', name: 'mysql-connector-java', version: mysql_connector_version
 
 	//Spring Boot
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: spring_boot_version
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: spring_boot_version
-
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf', version: spring_boot_version
-	compile group: 'org.springframework.boot', name: 'spring-boot-devtools', version: spring_boot_version
-
-	compile group: 'org.springframework.cloud', name: 'spring-cloud-config', version: spring_cloud_version
 
 
 	//Apache
     compile group: 'org.apache.commons', name: 'commons-lang3', version: apache_commons_lang_version
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: apache_httpclient_version
-	//lombok
+
+
+	//Utils
+	compile group: 'com.google.guava', name: 'guava', version: guava_version
+	compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 	compile group: 'org.projectlombok', name: 'lombok', version: lombok_version
 
 
 	//confluent
-//	compile group: 'org.springframework.integration', name: 'spring-integration-kafka', version : spring_integration_version
 	compile group: 'org.apache.avro', name: 'avro', version: avro_version
 	compile group: 'org.apache.kafka', name: 'kafka-clients', version: '0.9.0.1-cp1'
 	compile group: 'io.confluent', name: 'kafka-avro-serializer', version: confluent_version
-//	compile group: 'org.apache.kafka', name: 'kafka_2.11', version: kafka_version
 
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
