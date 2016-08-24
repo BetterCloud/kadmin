@@ -112,7 +112,7 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
                     Opt.of(pair.getRight())
                             .map(meta -> meta.offset())
                             .map(offset -> Math.max(0, offset - perPartitionRewind))
-                            .ifPresent(newOffset -> LOGGER.info("Seeing {} to {} (per partiion rewind {})",
+                            .ifPresent(newOffset -> LOGGER.info("Seeing {} to {} (per partition rewind {})",
                                     tp.toString(), newOffset, perPartitionRewind))
                             .ifPresent(newOffset -> consumer.seek(tp, newOffset))
                             .notPresent(() -> LOGGER.error("Could not calculate new offset for {}", tp.toString()));
