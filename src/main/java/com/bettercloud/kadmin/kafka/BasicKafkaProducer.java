@@ -36,7 +36,7 @@ public class BasicKafkaProducer<ValueT> implements KadminProducer<String, ValueT
     }
 
     public long getErrorCount() {
-        return sentCount.get();
+        return errorCount.get();
     }
 
     /**

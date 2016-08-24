@@ -1,8 +1,10 @@
 build/
 out/
+dist/application.properties
 classes
 
 .idea
+.DS_Store
 
 .gradle
 
