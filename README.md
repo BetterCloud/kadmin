@@ -179,6 +179,10 @@ schema.registry.url | Allows custom urls to be used for Kafka and Service Regist
 
 Note that changes to the major version (i.e. the first number) represent possible breaking changes, and may require modifications in your code to migrate. Changes to the minor version (i.e. the second number) should represent non-breaking changes. The third number represents any very minor bugfix patches.
 
+* **0.9.1** - Bug Fixes
+  * Fixed #2 - REST String serialization issues when raw strings contain quotes.
+  * Fixed producer error metric
+
 * **0.9.0** - Initial public release.
   * Consumer
     * each consumers uses a UUID as consumer group id to avoid colliding with existing consumer groups.
