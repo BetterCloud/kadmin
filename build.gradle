@@ -24,12 +24,12 @@ apply plugin: "io.spring.dependency-management"
 
 jar {
 	baseName = 'shared-kafka-admin-micro'
-	version = '0.9.0'
+	version = '0.9.1'
 }
 
 war {
 	baseName = 'shared-kafka-admin-micro'
-	version =  '0.9.0'
+	version =  '0.9.1'
 }
 
 sourceCompatibility = 1.8

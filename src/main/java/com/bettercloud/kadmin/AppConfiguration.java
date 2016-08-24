@@ -9,6 +9,7 @@ import com.bettercloud.kadmin.services.KafkaDeserializerRegistryService;
 import com.bettercloud.kadmin.services.KafkaSerializerRegistryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Maps;
 import org.apache.kafka.common.serialization.*;
 import org.springframework.context.annotation.Bean;
@@ -69,7 +70,7 @@ public class AppConfiguration {
         DeserializerRegistryService registry = new KafkaDeserializerRegistryService();
 
         registry.register(dim("Avro Object Deserializer", ErrorTolerantAvroObjectDeserializer.class, "avro", (o) -> toNode(o + "")));
-        registry.register(dim(StringDeserializer.class, "string", (o) -> toNode(w(o + ""))));
+        registry.register(dim(StringDeserializer.class, "string", (o) -> new TextNode(o + "")));
         registry.register(dim(ByteArrayDeserializer.class, "bytes", (o) -> toNode(w(o + ""))));
         registry.register(dim(IntegerDeserializer.class, "int", (o) -> toNode(o + "")));
         registry.register(dim(LongDeserializer.class, "long", (o) -> toNode(o + "")));
