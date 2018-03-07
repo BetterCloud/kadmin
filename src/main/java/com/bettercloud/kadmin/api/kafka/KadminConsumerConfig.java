@@ -17,4 +17,11 @@ public class KadminConsumerConfig {
     private String schemaRegistryUrl;
     private String keyDeserializer;
     private DeserializerInfoModel valueDeserializer;
+    private String securityProtocol;
+    private String trustStoreLocation;
+    private String trustStorePassword;
+    private String keyStoreLocation;
+    private String keyStorePassword;
+    private String keyPassword;
+
 }

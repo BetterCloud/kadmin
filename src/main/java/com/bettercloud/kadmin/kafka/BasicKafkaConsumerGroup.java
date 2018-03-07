@@ -8,11 +8,13 @@ import com.bettercloud.util.LoggerUtils;
 import com.bettercloud.util.Opt;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.RangeAssignor;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.springframework.core.env.Environment;
@@ -85,8 +87,19 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("metric.reporters", env.getProperty("metric.reporters", ""));
         properties.put("request.timeout.ms", env.getProperty("request.timeout.ms", Integer.class, 40 * 1000));
         properties.put("connections.max.idle.ms", env.getProperty("connections.max.idle.ms", Integer.class, 9 * 60 * 1000));
-        properties.put("security.protocol", env.getProperty("security.protocol", "PLAINTEXT"));
+        if(config.getSecurityProtocol().equals("SSL")) {
+            //configure the following three settings for SSL Encryption
+            properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, config.getSecurityProtocol());
+            properties.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, config.getTrustStoreLocation());
+            properties.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG,  config.getTrustStorePassword());
 
+            // configure the following three settings for SSL Authentication
+            properties.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, config.getKeyStoreLocation());
+            properties.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, config.getKeyStorePassword());
+            properties.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, config.getKeyPassword());
+        } else {
+            properties.put("security.protocol", env.getProperty("security.protocol", "PLAINTEXT"));
+        }
         properties.put("key.deserializer", config.getKeyDeserializer());
         properties.put("value.deserializer", config.getValueDeserializer().getClassName());
 

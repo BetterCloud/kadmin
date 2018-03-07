@@ -3,8 +3,10 @@ package com.bettercloud.kadmin.kafka;
 import com.bettercloud.kadmin.api.kafka.KadminProducer;
 import com.bettercloud.kadmin.api.kafka.KadminProducerConfig;
 import lombok.Getter;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.config.SslConfigs;
 
 import java.util.Properties;
 import java.util.UUID;
@@ -54,6 +56,18 @@ public class BasicKafkaProducer<ValueT> implements KadminProducer<String, ValueT
         properties.put("schema.registry.url", config.getSchemaRegistryUrl());
         properties.put("key.serializer", config.getKeySerializer());
         properties.put("value.serializer", config.getValueSerializer().getClassName());
+
+        if(config.getSecurityProtocol().equals("SSL")) {
+            //configure the following three settings for SSL Encryption
+            properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
+            properties.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, config.getTrustStoreLocation());
+            properties.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG,  config.getTrustStorePassword());
+
+            // configure the following three settings for SSL Authentication
+            properties.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, config.getKeyStoreLocation());
+            properties.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, config.getKeyStorePassword());
+            properties.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, config.getKeyPassword());
+        }
 
         this.producer = new KafkaProducer<>(properties);
     }
