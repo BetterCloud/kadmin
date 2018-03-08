@@ -30,6 +30,12 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
 
     private final String defaultKafkaHost;
     private final String defaultSchemaRegistryUrl;
+    private final String defaultSecurityProtocol;
+    private final String defaultTrustStoreLocation;
+    private final String defaultTrustStorePassword;
+    private final String defaultKeyStoreLocation;
+    private final String defaultKeyStorePassword;
+    private final String defaultKeyPassword;
 
     private final LinkedHashMap<String, KadminProducer<String, Object>> producerMap;
 
@@ -38,9 +44,27 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
             @Value("${kafka.host:localhost:9092}")
                     String defaultKafkaHost,
             @Value("${schema.registry.url:http://localhost:8081}")
-                    String defaultSchemaRegistryUrl) {
+                    String defaultSchemaRegistryUrl,
+            @Value("${security.protocol:PLAINTEXT}")
+                    String defaultSecurityProtocol,
+            @Value("${trust.store.location}")
+                    String defaultTrustStoreLocation,
+            @Value("${trust.store.password}")
+                    String defaultTrustStorePassword,
+            @Value("${key.store.location}")
+                    String defaultKeyStoreLocation,
+            @Value("${key.store.password}")
+                    String defaultKeyStorePassword,
+            @Value("${key.password}")
+                    String defaultKeyPassword) {
         this.defaultKafkaHost = defaultKafkaHost;
         this.defaultSchemaRegistryUrl = defaultSchemaRegistryUrl;
+        this.defaultSecurityProtocol = defaultSecurityProtocol;
+        this.defaultTrustStoreLocation = defaultTrustStoreLocation;
+        this.defaultTrustStorePassword = defaultTrustStorePassword;
+        this.defaultKeyStoreLocation = defaultKeyStoreLocation;
+        this.defaultKeyStorePassword = defaultKeyStorePassword;
+        this.defaultKeyPassword = defaultKeyPassword;
 
         this.producerMap = Maps.newLinkedHashMap();
     }
@@ -65,6 +89,12 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
     public KadminProducer<String, Object> get(KadminProducerConfig config) {
         Opt.of(config.getKafkaHost()).notPresent(() -> config.setKafkaHost(defaultKafkaHost));
         Opt.of(config.getSchemaRegistryUrl()).notPresent(() -> config.setSchemaRegistryUrl(defaultSchemaRegistryUrl));
+        Opt.of(config.getSecurityProtocol()).notPresent(() -> config.setSecurityProtocol(defaultSecurityProtocol));
+        Opt.of(config.getTrustStoreLocation()).notPresent(() -> config.setTrustStoreLocation(defaultTrustStoreLocation));
+        Opt.of(config.getTrustStorePassword()).notPresent(() -> config.setTrustStorePassword(defaultTrustStorePassword));
+        Opt.of(config.getKeyStoreLocation()).notPresent(() -> config.setKeyStoreLocation(defaultKeyStoreLocation));
+        Opt.of(config.getKeyStorePassword()).notPresent(() -> config.setKeyStorePassword(defaultKeyStorePassword));
+        Opt.of(config.getKeyPassword()).notPresent(() -> config.setKeyPassword(defaultKeyPassword));
 
         BasicKafkaProducer<Object> producer = new BasicKafkaProducer<>(config);
         producerMap.put(producer.getId(), producer);

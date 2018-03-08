@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHandlerRegistry {
 
     private static final Logger LOGGER = LoggerUtils.get(BasicKafkaConsumerGroup.class);
+    private static final String SSL = "SSL";
 
     private KafkaConsumer<String, Object> consumer;
     private final KadminConsumerConfig config;
@@ -87,7 +88,8 @@ public class BasicKafkaConsumerGroup implements KadminConsumerGroup, MessageHand
         properties.put("metric.reporters", env.getProperty("metric.reporters", ""));
         properties.put("request.timeout.ms", env.getProperty("request.timeout.ms", Integer.class, 40 * 1000));
         properties.put("connections.max.idle.ms", env.getProperty("connections.max.idle.ms", Integer.class, 9 * 60 * 1000));
-        if(config.getSecurityProtocol().equals("SSL")) {
+
+        if(config.getSecurityProtocol().equals(SSL)) {
             //configure the following three settings for SSL Encryption
             properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, config.getSecurityProtocol());
             properties.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, config.getTrustStoreLocation());
