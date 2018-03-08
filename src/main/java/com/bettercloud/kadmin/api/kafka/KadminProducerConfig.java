@@ -17,4 +17,10 @@ public class KadminProducerConfig {
     private String schemaRegistryUrl;
     private String keySerializer;
     private SerializerInfoModel valueSerializer;
+    private String securityProtocol;
+    private String trustStoreLocation;
+    private String trustStorePassword;
+    private String keyStoreLocation;
+    private String keyStorePassword;
+    private String keyPassword;
 }
