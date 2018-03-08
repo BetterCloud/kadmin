@@ -55,12 +55,30 @@ java -jar shared-kafka-admin-micro-*.jar --spring.profiles.active=kadmin,local
 1. run `./gradlew bootRun` or use your cli/ide to execute `com.bettercloud.kadmin.Application#main`
 2. Access the application using http://localhost:8080/kadmin/ or the provide the correct port and path context.
 
+## Run From Docker Container
+1. run docker compose file
+``` 
+docker-compose up
+```
+
+Take the following variables into consideration when running the container:
+0. `ZOOKEEPER_HOST`: zookeeper host
+0. `KAFKA_HOST`: kafka host
+0. `SECURITY_PROTOCOL`: security protocol (SSL or PLAINTEXT)
+0. `TRUST_STORE_LOCATION`: absolute location of the truststore jks file
+0. `TRUST_STORE_PASSWORD`: truststore password
+0. `KEY_STORE_LOCATION`: absolute location of the keystore jks file
+0. `KEY_STORE_PASSWORD`: keystore password
+0. `KEY_PASSWORD`: key password
+
 ## Building and Running From An Executable JAR
 0. run `./gradlew clean build`
 0. You can find the executable jar in `build/libs` e.g. `build/libs/shared-kafka-admin-micro-0.1.0.jar`
 0. If you used `<base>/application.properties` then copy that file to the same directory as the executable jar.
 0. You can run the jar using `java -jar shared-kafka-admin-micro-0.1.0.jar --spring.profiles.active=desired,Spring,profiles`
 0. Access the application using http://localhost:8080/kadmin/ providing the correct port and path context.
+
+
 
 **Example**
 ```
