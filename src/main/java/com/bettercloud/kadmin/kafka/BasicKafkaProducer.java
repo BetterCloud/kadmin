@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BasicKafkaProducer<ValueT> implements KadminProducer<String, ValueT> {
 
+    private static final String SSL = "SSL";
     @Getter private final KadminProducerConfig config;
     @Getter private final String id;
     @Getter private long lastUsedTime = -1;
@@ -57,7 +58,7 @@ public class BasicKafkaProducer<ValueT> implements KadminProducer<String, ValueT
         properties.put("key.serializer", config.getKeySerializer());
         properties.put("value.serializer", config.getValueSerializer().getClassName());
 
-        if(config.getSecurityProtocol().equals("SSL")) {
+        if(config.getSecurityProtocol().equals(SSL)) {
             //configure the following three settings for SSL Encryption
             properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
             properties.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, config.getTrustStoreLocation());
