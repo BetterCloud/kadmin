@@ -1,11 +1,15 @@
-FROM openjdk:8-jre
-MAINTAINER Eimar Fandino
+FROM openjdk:8-jdk as builder
+WORKDIR /app
+COPY . .
+RUN ./gradlew build -x test
 
-RUN mkdir /app
+FROM openjdk:8-jre
+LABEL maintainer="Eimar Fandino"
+
 WORKDIR /app
 
-ADD build/libs/shared-kafka-admin-micro-*.jar /app/app.jar
-ADD application.properties /app/application.properties
+COPY --from=builder  /app/build/libs/shared-kafka-admin-micro-*.jar /app/app.jar
+COPY application.properties /app/application.properties
 
 EXPOSE 8080
 
