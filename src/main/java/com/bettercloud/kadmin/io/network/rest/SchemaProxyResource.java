@@ -1,8 +1,9 @@
 package com.bettercloud.kadmin.io.network.rest;
 
 import com.bettercloud.kadmin.api.kafka.exception.SchemaRegistryRestException;
-import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
+import com.bettercloud.kadmin.api.services.IntrospectionService;
 import com.bettercloud.kadmin.api.services.SchemaRegistryService;
+import com.bettercloud.kadmin.io.network.dto.SchemaInfoModel;
 import com.bettercloud.util.LoggerUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,10 +28,12 @@ public class SchemaProxyResource {
     private static final Logger LOGGER = LoggerUtils.get(SchemaProxyResource.class);
 
     private final SchemaRegistryService schemaRegistryService;
+    private final IntrospectionService introspectionService;
 
     @Autowired
-    public SchemaProxyResource(SchemaRegistryService schemaRegistryService) {
+    public SchemaProxyResource(SchemaRegistryService schemaRegistryService, IntrospectionService introspectionService) {
         this.schemaRegistryService = schemaRegistryService;
+        this.introspectionService = introspectionService;
     }
 
     @RequestMapping(
@@ -52,11 +56,11 @@ public class SchemaProxyResource {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<List<String>> topics(@RequestParam("url") Optional<String> oUrl) {
+    public ResponseEntity<Collection<String>> topics(@RequestParam("kafka-url") Optional<String> kafkaUrl) {
         try {
-            return ResponseEntity.ok(schemaRegistryService.guessAllTopics(oUrl.orElse(null)));
-        } catch (SchemaRegistryRestException e) {
-            return ResponseEntity.status(e.getStatusCode())
+            return ResponseEntity.ok(introspectionService.getAllTopicNames(kafkaUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
                     .header("error-message", e.getMessage())
                     .body(null);
         }

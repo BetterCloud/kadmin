@@ -29,8 +29,13 @@ function initMain() {
     App.producer.$aceMessage.getSession().setMode("ace/mode/text");
 }
 
+function getKafkaHost() {
+    var kafkaHost = $('#kafkahost').val();
+    return kafkaHost !== "" ? kafkaHost : undefined;
+}
+
 function refreshTopics() {
-    $.get(App.contextPath + "/api/topics", handleNewTopics);
+    $.get(App.contextPath + "/api/topics", {"kafka-url": getKafkaHost()}, handleNewTopics);
 }
 
 function handleNewTopics(data) {
