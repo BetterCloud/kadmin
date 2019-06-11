@@ -13,4 +13,4 @@ COPY application.properties /app/application.properties
 
 EXPOSE 8080
 
-ENTRYPOINT [ "java", "-jar", "/app/app.jar" , "--spring.profiles.active=kadmin,local"]
+ENTRYPOINT [ "java", "-jar", "/app/app.jar" , "--spring.profiles.active=kadmin,local", "--server.contextPath=/"]
