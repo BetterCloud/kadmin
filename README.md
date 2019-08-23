@@ -56,6 +56,9 @@ java -jar shared-kafka-admin-micro-*.jar --spring.profiles.active=kadmin,local
 2. Access the application using http://localhost:8080/kadmin/ or the provide the correct port and path context.
 
 ## Run From Docker Container
+
+https://cloud.docker.com/u/bettercloud/repository/docker/bettercloud/kadmin
+
 2. run docker image
 
 ```
