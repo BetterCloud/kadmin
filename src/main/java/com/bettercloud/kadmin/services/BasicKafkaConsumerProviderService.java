@@ -52,26 +52,16 @@ public class BasicKafkaConsumerProviderService implements KadminConsumerGroupPro
                     String defaultSchemaRegistryUrl,
             @Value("${security.protocol:PLAINTEXT}")
                     String defaultSecurityProtocol,
-            @Value("${trust.store.location}")
-                    String defaultTrustStoreLocation,
-            @Value("${trust.store.password}")
-                    String defaultTrustStorePassword,
-            @Value("${key.store.location}")
-                    String defaultKeyStoreLocation,
-            @Value("${key.store.password}")
-                    String defaultKeyStorePassword,
-            @Value("${key.password}")
-                    String defaultKeyPassword,
-            Environment env) {
+                    Environment env) {
         this.consumerExecutor = Executors.newCachedThreadPool();
         this.defaultKafkaHost = defaultKafkaHost;
         this.defaultSchemaRegistryUrl = defaultSchemaRegistryUrl;
         this.defaultSecurityProtocol = defaultSecurityProtocol;
-        this.defaultTrustStoreLocation = defaultTrustStoreLocation;
-        this.defaultTrustStorePassword = defaultTrustStorePassword;
-        this.defaultKeyStoreLocation = defaultKeyStoreLocation;
-        this.defaultKeyStorePassword = defaultKeyStorePassword;
-        this.defaultKeyPassword = defaultKeyPassword;
+        this.defaultTrustStoreLocation = env.getProperty("trust.store.location");
+        this.defaultTrustStorePassword = env.getProperty("trust.store.password");
+        this.defaultKeyStoreLocation = env.getProperty("key.store.location");
+        this.defaultKeyStorePassword = env.getProperty("key.store.password");
+        this.defaultKeyPassword = env.getProperty("key.password");
 
         this.env = env;
 

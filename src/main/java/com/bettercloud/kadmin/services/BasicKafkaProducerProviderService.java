@@ -11,6 +11,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -47,24 +48,15 @@ public class BasicKafkaProducerProviderService implements KadminProducerProvider
                     String defaultSchemaRegistryUrl,
             @Value("${security.protocol:PLAINTEXT}")
                     String defaultSecurityProtocol,
-            @Value("${trust.store.location}")
-                    String defaultTrustStoreLocation,
-            @Value("${trust.store.password}")
-                    String defaultTrustStorePassword,
-            @Value("${key.store.location}")
-                    String defaultKeyStoreLocation,
-            @Value("${key.store.password}")
-                    String defaultKeyStorePassword,
-            @Value("${key.password}")
-                    String defaultKeyPassword) {
+                    Environment env) {
         this.defaultKafkaHost = defaultKafkaHost;
         this.defaultSchemaRegistryUrl = defaultSchemaRegistryUrl;
         this.defaultSecurityProtocol = defaultSecurityProtocol;
-        this.defaultTrustStoreLocation = defaultTrustStoreLocation;
-        this.defaultTrustStorePassword = defaultTrustStorePassword;
-        this.defaultKeyStoreLocation = defaultKeyStoreLocation;
-        this.defaultKeyStorePassword = defaultKeyStorePassword;
-        this.defaultKeyPassword = defaultKeyPassword;
+        this.defaultTrustStoreLocation = env.getProperty("trust.store.location");
+        this.defaultTrustStorePassword = env.getProperty("trust.store.password");
+        this.defaultKeyStoreLocation = env.getProperty("key.store.location");
+        this.defaultKeyStorePassword = env.getProperty("key.store.password");
+        this.defaultKeyPassword = env.getProperty("key.password");
 
         this.producerMap = Maps.newLinkedHashMap();
     }
